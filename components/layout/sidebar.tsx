@@ -15,7 +15,7 @@ export default function Sidebar({ open, setOpen }) {
         open ? 'translate-x-0' : '-translate-x-full'
       } md:translate-x-0 md:static`}
     >
-      <h1 className="text-center text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-tight my-6">
+      <h1 className="text-center text-2xl font-bold text-gray-900 dark:text-gray-900 tracking-tight my-6">
         Event Manager
       </h1>
       <ul className="flex flex-col gap-5 mx-4">
@@ -24,10 +24,10 @@ export default function Sidebar({ open, setOpen }) {
             router.push('/dashboard');
             setOpen(false);
           }}
-          className={`flex items-center rounded-lg p-2 transition gap-2 cursor-pointer ${
+          className={`flex items-center rounded-lg p-2 transition gap-2 cursor-pointer dark:text-gray-900 ${
             pathName === '/dashboard'
               ? 'bg-blue-100 text-blue-600'
-              : 'hover:text-blue-600 hover:bg-blue-50'
+              : 'hover:text-blue-50 hover:bg-blue-600'
           }`}
         >
           <Home size={20} />
@@ -39,10 +39,10 @@ export default function Sidebar({ open, setOpen }) {
             router.push('/dashboard/eventos');
             setOpen(false);
           }}
-          className={`flex items-center cursor-pointer rounded-lg p-2 transition gap-2 ${
+          className={`flex items-center cursor-pointer rounded-lg p-2 transition gap-2 dark:text-gray-900 ${
             pathName === '/dashboard/eventos'
-              ? 'bg-blue-100 text-blue-600'
-              : 'hover:bg-blue-50 hover:text-blue-600'
+            ? 'bg-blue-100 text-blue-600'
+            : 'hover:text-blue-50 hover:bg-blue-600'
           }`}
         >
           <Calendar size={20} />
@@ -54,10 +54,10 @@ export default function Sidebar({ open, setOpen }) {
             router.push('/dashboard/colaboradores');
             setOpen(false);
           }}
-          className={`flex items-center cursor-pointer rounded-lg p-2 transition gap-2 ${
+          className={`flex items-center cursor-pointer rounded-lg p-2 transition gap-2 dark:text-gray-900 ${
             pathName === '/dashboard/colaboradores'
-              ? 'bg-blue-100 text-blue-600'
-              : 'hover:bg-blue-50 hover:text-blue-600'
+            ? 'bg-blue-100 text-blue-600'
+            : 'hover:text-blue-50 hover:bg-blue-600'
           }`}
         >
           <Users size={20} />
@@ -69,10 +69,10 @@ export default function Sidebar({ open, setOpen }) {
             router.push('/dashboard/settings');
             setOpen(false);
           }}
-          className={`flex items-center cursor-pointer rounded-lg p-2 transition gap-2 ${
+          className={`flex items-center cursor-pointer rounded-lg p-2 transition gap-2 dark:text-gray-900 ${
             pathName === '/dashboard/settings'
-              ? 'bg-blue-100 text-blue-600'
-              : 'hover:bg-blue-50 hover:text-blue-600'
+            ? 'bg-blue-100 text-blue-600'
+            : 'hover:text-blue-50 hover:bg-blue-600'
           }`}
         >
           <Settings size={20} />
@@ -83,7 +83,7 @@ export default function Sidebar({ open, setOpen }) {
       <div></div>
       <div
         onClick={handleLogout}
-        className="flex items-center hover:bg-red-200 rounded-lg p-2 transition gap-2 mb-2 mx-3 cursor-pointer"
+        className="flex items-center hover:bg-red-200 rounded-lg p-2 transition gap-2 mb-2 mx-3 cursor-pointer dark:text-gray-900"
       >
         <LogOut size={20} />
         <span>Sair</span>
