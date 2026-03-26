@@ -2,7 +2,7 @@
 
 import { Menu, Moon, Sun } from 'lucide-react';
 import { usePathname } from 'next/navigation';
-import { useState} from 'react';
+import { useState, useEffect } from 'react';
 
 export default function Header({
   setOpen,
@@ -20,6 +20,7 @@ const [isDark, setIsDark] = useState(false);
 const toggleTheme = () => {
   const newTheme = !isDark;
   setIsDark(newTheme);
+  localStorage.setItem('theme', newTheme ? 'dark' : 'light');
   if (newTheme) {
     document.documentElement.classList.add("dark")
   } else {
@@ -27,21 +28,33 @@ const toggleTheme = () => {
   }
 }
 
+useEffect(() => {
+  const savedTheme = localStorage.getItem('theme');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const theme = savedTheme === 'dark' || (!savedTheme && prefersDark);
+  setIsDark(theme);
+  if (theme) {
+    document.documentElement.classList.add("dark");
+  } else {
+    document.documentElement.classList.remove("dark");
+  }
+}, []);
+
   return (
-    <header className="h-16 w-full bg-white border-b px-4 flex justify-between items-center ">
+    <header className="h-16 w-full bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 flex justify-between items-center ">
       <div className="flex items-center gap-5">
         <button
-          className="rounded-2xl md:hidden hover:bg-blue-200 transition p-2 dark:text-gray-900"
+          className="rounded-2xl md:hidden hover:bg-blue-200 dark:hover:bg-blue-700 transition p-2 text-gray-900 dark:text-white"
           onClick={() => setOpen(true)}
         >
           <Menu size={20} />
         </button>
-        <h1 className="text-lg font-semibold text-gray-900">
+        <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
           {titles[pathName] || 'Dashboard'}
         </h1>
       </div>
       <div>
-        <button onClick={toggleTheme} className="p-2 rounded-lg hover:bg-gray-200 hover:bg-blue-600 transition dark:text-gray-900">
+        <button onClick={toggleTheme} className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition text-gray-900 dark:text-white">
           {isDark ? <Sun size={20} /> :  <Moon size={20}/>
           }
         </button>
