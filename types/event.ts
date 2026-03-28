@@ -1,6 +1,7 @@
 type Event = {
-    id: string;
-    tipo: string;
-    data: string;
-    local: string;
-}
+  id: string;
+  nome: string;
+  tipo: string;
+  data: string;
+  local: string;
+};

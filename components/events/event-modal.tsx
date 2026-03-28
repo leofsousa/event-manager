@@ -3,6 +3,7 @@
 import Event from "@/types/event.ts";
 import { useState } from "react";
 import Input from "@/components/ui/input.tsx";
+import InputDate from "@/components/ui/input-date.tsx";
 
 type Props = {
   onClose: () => void;
@@ -38,17 +39,35 @@ export default function EventModal({ onClose }: Props) {
     >
       <div className="bg-white rounded-xl p-6 w-full max-w-md">
         <h2 className="text-xl font-semibold m-6 text-gray-900">Novo Evento</h2>
-        <div>
-          <Input
-            type="nome"
-            value={nome}
-            onChange={(e) => setNome(e.target.value)}
-          />
-          <Input
-            type="tipo"
-            value={tipo}
-            onChange={(e) => setTipo(e.target.value)}
-          />
+        <div className="flex flex-col gap-2">
+          <div>
+            <label className="text-gray-900">Nome</label>
+            <Input
+              type="nome"
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="text-gray-900">Tipo</label>
+            <Input
+              type="tipo"
+              value={tipo}
+              onChange={(e) => setTipo(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="text-gray-900">Data</label>
+            <InputDate value={data} onChange={setData} />
+          </div>
+          <div>
+            <label className="text-gray-900">Local</label>
+            <Input
+              type="local"
+              value={local}
+              onChange={(e) => setLocal(e.target.value)}
+            />
+          </div>
         </div>
 
         <button
