@@ -4,6 +4,7 @@ import Event from "@/types/event.ts";
 import { useState } from "react";
 import Input from "@/components/ui/input.tsx";
 import InputDate from "@/components/ui/input-date.tsx";
+import Button from "@/components/ui/button.tsx";
 
 type Props = {
   onClose: () => void;
@@ -37,7 +38,10 @@ export default function EventModal({ onClose }: Props) {
       className="fixed inset-0 bg-black/50 flex items-center justify-center"
       onClick={onClose}
     >
-      <div className="bg-white rounded-xl p-6 w-full max-w-md">
+      <div
+        className="bg-white rounded-xl p-6 w-full max-w-md"
+        onClick={(e) => e.stopPropagation()}
+      >
         <h2 className="text-xl font-semibold m-6 text-gray-900">Novo Evento</h2>
         <div className="flex flex-col gap-2">
           <div>
@@ -69,13 +73,12 @@ export default function EventModal({ onClose }: Props) {
             />
           </div>
         </div>
-
-        <button
-          className="m-6 rounded-xl bg-blue-600 p-2 hover:bg-blue-300 transition"
-          onClick={onClose}
-        >
-          Fechar
-        </button>
+        <div className="p-5 flex justify-between gap-2">
+          <Button onClick={onClose} variant="danger">
+            Cancelar
+          </Button>
+          <Button onClick={handleSubmit}>Adicionar Evento</Button>
+        </div>
       </div>
     </div>
   );
