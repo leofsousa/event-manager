@@ -1,23 +1,17 @@
 'use client';
 
 import { Plus } from 'lucide-react';
-
-type Event = {
-  id: string;
-  nome: string;
-  tipo: string;
-  data: string;
-  local: string;
-};
+import Event from '@/types/event.ts'
 
 type Props = {
   events: Event[];
   onDelete: (id: string) => void;
+  onAdd: () => void;
 };
 
-export default function TableEvents({ events, onDelete }: Props) {
+export default function TableEvents({ events, onDelete, onAdd }: Props) {
   return (
-    <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+    <div className="bg-white rounded-xl shadow-sm overflow-hidden dark:bg-blue-900">
       <table className="w-full">
         <thead className="bg-gray-100">
           <tr>
@@ -27,7 +21,7 @@ export default function TableEvents({ events, onDelete }: Props) {
                   Lista de Eventos
                 </span>
 
-                <button className="flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-500 transition">
+                <button className="flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-500 transition" onClick={onAdd}>
                   <Plus size={18} />
                   <span>Adicionar Evento</span>
                 </button>
