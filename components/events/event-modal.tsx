@@ -44,7 +44,7 @@ export default function EventModal({ onClose, onAddEvent }: Props) {
       data,
       local,
     };
-    onAddNEvent(newEvent);
+    onAddEvent(newEvent);
     onClose();
   };
 
@@ -52,7 +52,7 @@ export default function EventModal({ onClose, onAddEvent }: Props) {
   const [tipo, setTipo] = useState("");
   const [data, setData] = useState("");
   const [local, setLocal] = useState("");
-  const [errors, setErros] = useState({
+  const [errors, setErrors] = useState({
     nome: "",
     tipo: "",
     data: "",
@@ -60,9 +60,11 @@ export default function EventModal({ onClose, onAddEvent }: Props) {
   })
 
 
-
-
-  const isFormValid = nome && tipo && data && local;
+  const isFormValid =
+    nome.trim() &&
+    tipo.trim() &&
+    data.trim() &&
+    local.trim();
 
 
   return (
@@ -72,43 +74,54 @@ export default function EventModal({ onClose, onAddEvent }: Props) {
     >
       <div
         className="bg-white rounded-xl p-6 w-full max-w-md"
-        onClick={(e) => e.stopPropagation()}
-      >
+        onClick={(e) => e.stopPropagation()}>
         <h2 className="text-xl font-semibold m-4 text-gray-900">Novo Evento</h2>
         <div className="flex flex-col gap-4">
-          <div>
-            <FormField label="Nome" htmlFor="nome" required errors={errors.nome}>
-              <Input
-                type="text"
-                value={nome}
-                onChange={(e) => setNome(e.target.value)}
-              />
-            </FormField>
-          </div>
-          <div>
-            <FormField label="Tipo" htmlFor="tipo" required errors={errors.tipo}>
-              <Input
-                type="text"
-                value={tipo}
-                onChange={(e) => setTipo(e.target.value)}
-              />
-            </FormField>
-          </div>
-          <div>
-            <FormField label="Data" htmlFor="data" required errors={errors.data}>
+          <FormField label="Nome" htmlFor="nome" required error={errors.nome}>
+            <Input
+              type="text"
+              value={nome}
+              error={!errors.nome}
+              onChange={(e) => {
+                setNome(e.target.value);
 
-              <InputDate value={data} onChange={setData} />
-            </FormField>
-          </div>
-          <div>
-            <FormField label="Local" htmlFor="local" required errors={errors.local}>
-              <Input
-                type="text"
-                value={local}
-                onChange={(e) => setLocal(e.target.value)}
-              />
-            </FormField>
-          </div>
+                if (errors.nome) {
+                  setErrors((prev) => ({ ...prev, nome: "" }));
+                }
+              }}
+            />
+          </FormField>
+          <FormField label="Tipo" htmlFor="tipo" required errors={errors.tipo}>
+            <Input
+              type="text"
+              value={tipo}
+              error={!errors.tipo}
+              onChange={(e) => {
+                setTipo(e.target.value);
+
+                if (errors.tipo) {
+                  setErrors((prev) => ({ ...prev, tipo: "" }));
+                }
+              }}
+            />
+          </FormField>
+          <FormField label="Data" htmlFor="data" required errors={errors.data}>
+            <InputDate value={data} onChange={setData} />
+          </FormField>
+          <FormField label="Local" htmlFor="local" required errors={errors.local}>
+            <Input
+              type="text"
+              value={local}
+              error={!errors.local}
+              onChange={(e) => {
+                setLocal(e.target.value);
+
+                if (errors.local) {
+                  setErrors((prev) => ({ ...prev, local: "" }));
+                }
+              }}
+            />
+          </FormField>
         </div>
         <div className="p-5 flex justify-between gap-2">
           <Button onClick={onClose} variant="secondary">
