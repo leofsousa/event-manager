@@ -5,18 +5,15 @@ import { useState } from "react";
 import Input from "@/components/ui/input.tsx";
 import InputDate from "@/components/ui/input-date.tsx";
 import Button from "@/components/ui/button.tsx";
+import FormField from '@/components/events/form-field.tsx'
 
 type Props = {
   onClose: () => void;
   onAddEvent: (event: Event) => void;
 };
 
-export default function EventModal({ onClose }: Props) {
+export default function EventModal({ onClose, onAddEvent }: Props) {
   const handleSubmit = () => {
-    if (!nome || !tipo || !data || !local) {
-      alert("Preencha todos os campos");
-      return;
-    }
     const newEvent: Event = {
       id: crypto.randomUUID(),
       nome,
@@ -33,6 +30,9 @@ export default function EventModal({ onClose }: Props) {
   const [data, setData] = useState("");
   const [local, setLocal] = useState("");
 
+  const isFormValid = nome && tipo && data && local;
+
+
   return (
     <div
       className="fixed inset-0 bg-black/50 flex items-center justify-center"
@@ -42,42 +42,47 @@ export default function EventModal({ onClose }: Props) {
         className="bg-white rounded-xl p-6 w-full max-w-md"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-xl font-semibold m-6 text-gray-900">Novo Evento</h2>
-        <div className="flex flex-col gap-2">
+        <h2 className="text-xl font-semibold m-4 text-gray-900">Novo Evento</h2>
+        <div className="flex flex-col gap-4">
           <div>
-            <label className="text-gray-900">Nome</label>
-            <Input
-              type="nome"
-              value={nome}
-              onChange={(e) => setNome(e.target.value)}
-            />
+            <FormField label="Nome" htmlFor="nome" required>
+              <Input
+                type="nome"
+                value={nome}
+                onChange={(e) => setNome(e.target.value)}
+              />
+            </FormField>
           </div>
           <div>
-            <label className="text-gray-900">Tipo</label>
-            <Input
-              type="tipo"
-              value={tipo}
-              onChange={(e) => setTipo(e.target.value)}
-            />
+            <FormField label="Tipo" htmlFor="tipo" required>
+              <Input
+                type="tipo"
+                value={tipo}
+                onChange={(e) => setTipo(e.target.value)}
+              />
+            </FormField>
           </div>
           <div>
-            <label className="text-gray-900">Data</label>
-            <InputDate value={data} onChange={setData} />
+            <FormField label="Data" htmlFor="data" required>
+
+              <InputDate value={data} onChange={setData} />
+            </FormField>
           </div>
           <div>
-            <label className="text-gray-900">Local</label>
-            <Input
-              type="local"
-              value={local}
-              onChange={(e) => setLocal(e.target.value)}
-            />
+            <FormField label="Local" htmlFor="local" required>
+              <Input
+                type="local"
+                value={local}
+                onChange={(e) => setLocal(e.target.value)}
+              />
+            </FormField>
           </div>
         </div>
         <div className="p-5 flex justify-between gap-2">
-          <Button onClick={onClose} variant="danger">
+          <Button onClick={onClose} variant="secondary">
             Cancelar
           </Button>
-          <Button onClick={handleSubmit}>Adicionar Evento</Button>
+          <Button onClick={handleSubmit} type="submit" disabled={!isFormValid}>Salvar</Button>
         </div>
       </div>
     </div>
