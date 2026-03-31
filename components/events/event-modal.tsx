@@ -13,7 +13,30 @@ type Props = {
 };
 
 export default function EventModal({ onClose, onAddEvent }: Props) {
+  const validate = () => {
+    const newErrors = {
+      nome: "",
+      tipo: "",
+      data: "",
+      local: "",
+    };
+
+    if (!nome.trim()) newErrors.nome = "Nome é obrigatório";
+    if (!tipo.trim()) newErrors.tipo = "Tipo é obrigatório";
+    if (!data.trim()) newErrors.data = "Data é obrigatória";
+    if (!local.trim()) newErrors.local = "Local é obrigatório";
+
+    setErrors(newErrors);
+
+    return Object.values(newErrors).every((err) => err === "");
+  };
+
+
   const handleSubmit = () => {
+    const isValid = validate();
+
+    if (!isValid) return;
+
     const newEvent: Event = {
       id: crypto.randomUUID(),
       nome,
@@ -21,7 +44,7 @@ export default function EventModal({ onClose, onAddEvent }: Props) {
       data,
       local,
     };
-    onAddNewEvent(newEvent);
+    onAddNEvent(newEvent);
     onClose();
   };
 
@@ -29,6 +52,15 @@ export default function EventModal({ onClose, onAddEvent }: Props) {
   const [tipo, setTipo] = useState("");
   const [data, setData] = useState("");
   const [local, setLocal] = useState("");
+  const [errors, setErros] = useState({
+    nome: "",
+    tipo: "",
+    data: "",
+    local: "",
+  })
+
+
+
 
   const isFormValid = nome && tipo && data && local;
 
@@ -45,33 +77,33 @@ export default function EventModal({ onClose, onAddEvent }: Props) {
         <h2 className="text-xl font-semibold m-4 text-gray-900">Novo Evento</h2>
         <div className="flex flex-col gap-4">
           <div>
-            <FormField label="Nome" htmlFor="nome" required>
+            <FormField label="Nome" htmlFor="nome" required errors={errors.nome}>
               <Input
-                type="nome"
+                type="text"
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
               />
             </FormField>
           </div>
           <div>
-            <FormField label="Tipo" htmlFor="tipo" required>
+            <FormField label="Tipo" htmlFor="tipo" required errors={errors.tipo}>
               <Input
-                type="tipo"
+                type="text"
                 value={tipo}
                 onChange={(e) => setTipo(e.target.value)}
               />
             </FormField>
           </div>
           <div>
-            <FormField label="Data" htmlFor="data" required>
+            <FormField label="Data" htmlFor="data" required errors={errors.data}>
 
               <InputDate value={data} onChange={setData} />
             </FormField>
           </div>
           <div>
-            <FormField label="Local" htmlFor="local" required>
+            <FormField label="Local" htmlFor="local" required errors={errors.local}>
               <Input
-                type="local"
+                type="text"
                 value={local}
                 onChange={(e) => setLocal(e.target.value)}
               />
