@@ -6,6 +6,8 @@ import Input from "@/components/ui/input.tsx";
 import InputDate from "@/components/ui/input-date.tsx";
 import Button from "@/components/ui/button.tsx";
 import FormField from '@/components/events/form-field.tsx'
+import Select from '@/components/ui/select.tsx';
+
 
 type Props = {
   onClose: () => void;
@@ -13,6 +15,8 @@ type Props = {
 };
 
 export default function EventModal({ onClose, onAddEvent }: Props) {
+
+
   const validate = () => {
     const newErrors = {
       nome: "",
@@ -47,7 +51,7 @@ export default function EventModal({ onClose, onAddEvent }: Props) {
     onAddEvent(newEvent);
     onClose();
   };
-
+  const [isCreatingType, setIsCreatingType] = useState(false)
   const [nome, setNome] = useState("");
   const [tipo, setTipo] = useState("");
   const [data, setData] = useState("");
@@ -92,18 +96,17 @@ export default function EventModal({ onClose, onAddEvent }: Props) {
             />
           </FormField>
           <FormField label="Tipo" htmlFor="tipo" required errors={errors.tipo}>
-            <Input
-              type="text"
-              value={tipo}
-              error={!errors.tipo}
-              onChange={(e) => {
-                setTipo(e.target.value);
+            <Select onChange={(value) => {
+              if (value === "__new__") {
+                setIsCreatingType(true);
+                return
+              }
+              setTipo(value);
 
-                if (errors.tipo) {
-                  setErrors((prev) => ({ ...prev, tipo: "" }));
-                }
-              }}
-            />
+              if (errors.tipo) {
+                setErrors((prev) => ({...prev, tipo:""}))
+              }
+            }}/>
           </FormField>
           <FormField label="Data" htmlFor="data" required errors={errors.data}>
             <InputDate value={data} onChange={setData} />

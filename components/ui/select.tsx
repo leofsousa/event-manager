@@ -27,6 +27,11 @@ export default function Select({
             `}
         >
             <option value="">Selecione um tipo</option>
+            {options.map((option) => (
+            <option key={option.value} value={option.value}>
+                {option.label}
+            </option>))}
+            <option value="__new__"> + Criar novo Tipo</option>
         </select>
     )
 }
