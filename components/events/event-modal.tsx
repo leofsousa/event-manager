@@ -7,6 +7,7 @@ import InputDate from "@/components/ui/input-date";
 import Button from "@/components/ui/button";
 import FormField from '@/components/events/form-field'
 import Select from "@/components/ui/select";
+import CreateTypeModal from "./create-type-modal";
 
 
 type Props = {
@@ -116,7 +117,7 @@ export default function EventModal({ onClose, onAddEvent }: Props) {
           </FormField>
           <FormField label="Tipo" htmlFor="tipo" required error={errors.tipo}>
             <Select 
-            value="tipo"
+            value={tipo}
             options={eventTypes}
             error={!!errors.tipo}
             onChange={(value) => {
@@ -156,6 +157,11 @@ export default function EventModal({ onClose, onAddEvent }: Props) {
           <Button onClick={handleSubmit} type="submit" disabled={!isFormValid}>Salvar</Button>
         </div>
       </div>
+      {isCreatingType && (
+        <CreateTypeModal onClose={() => setIsCreatingType(false)}
+        onCreate={handleCreateType}/>
+      )
+      }
     </div>
   );
 }
