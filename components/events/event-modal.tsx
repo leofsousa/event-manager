@@ -1,12 +1,12 @@
 "use client";
 
-import Event from "@/types/event.ts";
+import type { Event } from "@/types/type-event";
 import { useState } from "react";
-import Input from "@/components/ui/input.tsx";
-import InputDate from "@/components/ui/input-date.tsx";
-import Button from "@/components/ui/button.tsx";
-import FormField from '@/components/events/form-field.tsx'
-import Select from '@/components/ui/select.tsx';
+import Input from "@/components/ui/input";
+import InputDate from "@/components/ui/input-date";
+import Button from "@/components/ui/button";
+import FormField from '@/components/events/form-field'
+import Select from "@/components/ui/select";
 
 
 type Props = {
@@ -16,6 +16,21 @@ type Props = {
 
 export default function EventModal({ onClose, onAddEvent }: Props) {
 
+  const handleCreateType = (name: string) => {
+  const formatted = name.toLowerCase().trim();
+
+  if (eventTypes.some((t) => t.value === formatted)) {
+    return;
+  }
+
+  const newType = {
+    label: name,
+    value: formatted,
+  };
+
+  setEventTypes((prev) => [...prev, newType]);
+  setTipo(formatted);
+};
 
   const validate = () => {
     const newErrors = {
@@ -51,6 +66,10 @@ export default function EventModal({ onClose, onAddEvent }: Props) {
     onAddEvent(newEvent);
     onClose();
   };
+  const [eventTypes, setEventTypes] = useState([
+    {label: "Operação Estúdio", value: "operacao-estudio"},
+    {label: "Externa", value: "externa"},
+  ])
   const [isCreatingType, setIsCreatingType] = useState(false)
   const [nome, setNome] = useState("");
   const [tipo, setTipo] = useState("");
@@ -95,8 +114,12 @@ export default function EventModal({ onClose, onAddEvent }: Props) {
               }}
             />
           </FormField>
-          <FormField label="Tipo" htmlFor="tipo" required errors={errors.tipo}>
-            <Select onChange={(value) => {
+          <FormField label="Tipo" htmlFor="tipo" required error={errors.tipo}>
+            <Select 
+            value="tipo"
+            options={eventTypes}
+            error={!!errors.tipo}
+            onChange={(value) => {
               if (value === "__new__") {
                 setIsCreatingType(true);
                 return
@@ -108,10 +131,10 @@ export default function EventModal({ onClose, onAddEvent }: Props) {
               }
             }}/>
           </FormField>
-          <FormField label="Data" htmlFor="data" required errors={errors.data}>
+          <FormField label="Data" htmlFor="data" required error={errors.data}>
             <InputDate value={data} onChange={setData} />
           </FormField>
-          <FormField label="Local" htmlFor="local" required errors={errors.local}>
+          <FormField label="Local" htmlFor="local" required error={errors.local}>
             <Input
               type="text"
               value={local}

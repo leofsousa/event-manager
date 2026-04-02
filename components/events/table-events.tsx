@@ -1,7 +1,7 @@
 'use client';
 
 import { Plus } from 'lucide-react';
-import Event from '@/types/event.ts'
+import type { Event } from '@/types/type-event'
 
 type Props = {
   events: Event[];
