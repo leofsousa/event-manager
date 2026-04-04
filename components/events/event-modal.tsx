@@ -52,10 +52,14 @@ export default function EventModal({ onClose, onAddEvent }: Props) {
   };
 
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const isValid = validate();
 
     if (!isValid) return;
+
+    setIsSubmiting(true)
+
+    await new Promise((resolve) => setTimeout(resolve, 800))
 
     const newEvent: Event = {
       id: crypto.randomUUID(),
@@ -65,12 +69,15 @@ export default function EventModal({ onClose, onAddEvent }: Props) {
       local,
     };
     onAddEvent(newEvent);
+
+    setIsSubmiting(false)
     onClose();
   };
   const [eventTypes, setEventTypes] = useState([
     {label: "Operação Estúdio", value: "operacao-estudio"},
     {label: "Externa", value: "externa"},
   ])
+  const [isSubmiting, setIsSubmiting] = useState(false);
   const [isCreatingType, setIsCreatingType] = useState(false)
   const [nome, setNome] = useState("");
   const [tipo, setTipo] = useState("");
@@ -154,7 +161,12 @@ export default function EventModal({ onClose, onAddEvent }: Props) {
           <Button onClick={onClose} variant="secondary">
             Cancelar
           </Button>
-          <Button onClick={handleSubmit} type="submit" disabled={!isFormValid}>Salvar</Button>
+          <Button 
+          onClick={handleSubmit} 
+          type="submit" 
+          disabled={!isFormValid}>
+            {isSubmiting ? "Salvando..." : "Salvar"}
+            </Button>
         </div>
       </div>
       {isCreatingType && (
