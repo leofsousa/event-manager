@@ -8,6 +8,7 @@ import Button from "@/components/ui/button";
 import FormField from '@/components/events/form-field'
 import Select from "@/components/ui/select";
 import CreateTypeModal from "./create-type-modal";
+import {useToast} from "@/hooks/useToast";
 
 
 type Props = {
@@ -17,6 +18,7 @@ type Props = {
 
 export default function EventModal({ onClose, onAddEvent }: Props) {
 
+  const { showToast } = useToast();
   const handleCreateType = (name: string) => {
   const formatted = name.toLowerCase().trim();
 
@@ -69,6 +71,8 @@ export default function EventModal({ onClose, onAddEvent }: Props) {
       local,
     };
     onAddEvent(newEvent);
+
+    showToast('Evento Criado com sucesso!');
 
     setIsSubmiting(false)
     onClose();
