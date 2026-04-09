@@ -14,7 +14,7 @@ type ToastContextType = {
 
 const ToastContext = createContext<ToastContextType | null>(null)
 
-export default function ToastProvider({ children }: { children: React.ReactNode }) {
+export function ToastProvider({ children }: { children: React.ReactNode }) {
     const [toasts, setToasts] = useState<Toast[]>([]);
 
     const showToast = (message: string, type: Toast["type"] = "success") => {
@@ -42,3 +42,5 @@ export default function ToastProvider({ children }: { children: React.ReactNode 
         </ToastContext.Provider>
     )
 }
+
+export { ToastContext };
