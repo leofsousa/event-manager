@@ -6,6 +6,7 @@ type Toast = {
     id: string;
     message: string;
     type: "success" | "error";
+    leaving?: boolean;
 };
 
 type ToastContextType = {
@@ -23,8 +24,17 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         setToasts((prev) => [...prev, { id, message, type }])
 
         setTimeout(() => {
-            setToasts((prev) => prev.filter((t) => t.id !== id));
-        }, 3000);
+            setToasts((prev) =>
+              prev.map((t) =>
+                t.id === id ? { ...t, leaving: true } : t
+              )
+            );
+          
+            setTimeout(() => {
+              setToasts((prev) => prev.filter((t) => t.id !== id));
+            }, 300);
+          }, 3000);
+          
     }
     return (
         <ToastContext.Provider value={{ showToast }}>
@@ -33,7 +43,18 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                 {toasts.map((toast) => (
                     <div
                         key={toasts.id}
-                        className={`px-4 py-2 rounded-lg shadow-md text-white ${toast.type === "success" ? "bg-green-500" : "bg-red-500"}`}
+                        className={`
+                        px-4 py-2 rounded-lg shadow-md text-white
+                        transform transition-all duration-300
+                    
+                        ${toast.type === "success" ? "bg-green-500" : "bg-red-500"}
+                    
+                        ${
+                          toast.leaving
+                            ? "opacity-0 -translate-y-2"
+                            : "opacity-100 translate-y-0"
+                        }
+                      `}
                         >
                             {toast.message}
                     </div>
