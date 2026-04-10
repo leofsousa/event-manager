@@ -32,19 +32,31 @@ export default function Eventos() {
 
   const sortedEvents = [...events].sort((a, b) => {
     if (!sortBy) return 0;
-
+  
     let comparison = 0;
-
+  
     if (sortBy === "nome") {
-      comparison = 
-      new Date(a.data).getTime() - 
-      new Date(b.data).getTime();
+      comparison = a.nome.localeCompare(b.nome);
     }
-
+  
+    if (sortBy === "data") {
+      comparison =
+        new Date(a.data).getTime() -
+        new Date(b.data).getTime();
+    }
+  
     return sortOrder === "asc" ? comparison : -comparison;
   });
+  
   return <div>
-    <TableEvents events={events} onDelete={handleDelete} onAdd={() => setModalOpen(true)} />
+    <TableEvents
+      events={sortedEvents}
+      onDelete={handleDelete}
+      onAdd={() => setModalOpen(true)}
+      onSort={handleSort}
+      sortBy={sortBy}
+      sortOrder={sortOrder}
+    />
     {isModalOpen && (
       <EventModal
         onClose={() => setModalOpen(false)}

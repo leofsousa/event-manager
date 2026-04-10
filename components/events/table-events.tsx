@@ -7,9 +7,18 @@ type Props = {
   events: Event[];
   onDelete: (id: string) => void;
   onAdd: () => void;
+  onSort: (field: "nome" | "data") => void;
+  sortBy: "nome"| "data" | null;
+  sortOrder: "asc" | "desc";
 };
 
-export default function TableEvents({ events, onDelete, onAdd }: Props) {
+export default function TableEvents({
+  events,
+  onDelete,
+  onAdd,
+  onSort,
+  sortBy,
+  sortOrder }: Props) {
   return (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden dark:bg-blue-900">
       <table className="w-full">
@@ -29,15 +38,16 @@ export default function TableEvents({ events, onDelete, onAdd }: Props) {
             </th>
           </tr>
           <tr>
-            <th className="text-left p-4 text-sm font-medium text-gray-600">
-              Nome
+            <th onClick={() => onSort("nome")}
+              className="text-left p-4 text-sm font-medium text-gray-600 cursor-pointer">
+              Nome {sortBy === "nome" && (sortOrder === "asc" ? "↑" : "↓")}
             </th>
 
             <th className="text-left p-4 text-sm font-medium text-gray-600">
               Tipo
             </th>
-            <th className="text-left p-4 text-sm font-medium text-gray-600">
-              Data
+            <th onClick={() => onSort("data")} className="cursor-pointer">
+              Data {sortBy === "data" && (sortOrder === "asc" ? "↑" : "↓")}
             </th>
             <th className="text-left p-4 text-sm font-medium text-gray-600">
               Local
