@@ -18,7 +18,7 @@ export default function Eventos() {
     setEvents((prevEvents) => prevEvents.filter((event) => event.id !== id));
   };
 
-  const [sortBy, setSortBy] = useState<"nome" | "data" | null>(null);
+  const [sortBy, setSortBy] = useState<"nome" | "data" | null>("nome");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   const handleSort = (field: "nome" | "data") => {
