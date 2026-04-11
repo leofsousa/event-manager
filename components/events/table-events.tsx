@@ -8,8 +8,9 @@ type Props = {
   onDelete: (id: string) => void;
   onAdd: () => void;
   onSort: (field: "nome" | "data") => void;
-  sortBy: "nome"| "data" | null;
+  sortBy: "nome" | "data" | null;
   sortOrder: "asc" | "desc";
+  onEdit: (event: Event) => void
 };
 
 export default function TableEvents({
@@ -18,7 +19,9 @@ export default function TableEvents({
   onAdd,
   onSort,
   sortBy,
-  sortOrder }: Props) {
+  sortOrder,
+  onEdit  
+}: Props) {
   return (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden dark:bg-blue-900">
       <table className="w-full">
@@ -67,7 +70,12 @@ export default function TableEvents({
               <td className="p-4">{event.data}</td>
               <td className="p-4">{event.local}</td>
 
-              <td className="p-4 text-right">
+              <td className="p-4 text-right flex flex-row gap-4">
+                <button 
+                onClick={() => onEdit(event)}
+                className="text-blue-500 hover:text-blue-700 mr-2">
+                  Editar
+                </button>
                 <button
                   onClick={() => onDelete(event.id)}
                   className="text-red-500 hover:text-red-700"

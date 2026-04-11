@@ -7,6 +7,18 @@ import type { Event } from '@/types/type-event'
 
 export default function Eventos() {
 
+  const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  const handleUpdateEvent = (updatedEvent: Event) => {
+    setEvents((prev)=> 
+    prev.map((event)=>
+    event.id === updatedEvent.id ? updatedEvent : event)
+    )
+  }
+
+  const handleEdit = (event:Event) => {
+    setEditingEvent(event)
+    setModalOpen(true)
+  }
 
   const [isModalOpen, setModalOpen] = useState(false);
   const [events, setEvents] = useState<Event[]>([]);
@@ -56,11 +68,17 @@ export default function Eventos() {
       onSort={handleSort}
       sortBy={sortBy}
       sortOrder={sortOrder}
+      onEdit={handleEdit}
     />
     {isModalOpen && (
       <EventModal
-        onClose={() => setModalOpen(false)}
+        onClose={() => {
+          setModalOpen(false)
+          setEditingEvent(null)
+        }}
         onAddEvent={handleAddEvent}
+        onUpdateEvent={handleUpdateEvent}
+        editingEvent={editingEvent}
       />
     )}
   </div>;

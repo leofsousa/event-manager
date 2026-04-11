@@ -1,39 +1,45 @@
 "use client";
 
 import type { Event } from "@/types/type-event";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Input from "@/components/ui/input";
 import InputDate from "@/components/ui/input-date";
 import Button from "@/components/ui/button";
 import FormField from '@/components/events/form-field'
 import Select from "@/components/ui/select";
 import CreateTypeModal from "./create-type-modal";
-import {useToast} from "@/hooks/useToast";
+import { useToast } from "@/hooks/useToast";
 
 
 type Props = {
   onClose: () => void;
   onAddEvent: (event: Event) => void;
+  editingEvent?: Event | null;
+  onUpdateEvent: (event: Event) => void
 };
 
-export default function EventModal({ onClose, onAddEvent }: Props) {
+export default function EventModal({ 
+  onClose, 
+  onAddEvent, 
+  onUpdateEvent,
+  editingEvent }: Props) {
 
   const { showToast } = useToast();
   const handleCreateType = (name: string) => {
-  const formatted = name.toLowerCase().trim();
+    const formatted = name.toLowerCase().trim();
 
-  if (eventTypes.some((t) => t.value === formatted)) {
-    return;
-  }
+    if (eventTypes.some((t) => t.value === formatted)) {
+      return;
+    }
 
-  const newType = {
-    label: name,
-    value: formatted,
+    const newType = {
+      label: name,
+      value: formatted,
+    };
+
+    setEventTypes((prev) => [...prev, newType]);
+    setTipo(formatted);
   };
-
-  setEventTypes((prev) => [...prev, newType]);
-  setTipo(formatted);
-};
 
   const validate = () => {
     const newErrors = {
@@ -56,30 +62,42 @@ export default function EventModal({ onClose, onAddEvent }: Props) {
 
   const handleSubmit = async () => {
     const isValid = validate();
-
     if (!isValid) return;
-
-    setIsSubmiting(true)
-
-    await new Promise((resolve) => setTimeout(resolve, 800))
-
-    const newEvent: Event = {
-      id: crypto.randomUUID(),
-      nome,
-      tipo,
-      data,
-      local,
-    };
-    onAddEvent(newEvent);
-
-    showToast('Evento Criado com sucesso!');
-
-    setIsSubmiting(false)
+  
+    setIsSubmiting(true);
+  
+    await new Promise((resolve) => setTimeout(resolve, 800));
+  
+    if (editingEvent) {
+      onUpdateEvent({
+        ...editingEvent,
+        nome,
+        tipo,
+        data,
+        local,
+      });
+  
+      showToast("Evento atualizado com sucesso!");
+    } else {
+      const newEvent: Event = {
+        id: crypto.randomUUID(),
+        nome,
+        tipo,
+        data,
+        local,
+      };
+  
+      onAddEvent(newEvent);
+  
+      showToast("Evento criado com sucesso!");
+    }
+  
+    setIsSubmiting(false);
     onClose();
   };
   const [eventTypes, setEventTypes] = useState([
-    {label: "Operação Estúdio", value: "operacao-estudio"},
-    {label: "Externa", value: "externa"},
+    { label: "Operação Estúdio", value: "operacao-estudio" },
+    { label: "Externa", value: "externa" },
   ])
   const [isSubmiting, setIsSubmiting] = useState(false);
   const [isCreatingType, setIsCreatingType] = useState(false)
@@ -94,6 +112,19 @@ export default function EventModal({ onClose, onAddEvent }: Props) {
     local: "",
   })
 
+  useEffect(() => {
+    if (editingEvent) {
+      setNome(editingEvent.nome);
+      setTipo(editingEvent.tipo);
+      setData(editingEvent.data);
+      setLocal(editingEvent.local)
+    } else {
+      setNome("");
+      setTipo("");
+      setData("");
+      setLocal("")
+    }
+  }, [editingEvent])
 
   const isFormValid =
     nome.trim() &&
@@ -127,21 +158,21 @@ export default function EventModal({ onClose, onAddEvent }: Props) {
             />
           </FormField>
           <FormField label="Tipo" htmlFor="tipo" required error={errors.tipo}>
-            <Select 
-            value={tipo}
-            options={eventTypes}
-            error={!!errors.tipo}
-            onChange={(value) => {
-              if (value === "__new__") {
-                setIsCreatingType(true);
-                return
-              }
-              setTipo(value);
+            <Select
+              value={tipo}
+              options={eventTypes}
+              error={!!errors.tipo}
+              onChange={(value) => {
+                if (value === "__new__") {
+                  setIsCreatingType(true);
+                  return
+                }
+                setTipo(value);
 
-              if (errors.tipo) {
-                setErrors((prev) => ({...prev, tipo:""}))
-              }
-            }}/>
+                if (errors.tipo) {
+                  setErrors((prev) => ({ ...prev, tipo: "" }))
+                }
+              }} />
           </FormField>
           <FormField label="Data" htmlFor="data" required error={errors.data}>
             <InputDate value={data} onChange={setData} />
@@ -165,17 +196,17 @@ export default function EventModal({ onClose, onAddEvent }: Props) {
           <Button onClick={onClose} variant="secondary">
             Cancelar
           </Button>
-          <Button 
-          onClick={handleSubmit} 
-          type="submit" 
-          disabled={!isFormValid}>
+          <Button
+            onClick={handleSubmit}
+            type="submit"
+            disabled={!isFormValid}>
             {isSubmiting ? "Salvando..." : "Salvar"}
-            </Button>
+          </Button>
         </div>
       </div>
       {isCreatingType && (
         <CreateTypeModal onClose={() => setIsCreatingType(false)}
-        onCreate={handleCreateType}/>
+          onCreate={handleCreateType} />
       )
       }
     </div>
