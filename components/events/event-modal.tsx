@@ -9,6 +9,7 @@ import FormField from '@/components/events/form-field'
 import Select from "@/components/ui/select";
 import CreateTypeModal from "./create-type-modal";
 import { useToast } from "@/hooks/useToast";
+import { subabase } from "@/lib/supabase";
 
 
 type Props = {
@@ -18,9 +19,9 @@ type Props = {
   onUpdateEvent: (event: Event) => void
 };
 
-export default function EventModal({ 
-  onClose, 
-  onAddEvent, 
+export default function EventModal({
+  onClose,
+  onAddEvent,
   onUpdateEvent,
   editingEvent }: Props) {
 
@@ -63,35 +64,54 @@ export default function EventModal({
   const handleSubmit = async () => {
     const isValid = validate();
     if (!isValid) return;
-  
+
     setIsSubmiting(true);
-  
-    await new Promise((resolve) => setTimeout(resolve, 800));
-  
+
     if (editingEvent) {
-      onUpdateEvent({
-        ...editingEvent,
-        nome,
-        tipo,
-        data,
-        local,
-      });
-  
-      showToast("Evento atualizado com sucesso!");
+      const { data, error } = await supabase
+        .from("events")
+        .update({
+          nome,
+          tipo,
+          data,
+          local
+        })
+        .eq("id", editingEvent.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error(error);
+        showToast("Erro ao atualizar evento");
+        setIsSubmiting(false);
+        return
+      }
+      onUpdateEvent(data);
+      showToast("Evento Atualizado com sucesso")
     } else {
-      const newEvent: Event = {
-        id: crypto.randomUUID(),
-        nome,
-        tipo,
-        data,
-        local,
-      };
-  
-      onAddEvent(newEvent);
-  
-      showToast("Evento criado com sucesso!");
+      const { data, error } = await supabase
+        .from("events")
+        .insert([
+          {
+            nome,
+            tipo,
+            data,
+            local
+          }
+        ])
+        .select()
+        .single()
+
+      if (error) {
+        console.error(error);
+        showToast("Erro ao criar evento!");
+        setIsSubmiting(false)
+        return
+      }
+
+      onAddEvent(data);
+      showToast("Evento criado com sucesso!")
     }
-  
     setIsSubmiting(false);
     onClose();
   };
@@ -141,13 +161,15 @@ export default function EventModal({
       <div
         className="bg-white rounded-xl p-6 w-full max-w-md"
         onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-xl font-semibold m-4 text-gray-900">Novo Evento</h2>
+        <h2 className="text-xl font-semibold m-4 text-gray-900">
+          {editingEvent ? "Editar Evento" : "Novo Evento"}
+        </h2>
         <div className="flex flex-col gap-4">
           <FormField label="Nome" htmlFor="nome" required error={errors.nome}>
             <Input
               type="text"
               value={nome}
-              error={!errors.nome}
+              error={!!errors.nome}
               onChange={(e) => {
                 setNome(e.target.value);
 
@@ -181,7 +203,7 @@ export default function EventModal({
             <Input
               type="text"
               value={local}
-              error={!errors.local}
+              error={!!errors.local}
               onChange={(e) => {
                 setLocal(e.target.value);
 
