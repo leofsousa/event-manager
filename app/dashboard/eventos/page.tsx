@@ -2,20 +2,36 @@
 
 import EventModal from '@/components/events/event-modal'
 import TableEvents from '@/components/events/table-events';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Event } from '@/types/type-event'
+import { supabase } from '@/lib/supabase'
 
 export default function Eventos() {
+  useEffect(() => {
+    const fetchEvents = async () => {
+      const { data, error } = await supabase
+        .from("events")
+        .select("*")
+
+      if (error) {
+        console.log("Erro ao buscar eventos", error);
+        return;
+      }
+
+      setEvents(data || [])
+    };
+    fetchEvents();
+  }, [])
 
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const handleUpdateEvent = (updatedEvent: Event) => {
-    setEvents((prev)=> 
-    prev.map((event)=>
-    event.id === updatedEvent.id ? updatedEvent : event)
+    setEvents((prev) =>
+      prev.map((event) =>
+        event.id === updatedEvent.id ? updatedEvent : event)
     )
   }
 
-  const handleEdit = (event:Event) => {
+  const handleEdit = (event: Event) => {
     setEditingEvent(event)
     setModalOpen(true)
   }
@@ -44,22 +60,22 @@ export default function Eventos() {
 
   const sortedEvents = [...events].sort((a, b) => {
     if (!sortBy) return 0;
-  
+
     let comparison = 0;
-  
+
     if (sortBy === "nome") {
       comparison = a.nome.localeCompare(b.nome);
     }
-  
+
     if (sortBy === "data") {
       comparison =
         new Date(a.data).getTime() -
         new Date(b.data).getTime();
     }
-  
+
     return sortOrder === "asc" ? comparison : -comparison;
   });
-  
+
   return <div>
     <TableEvents
       events={sortedEvents}
