@@ -9,7 +9,7 @@ import FormField from '@/components/events/form-field'
 import Select from "@/components/ui/select";
 import CreateTypeModal from "./create-type-modal";
 import { useToast } from "@/hooks/useToast";
-import { subabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 
 
 type Props = {
@@ -68,7 +68,7 @@ export default function EventModal({
     setIsSubmiting(true);
 
     if (editingEvent) {
-      const { data, error } = await supabase
+      const { data: reponseData, error } = await supabase
         .from("events")
         .update({
           nome,
@@ -86,10 +86,10 @@ export default function EventModal({
         setIsSubmiting(false);
         return
       }
-      onUpdateEvent(data);
+      onUpdateEvent(reponseData);
       showToast("Evento Atualizado com sucesso")
     } else {
-      const { data, error } = await supabase
+      const { data: reponseData, error } = await supabase
         .from("events")
         .insert([
           {
@@ -109,7 +109,7 @@ export default function EventModal({
         return
       }
 
-      onAddEvent(data);
+      onAddEvent(reponseData);
       showToast("Evento criado com sucesso!")
     }
     setIsSubmiting(false);
