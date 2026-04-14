@@ -26,21 +26,49 @@ export default function EventModal({
   editingEvent }: Props) {
 
   const { showToast } = useToast();
-  const handleCreateType = (name: string) => {
+  useEffect(() => {
+    const fetchTypes = async () => {
+      const { data, error } = await supabase
+        .from("event_types")
+        .select("*");
+  
+      if (error) {
+        console.error(error);
+        return;
+      }
+  
+      setEventTypes(data);
+    };
+  
+    fetchTypes();
+  }, []);
+  
+  const handleCreateType = async (name: string) => {
     const formatted = name.toLowerCase().trim();
-
-    if (eventTypes.some((t) => t.value === formatted)) {
+  
+    const { data, error } = await supabase
+      .from("event_types")
+      .insert([
+        {
+          label: name,
+          value: formatted,
+        },
+      ])
+      .select()
+      .single();
+  
+    if (error) {
+      console.error(error);
+      showToast("Erro ao criar tipo");
       return;
     }
-
-    const newType = {
-      label: name,
-      value: formatted,
-    };
-
-    setEventTypes((prev) => [...prev, newType]);
-    setTipo(formatted);
+  
+    setEventTypes((prev) => [...prev, data]);
+    setTipo(data.value);
+  
+    showToast("Tipo criado com sucesso!");
   };
+  
 
   const validate = () => {
     const newErrors = {
