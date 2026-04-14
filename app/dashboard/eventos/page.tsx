@@ -4,9 +4,11 @@ import EventModal from '@/components/events/event-modal'
 import TableEvents from '@/components/events/table-events';
 import { useState, useEffect } from 'react';
 import type { Event } from '@/types/type-event'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase';
+import { useToast } from "@/hooks/useToast"
 
 export default function Eventos() {
+  const {showToast} = useToast();
   useEffect(() => {
     const fetchEvents = async () => {
       const { data, error } = await supabase
@@ -42,8 +44,18 @@ export default function Eventos() {
     setEvents((prev) => [...prev, event]);
   };
 
-  const handleDelete = (id: string) => {
-    setEvents((prevEvents) => prevEvents.filter((event) => event.id !== id));
+  const handleDelete = async (id: string) => {
+    const { error } = await supabase
+    .from("events")
+    .delete()
+    .eq("id", id);
+
+    if (error) {
+      console.error(error);
+      return
+    }
+    setEvents((prev) => prev.filter((event) => event.id !== id));
+    showToast("Evento Deletado com sucesso!")
   };
 
   const [sortBy, setSortBy] = useState<"nome" | "data" | null>("nome");
