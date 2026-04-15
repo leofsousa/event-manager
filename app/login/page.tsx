@@ -3,22 +3,28 @@
 import Button from '@/components/ui/button';
 import Input from '@/components/ui/input';
 import { useState } from 'react';
+import { supabase } from '@/lib/supabase';
+import { useRouter } from 'next/navigation';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!email || !senha) {
       alert('Preencha corretamente os campos')
       return
     }
-    const user = {
-      email,
-      tipo: "admin"
-    };
-    localStorage.setItem("user", JSON.stringify(user));
-    window.location.href = "/dashboard"
+   const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password: senha,
+   });
+   if (error) {
+    console.error(error);
+    alert("Erro ao fazer login");
+    return;
+   }
+   router.push('/dashboard')
   }
 
   return (
