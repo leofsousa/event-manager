@@ -1,6 +1,7 @@
 import { Home, Calendar, Users, Settings, LogOut } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 
 type Props = {
   open: boolean;
@@ -10,9 +11,9 @@ type Props = {
 
 export default function Sidebar({ open, setOpen }:Props) {
   const router = useRouter();
-  const handleLogout = () => {
-    localStorage.removeItem('user');
-    window.location.href = '/login';
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.replace('/login');
   };
   const pathName = usePathname();
   return (
