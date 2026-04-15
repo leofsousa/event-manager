@@ -1,12 +1,24 @@
-import Image from 'next/image';
-import Link from 'next/link';
+'use client';
+
+import { useAuth } from '@/context/auth-context';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 export default function Home() {
-  return (
-    <main className="">
-      <Link href="/login">
-        <button>Login</button>
-      </Link>
-    </main>
-  );
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (loading) return;
+
+    if (user) {
+      router.replace('/dashboard')
+    } else {
+      router.replace('/login')
+    }
+  }, [user, loading]
+
+  )
+
+  return null
 }
