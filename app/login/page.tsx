@@ -90,7 +90,7 @@ export default function Login() {
           placeholder="Senha"
           onChange={(e) => setSenha(e.target.value)}
         />
-        <Button children="Entrar" onClick={handleLogin} />
+        <Button onClick={handleLogin}>Entrar</Button>
       </div>
     </div>
   );
