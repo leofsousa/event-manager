@@ -16,7 +16,7 @@ export default function Home() {
     } else {
       router.replace('/login')
     }
-  }, [user, loading]
+  }, [user, loading, router]
 
   )
 

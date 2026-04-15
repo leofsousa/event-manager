@@ -42,7 +42,7 @@ export default function Login() {
     if (user) {
       router.replace('/dashboard');
     }
-  }, [user, loading]);
+  }, [user, loading, router]);
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
 
