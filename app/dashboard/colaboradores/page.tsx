@@ -1,5 +1,12 @@
+'use client';
+
+import TableColaboradores from '@/components/colaboradores/table-colaboradores';
+import { useState } from 'react';
+
 export default function Colaboradores() {
+  const [colaboradores, setColaboradores] = useState([]);
+
   return (
-    <h1> Olá mundo </h1>
+    <TableColaboradores colaboradores={colaboradores}/>
   )
 }
