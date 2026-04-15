@@ -2,30 +2,40 @@
 
 import Button from '@/components/ui/button';
 import Input from '@/components/ui/input';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/auth-context';
 
 export default function Login() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (loading) return;
+
+    if (user) {
+      router.replace('/dashboard');
+    }
+  }, [user, loading]);
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
-  const router = useRouter();
 
   const handleLogin = async () => {
     if (!email || !senha) {
       alert('Preencha corretamente os campos')
       return
     }
-   const { error } = await supabase.auth.signInWithPassword({
-    email,
-    password: senha,
-   });
-   if (error) {
-    console.error(error);
-    alert("Erro ao fazer login");
-    return;
-   }
-   router.push('/dashboard')
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password: senha,
+    });
+    if (error) {
+      console.error(error);
+      alert("Erro ao fazer login");
+      return;
+    }
+    router.push('/dashboard')
   }
 
   return (
