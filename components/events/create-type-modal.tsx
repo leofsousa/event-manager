@@ -20,9 +20,9 @@ export default function CreateTypeModal({ onClose, onCreate }:Props){
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center"
         onClick={onClose}>
             <div 
-            className="bg-white rounded-xl p-6 w-full max-w-sm"
+            className="bg-white dark:bg-gray-900 rounded-xl p-6 w-full max-w-sm"
             onClick={(e) => e.stopPropagation()}>
-                <h2 className="text-xl font-bold mb-4">Novo tipo de evento</h2>
+                <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">Novo tipo de evento</h2>
                 <Input 
                 placeholder="Ex: Convenção"
                 value={value}

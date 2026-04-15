@@ -187,9 +187,9 @@ export default function EventModal({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-xl p-6 w-full max-w-md"
+        className="bg-white dark:bg-gray-900 rounded-xl p-6 w-full max-w-md"
         onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-xl font-semibold m-4 text-gray-900">
+        <h2 className="text-xl font-semibold m-4 text-gray-900 dark:text-gray-100">
           {editingEvent ? "Editar Evento" : "Novo Evento"}
         </h2>
         <div className="flex flex-col gap-4">

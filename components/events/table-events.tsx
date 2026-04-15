@@ -30,11 +30,11 @@ export default function TableEvents({
     <>
       <div className="bg-white rounded-xl shadow-sm overflow-hidden dark:bg-blue-900">
         <table className="w-full">
-          <thead className="bg-gray-100">
+          <thead className="bg-gray-100 dark:bg-blue-950">
             <tr>
               <th colSpan={5} className="p-4">
                 <div className="flex items-center justify-between w-full">
-                  <span className="text-lg font-semibold text-gray-900">
+                  <span className="text-lg font-semibold text-gray-900 dark:text-white">
                     Lista de Eventos
                   </span>
 
@@ -51,16 +51,16 @@ export default function TableEvents({
                 Nome {sortBy === "nome" && (sortOrder === "asc" ? "↑" : "↓")}
               </th>
 
-              <th className="text-left p-4 text-sm font-medium text-gray-600">
+              <th className="text-left p-4 text-sm font-medium text-gray-600 dark:text-gray-300">
                 Tipo
               </th>
-              <th onClick={() => onSort("data")} className="cursor-pointer">
+              <th onClick={() => onSort("data")} className="text-left p-4 text-sm font-medium text-gray-600 dark:text-gray-300 cursor-pointer">
                 Data {sortBy === "data" && (sortOrder === "asc" ? "↑" : "↓")}
               </th>
-              <th className="text-left p-4 text-sm font-medium text-gray-600">
+              <th className="text-left p-4 text-sm font-medium text-gray-600 dark:text-gray-300">
                 Local
               </th>
-              <th className="text-right p-4 text-sm font-medium text-gray-600">
+              <th className="text-right p-4 text-sm font-medium text-gray-600 dark:text-gray-300">
                 Ações
               </th>
             </tr>
@@ -68,22 +68,22 @@ export default function TableEvents({
 
           <tbody>
             {events.map((event) => (
-              <tr key={event.id} className="border-b hover:bg-gray-50 transition">
-                <td className="p-4 font-medium text-gray-900">{event.nome}</td>
+              <tr key={event.id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-blue-950 transition">
+                <td className="p-4 font-medium text-gray-900 dark:text-gray-100">{event.nome}</td>
 
-                <td className="p-4">{event.tipo}</td>
-                <td className="p-4">{event.data}</td>
-                <td className="p-4">{event.local}</td>
+                <td className="p-4 text-gray-700 dark:text-gray-200">{event.tipo}</td>
+                <td className="p-4 text-gray-700 dark:text-gray-200">{event.data}</td>
+                <td className="p-4 text-gray-700 dark:text-gray-200">{event.local}</td>
 
-                <td className="p-4 text-right flex flex-row gap-4">
+                <td className="p-4 flex justify-end items-center gap-4">
                   <button
                     onClick={() => onEdit(event)}
-                    className="text-blue-500 hover:text-blue-700 mr-2">
+                    className="text-blue-500 hover:text-blue-700 dark:text-blue-300 dark:hover:text-blue-100 transition mr-2">
                     Editar
                   </button>
                   <button
                     onClick={() => setEventToDelete(event)}
-                    className="text-red-500 hover:text-red-700"
+                    className="text-red-500 hover:text-red-700 dark:text-red-300 dark:hover:text-red-100 transition"
                   >
                     Excluir
                   </button>

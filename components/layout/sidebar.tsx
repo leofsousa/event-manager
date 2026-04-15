@@ -34,7 +34,7 @@ export default function Sidebar({ open, setOpen }:Props) {
           className={`flex items-center rounded-lg p-2 transition gap-2 cursor-pointer text-gray-900 dark:text-white ${
             pathName === '/dashboard'
               ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300'
-              : 'hover:bg-blue-600 dark:hover:bg-blue-700'
+              : 'hover:bg-blue-600 hover:text-white dark:hover:bg-blue-700 dark:hover:text-white'
           }`}
         >
           <Home size={20} />
@@ -49,7 +49,7 @@ export default function Sidebar({ open, setOpen }:Props) {
           className={`flex items-center cursor-pointer rounded-lg p-2 transition gap-2 text-gray-900 dark:text-white ${
             pathName === '/dashboard/eventos'
             ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300'
-            : 'hover:bg-blue-600 dark:hover:bg-blue-700'
+            : 'hover:bg-blue-600 hover:text-white dark:hover:bg-blue-700 dark:hover:text-white'
           }`}
         >
           <Calendar size={20} />
@@ -64,7 +64,7 @@ export default function Sidebar({ open, setOpen }:Props) {
           className={`flex items-center cursor-pointer rounded-lg p-2 transition gap-2 text-gray-900 dark:text-white ${
             pathName === '/dashboard/colaboradores'
             ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300'
-            : 'hover:bg-blue-600 dark:hover:bg-blue-700'
+            : 'hover:bg-blue-600 hover:text-white dark:hover:bg-blue-700 dark:hover:text-white'
           }`}
         >
           <Users size={20} />
@@ -79,7 +79,7 @@ export default function Sidebar({ open, setOpen }:Props) {
           className={`flex items-center cursor-pointer rounded-lg p-2 transition gap-2 text-gray-900 dark:text-white ${
             pathName === '/dashboard/settings'
             ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300'
-            : 'hover:bg-blue-600 dark:hover:bg-blue-700'
+            : 'hover:bg-blue-600 hover:text-white dark:hover:bg-blue-700 dark:hover:text-white'
           }`}
         >
           <Settings size={20} />
@@ -90,7 +90,7 @@ export default function Sidebar({ open, setOpen }:Props) {
       <div></div>
       <div
         onClick={handleLogout}
-        className="flex items-center hover:bg-red-200 dark:hover:bg-red-700 rounded-lg p-2 transition gap-2 mb-2 mx-3 cursor-pointer text-gray-900 dark:text-white"
+        className="flex items-center hover:bg-red-200 hover:text-black dark:hover:bg-red-700 dark:hover:text-white rounded-lg p-2 transition gap-2 mb-2 mx-3 cursor-pointer text-gray-900 dark:text-white"
       >
         <LogOut size={20} />
         <span>Sair</span>

@@ -39,9 +39,9 @@ export default function Login() {
   }
 
   return (
-    <div className="h-screen w-full bg-gray-50 flex items-center justify-center">
-      <div className="flex flex-col w-full max-w-sm p-2 m-4 items-center justify-center bg-white rounded-xl gap-2 shadow-md space-y-3">
-        <h1 className="text-center text-2xl font-bold text-gray-900 dark:text-blue-600 tracking-tight mb-6">
+    <div className="h-screen w-full bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
+      <div className="flex flex-col w-full max-w-sm p-2 m-4 items-center justify-center bg-white dark:bg-gray-900 rounded-xl gap-2 shadow-md space-y-3">
+        <h1 className="text-center text-2xl font-bold text-gray-900 dark:text-white tracking-tight mb-6">
           Event Manager
         </h1>
         <Input

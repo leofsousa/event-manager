@@ -24,7 +24,7 @@ export default function FormField({
             {children}
 
             {error && (
-                <span>{error}</span>
+                <span className="text-sm text-red-500 dark:text-red-400">{error}</span>
             )}
         </div>
     );
