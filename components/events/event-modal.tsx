@@ -10,7 +10,7 @@ import Select from "@/components/ui/select";
 import CreateTypeModal from "./create-type-modal";
 import { useToast } from "@/hooks/useToast";
 import { supabase } from "@/lib/supabase";
-
+import CreateOptionModal from '@/components/modals/create-option-modal';
 
 type Props = {
   onClose: () => void;
@@ -255,7 +255,10 @@ export default function EventModal({
         </div>
       </div>
       {isCreatingType && (
-        <CreateTypeModal onClose={() => setIsCreatingType(false)}
+        <CreateOptionModal
+          title="Novo Tipo"
+          placeholder="Digite o nome do novo tipo"
+          onClose={() => setIsCreatingType(false)}
           onCreate={handleCreateType} />
       )
       }
