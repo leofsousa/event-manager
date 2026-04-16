@@ -20,6 +20,7 @@ type Option = {
     error,
     placeholder = "Selecione uma opção",
     showCreateOption = false,
+    createOptionLabel = "Criar novo"
   }: SelectProps) {
     return (
       <select
