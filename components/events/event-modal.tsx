@@ -31,21 +31,21 @@ export default function EventModal({
       const { data, error } = await supabase
         .from("event_types")
         .select("*");
-  
+
       if (error) {
         console.error(error);
         return;
       }
-  
+
       setEventTypes(data);
     };
-  
+
     fetchTypes();
   }, []);
-  
+
   const handleCreateType = async (name: string) => {
     const formatted = name.toLowerCase().trim();
-  
+
     const { data, error } = await supabase
       .from("event_types")
       .insert([
@@ -56,19 +56,19 @@ export default function EventModal({
       ])
       .select()
       .single();
-  
+
     if (error) {
       console.error(error);
       showToast("Erro ao criar tipo");
       return;
     }
-  
+
     setEventTypes((prev) => [...prev, data]);
     setTipo(data.value);
-  
+
     showToast("Tipo criado com sucesso!");
   };
-  
+
 
   const validate = () => {
     const newErrors = {
@@ -211,18 +211,18 @@ export default function EventModal({
             <Select
               value={tipo}
               options={eventTypes}
-              error={!!errors.tipo}
+              showCreateOption
+              createOptionLabel="Criar novo tipo"
+              placeholder="Selecione o tipo"
               onChange={(value) => {
                 if (value === "__new__") {
                   setIsCreatingType(true);
-                  return
+                  return;
                 }
-                setTipo(value);
 
-                if (errors.tipo) {
-                  setErrors((prev) => ({ ...prev, tipo: "" }))
-                }
-              }} />
+                setTipo(value);
+              }}
+            />
           </FormField>
           <FormField label="Data" htmlFor="data" required error={errors.data}>
             <InputDate value={data} onChange={setData} />
