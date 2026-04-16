@@ -14,7 +14,7 @@ export default function TableColaboradores({ colaboradores, onAdd, onEdit, onDel
     return (
         <div className="bg-white rounded-xl shadow-sm overflow:hidden">
             <table className="w-full">
-                <thead className="bg-gray-100">
+                <thead className="bg-gray-200">
                     <tr>
                         <th colSpan={3} className="p-4">
                             <div className="flex justify-between">
