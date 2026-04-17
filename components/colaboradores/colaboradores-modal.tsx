@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Button from '@/components/ui/button';
 import Input from '@/components/ui/input';
+import FormField from '@/components/events/form-field';
 import { useToast } from '@/hooks/useToast';
 import { supabase } from '@/lib/supabase';
 
@@ -86,7 +87,12 @@ export default function ColaboradoresModal({ onClose, onSuccess, colaborador }: 
                     </div>
                 </div>
                 <div className="flex flex-col gap-3">
-                    <Input />
+                    <FormField label="Nome" required>
+                        <Input
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value) }
+                        />
+                    </FormField>
                 </div>
             </div>
         </div>
