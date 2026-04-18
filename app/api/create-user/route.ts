@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
