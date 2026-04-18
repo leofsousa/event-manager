@@ -10,7 +10,12 @@ type Props = {
     onDelete: (c: any) => void;
 }
 
-export default function TableColaboradores({ colaboradores, onAdd, onEdit, onDelete, }: Props) {
+export default function TableColaboradores({
+    colaboradores,
+    onAdd,
+    onEdit,
+    onDelete,
+}: Props) {
     return (
         <div className="bg-white rounded-xl shadow-sm overflow:hidden">
             <table className="w-full">
@@ -21,7 +26,7 @@ export default function TableColaboradores({ colaboradores, onAdd, onEdit, onDel
                                 <span className="font-semibold">
                                     Colaboradores
                                 </span>
-                                <Button className="flex">
+                                <Button className="flex" onClick={onAdd}>
                                     <Plus size={20} />
                                     Adicionar
                                 </Button>
