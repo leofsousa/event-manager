@@ -4,12 +4,14 @@ import { useEffect, useState } from 'react';
 import TableColaboradores from '@/components/colaboradores/table-colaboradores';
 import ColaboradorModal from '@/components/colaboradores/colaboradores-modal';
 import { supabase } from '@/lib/supabase';
+import ConfirmModal from '@/components/ui/confirm-modal';
 
 
 export default function Colaboradores() {
   const [colaboradores, setColaboradores] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedColaborator, setSelectedColaborator] = useState<any | null>(null)
+  const [ colaboradorToDelete, setColaboradorToDelete ] = useState<any | null>(null)
 
   const fetchColaboradores = async () => {
     const { data, error } = await supabase.from('profiles').select('*')
@@ -30,16 +32,15 @@ export default function Colaboradores() {
   }
 
   const handleDelete = async (colaborador: any) => {
-    const confirmDelete = confirm(`Deletar ${colaborador.username}`);
-    if (!confirmDelete) return;
+    if (!colaboradorToDelete) return;
 
-    const { error } = await supabase.from('profiles').delete().eq('id', colaborador.id);
+    const { error } = await supabase.from('profiles').delete().eq('id', colaboradorToDelete.id);
 
     if (error) {
       console.error(error);
       return
     }
-
+    setColaboradorToDelete(null)
     fetchColaboradores()
   }
   return (
@@ -50,7 +51,7 @@ export default function Colaboradores() {
           setIsModalOpen(true);
         }}
         onEdit={handleEdit}
-        onDelete={handleDelete}
+        onDelete={(c) => setColaboradorToDelete(c)}
         colaboradores={colaboradores} />
       {isModalOpen && (
         <ColaboradorModal
@@ -59,6 +60,16 @@ export default function Colaboradores() {
           onSuccess={fetchColaboradores}
         />
       )}
+      {
+        colaboradorToDelete && (
+          <ConfirmModal 
+            title="Excluir colaborador"
+            description={`Tem certeza que deseja excluir ${colaboradorToDelete.username} ?`}
+            onConfirm={handleDelete}
+            onCancel={() => setColaboradorToDelete(null)}
+          />
+        )
+      }
     </div>
   )
 }
