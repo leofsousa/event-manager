@@ -45,14 +45,16 @@ export default function TableColaboradores({
                             <td colSpan={3} className="p-4 text-center text-gray-500">Nenhum colaborar encontrado</td>
                         </tr>
                     ) : (colaboradores.map((c) => (
-                        <tr key={c.id} className="border-b dark:border-gray-700">
+                        <tr key={c.id} className="border-b dark:border-gray-700 text-black cursos-pointer hover:bg-gray-400 transition" onClick={() => onEdit(c)}>
                             <td className="p-4">{c.username}</td>
                             <td className="p-4">{c.cargo || '-'}</td>
 
                             <td className="p-4 text-right">
                                 <div>
-                                    <Button variant="secondary" onClick={() => onEdit(c)}>Editar</Button>
-                                    <Button variant="danger" onClick={() => onDelete(c)}>Deletar</Button>
+                                    <Button variant="danger" onClick={(e) => {
+                                        e.stopPropagation();
+                                        onDelete(c);
+                                    }}>Deletar</Button>
                                 </div>
                             </td>
                         </tr>
