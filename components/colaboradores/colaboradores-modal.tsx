@@ -8,6 +8,7 @@ import FormField from '@/components/events/form-field';
 import { useToast } from '@/hooks/useToast';
 import { supabase } from '@/lib/supabase';
 import { User } from 'lucide-react';
+import CreateOptionModal from '@/components/modals/create-option-modal';
 
 type Props = {
   onClose: () => void;
@@ -24,7 +25,7 @@ export default function ColaboradorModal({
 
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
-  const [ password, setPassword ] = useState('');
+  const [password, setPassword] = useState('');
   const [cargo, setCargo] = useState('');
   const [cargos, setCargos] = useState<any[]>([]);
   const [role, setRole] = useState<'admin' | 'colaborador'>('colaborador');
@@ -46,19 +47,33 @@ export default function ColaboradorModal({
 
   const fetchCargos = async () => {
     const { data, error } = await supabase.from('cargos').select('*');
-  
+
     if (error) {
       console.error(error);
       return;
     }
-  
+
     setCargos(data || []);
   };
-  
+
   useEffect(() => {
     fetchCargos();
   }, []);
-  
+
+  const handleCreateCargo = async (name: string) => {
+    const { error } = await supabase.from('cargos').insert([{ name }]);
+
+    if (error) {
+      console.error(error);
+      showToast('Erro ao criar cargo');
+      return;
+    }
+
+    await fetchCargos();
+    setCargo(name);
+    showToast('Cargo criado!');
+  };
+
 
   const handleSubmit = async () => {
     if (!username.trim()) {
@@ -95,7 +110,7 @@ export default function ColaboradorModal({
             cargo,
             role,
           }),
-          
+
         });
 
         if (!res.ok) throw new Error();
@@ -150,7 +165,7 @@ export default function ColaboradorModal({
                 <Input
                   type="password"
                   value={password}
-                  onChange={(e) => { setPassword(e.target.value)}}
+                  onChange={(e) => { setPassword(e.target.value) }}
                 />
               </FormField>
             </>
@@ -163,17 +178,19 @@ export default function ColaboradorModal({
           )}
 
           <FormField label="Cargo">
-            <Select 
+            <Select
               value={cargo}
               onChange={(value) => {
-                if(value === "__new__") {
+                if (value === "__new__") {
                   setIsCreateCargoOpen(true)
                 } else {
                   setCargo(value)
                 }
               }}
               options={cargoOptions}
-              />
+              showCreateOption
+              createOptionLabel="Adicionar Cargo"
+            />
           </FormField>
 
           <FormField label="Perfil">
@@ -199,6 +216,17 @@ export default function ColaboradorModal({
           </Button>
         </div>
       </div>
+      {isCreateCargoOpen && (
+      <CreateOptionModal
+        title="Novo cargo"
+        placeholder="Ex: Diretor"
+        onClose={() => setIsCreateCargoOpen(false)}
+        onCreate={(value) => {
+          handleCreateCargo(value);
+          setIsCreateCargoOpen(false);
+        }}
+      />
+    )}
     </div>
   );
 }
