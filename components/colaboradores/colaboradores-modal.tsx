@@ -26,7 +26,14 @@ export default function ColaboradorModal({
   const [email, setEmail] = useState('');
   const [ password, setPassword ] = useState('');
   const [cargo, setCargo] = useState('');
+  const [cargos, setCargos] = useState<any[]>([]);
   const [role, setRole] = useState<'admin' | 'colaborador'>('colaborador');
+  const [isCreateCargoOpen, setIsCreateCargoOpen] = useState(false);
+
+  const cargoOptions = cargos.map((c) => ({
+    label: c.name,
+    value: c.name,
+  }));
 
   useEffect(() => {
     if (colaborador) {
@@ -36,6 +43,22 @@ export default function ColaboradorModal({
       setEmail(colaborador.email || '');
     }
   }, [colaborador]);
+
+  const fetchCargos = async () => {
+    const { data, error } = await supabase.from('cargos').select('*');
+  
+    if (error) {
+      console.error(error);
+      return;
+    }
+  
+    setCargos(data || []);
+  };
+  
+  useEffect(() => {
+    fetchCargos();
+  }, []);
+  
 
   const handleSubmit = async () => {
     if (!username.trim()) {
@@ -140,10 +163,17 @@ export default function ColaboradorModal({
           )}
 
           <FormField label="Cargo">
-            <Input
+            <Select 
               value={cargo}
-              onChange={(e) => setCargo(e.target.value)}
-            />
+              onChange={(value) => {
+                if(value === "__new__") {
+                  setIsCreateCargoOpen(true)
+                } else {
+                  setCargo(value)
+                }
+              }}
+              options={cargoOptions}
+              />
           </FormField>
 
           <FormField label="Perfil">
