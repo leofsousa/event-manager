@@ -24,6 +24,7 @@ export default function ColaboradorModal({
 
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
+  const [ password, setPassword ] = useState('');
   const [cargo, setCargo] = useState('');
   const [role, setRole] = useState<'admin' | 'colaborador'>('colaborador');
 
@@ -39,6 +40,11 @@ export default function ColaboradorModal({
   const handleSubmit = async () => {
     if (!username.trim()) {
       showToast('Nome é obrigatório');
+      return;
+    }
+
+    if (!colaborador && password.length < 6) {
+      showToast('Senha deve ter pelo menos 6 caracteres');
       return;
     }
 
@@ -62,10 +68,11 @@ export default function ColaboradorModal({
           body: JSON.stringify({
             username,
             email,
-            password: '123456',
+            password,
             cargo,
             role,
           }),
+          
         });
 
         if (!res.ok) throw new Error();
@@ -119,7 +126,8 @@ export default function ColaboradorModal({
               <FormField label="Senha" required>
                 <Input
                   type="password"
-                  onChange={() => {}}
+                  value={password}
+                  onChange={(e) => { setPassword(e.target.value)}}
                 />
               </FormField>
             </>

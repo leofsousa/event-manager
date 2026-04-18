@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseurl = "https://nzlmnwxwpcfursfhuejl.supabase.co";
-const supabasekey = "sb_publishable__lzBNmiInHtH-qDK5Ad1IA_PsrTqSRR"; 
-
-export const supabase = createClient(supabaseurl, supabasekey)
+export const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
