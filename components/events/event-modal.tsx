@@ -29,6 +29,8 @@ export default function EventModal({
 
   const [eventTypes, setEventTypes] = useState<{ label: string; value: string }[]>([]);
   const [isCreatingType, setIsCreatingType] = useState(false);
+  const [customLocal, setCustomLocal] = useState("");
+  const [isOtherSelected, setIsOtherSelected] = useState(false);
 
   const [nome, setNome] = useState("");
   const [tipo, setTipo] = useState("");
@@ -49,14 +51,16 @@ export default function EventModal({
       .from("event_types")
       .select("*");
 
+    console.log(data);
+
     if (error) {
       console.error(error);
       return;
     }
 
     const formatted = (data || []).map((t: any) => ({
-      label: t.name,
-      value: t.name,
+      label: t.label,
+      value: t.value,
     }));
 
     setEventTypes(formatted);
@@ -83,7 +87,10 @@ export default function EventModal({
   const handleCreateType = async (name: string) => {
     const { data, error } = await supabase
       .from("event_types")
-      .insert([{ name }])
+      .insert([{
+        label: name,
+        value: formatted,
+      }])
       .select()
       .single();
 
@@ -180,6 +187,21 @@ export default function EventModal({
     data.trim() &&
     local.trim();
 
+  const studioOptions = [
+    { label: "Estúdio 1", value: "estudio-1" },
+    { label: "Estúdio 2", value: "estudio-2" },
+    { label: "Estúdio 3", value: "estudio-3" },
+    { label: "Estúdio 4", value: "estudio-4" },
+    { label: "Outro", value: "__other__" },
+  ];
+
+  const isStudio = tipo === "operacao-estudio";
+
+  useEffect(() => {
+    setLocal('');
+    setIsOtherSelected(false);
+  }, [tipo]);
+  
   return (
     <div
       className="fixed inset-0 bg-black/50 flex items-center justify-center"
@@ -212,7 +234,7 @@ export default function EventModal({
             <Select
               value={tipo}
               options={eventTypes}
-              allowCreate
+              showCreateOption
               onChange={(value) => {
                 if (value === "__new__") {
                   setIsCreatingType(true);
@@ -228,16 +250,44 @@ export default function EventModal({
           </FormField>
 
           <FormField label="Local" required error={errors.local}>
-            <Input
-              value={local}
-              error={!!errors.local}
-              onChange={(e) => {
-                setLocal(e.target.value);
-                if (errors.local) {
-                  setErrors((prev) => ({ ...prev, local: "" }));
-                }
-              }}
-            />
+            {isStudio ? (
+              <>
+                <Select
+                  value={isOtherSelected ? "__other__" : local}
+                  options={studioOptions}
+                  onChange={(value) => {
+                    if (value === '__other__') {
+                      setIsOtherSelected(true);
+                      setLocal('');
+                    } else {
+                      setIsOtherSelected(false);
+                      setLocal(value);
+                    }
+                  }}
+                />
+                {isOtherSelected && (
+                  <Input
+                    placeholder="Digite o local"
+                    value={customLocal}
+                    onChange={(e) => {
+                      setCustomLocal(e.target.value);
+                      setLocal(e.target.value)
+                    }}
+                  />
+                )}
+              </>
+            ) : (
+              <Input
+                value={local}
+                error={!!errors.local}
+                onChange={(e) => {
+                  setLocal(e.target.value);
+                  if (errors.local) {
+                    setErrors((prev) => ({ ...prev, local: "" }))
+                  }
+                }}
+              />
+            )}
           </FormField>
 
         </div>
