@@ -19,7 +19,7 @@ export default function TableColaboradores({
     return (
         <div className="bg-white rounded-xl shadow-sm overflow:hidden">
             <table className="w-full">
-                <thead className="bg-gray-200">
+                <thead className="bg-gray-400">
                     <tr>
                         <th colSpan={3} className="p-4">
                             <div className="flex justify-between">
