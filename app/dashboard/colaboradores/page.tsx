@@ -6,12 +6,18 @@ import ColaboradorModal from '@/components/colaboradores/colaboradores-modal';
 import { supabase } from '@/lib/supabase';
 import ConfirmModal from '@/components/ui/confirm-modal';
 
+type Colaborador = {
+  id: string;
+  username: string;
+  cargo?: string;
+  role: string;
+}
 
 export default function Colaboradores() {
-  const [colaboradores, setColaboradores] = useState([]);
+  const [colaboradores, setColaboradores] = useState<Colaborador[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedColaborator, setSelectedColaborator] = useState<any | null>(null)
-  const [ colaboradorToDelete, setColaboradorToDelete ] = useState<any | null>(null)
+  const [selectedColaborator, setSelectedColaborator] = useState<Colaborador | null>(null);
+  const [colaboradorToDelete, setColaboradorToDelete] = useState<Colaborador | null>(null);
 
   const fetchColaboradores = async () => {
     const { data, error } = await supabase.from('profiles').select('*')
@@ -31,10 +37,13 @@ export default function Colaboradores() {
     setIsModalOpen(true);
   }
 
-  const handleDelete = async (colaborador: any) => {
+  const handleDelete = async () => {
     if (!colaboradorToDelete) return;
 
-    const { error } = await supabase.from('profiles').delete().eq('id', colaboradorToDelete.id);
+    const { error } = await supabase
+    .from('profiles')
+    .delete()
+    .eq('id', colaboradorToDelete.id);
 
     if (error) {
       console.error(error);

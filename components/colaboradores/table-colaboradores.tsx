@@ -1,6 +1,5 @@
 'use client';
 
-import Button from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 
 type Props = {
@@ -17,45 +16,48 @@ export default function TableColaboradores({
     onDelete,
 }: Props) {
     return (
-        <div className="bg-white rounded-xl shadow-sm overflow:hidden">
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden dark:bg-blue-900">
             <table className="w-full">
-                <thead className="bg-gray-400">
+                <thead className="bg-gray-100 dark:bg-blue-950">
                     <tr>
                         <th colSpan={3} className="p-4">
-                            <div className="flex justify-between">
-                                <span className="font-semibold">
+                            <div className="flex items-center justify-between w-full">
+                                <span className="text-lg font-semibold text-gray-900 dark:text-white">
                                     Colaboradores
                                 </span>
-                                <Button className="flex" onClick={onAdd}>
-                                    <Plus size={20} />
-                                    Adicionar
-                                </Button>
+                                <button className="flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-500 transition" onClick={onAdd}>
+                                    <Plus size={18} />
+                                    <span>Adicionar</span>
+                                </button>
                             </div>
                         </th>
                     </tr>
                     <tr>
-                        <th className="p-4 text-left">Nome</th>
-                        <th className="p-4 text-left">Cargo</th>
-                        <th className="p-4 text-right">Ações</th>
+                        <th className="text-left p-4 text-sm font-medium text-gray-600 dark:text-gray-300">Nome</th>
+                        <th className="text-left p-4 text-sm font-medium text-gray-600 dark:text-gray-300">Cargo</th>
+                        <th className="text-right p-4 text-sm font-medium text-gray-600 dark:text-gray-300">Ações</th>
                     </tr>
                 </thead>
                 <tbody>
                     {colaboradores.length === 0 ? (
                         <tr>
-                            <td colSpan={3} className="p-4 text-center text-gray-500">Nenhum colaborar encontrado</td>
+                            <td colSpan={3} className="p-4 text-center text-gray-500 dark:text-gray-400">Nenhum colaborador encontrado</td>
                         </tr>
                     ) : (colaboradores.map((c) => (
-                        <tr key={c.id} className="border-b dark:border-gray-700 text-black cursos-pointer hover:bg-gray-400 transition" onClick={() => onEdit(c)}>
-                            <td className="p-4">{c.username}</td>
-                            <td className="p-4">{c.cargo || '-'}</td>
+                        <tr key={c.id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-blue-950 transition cursor-pointer" onClick={() => onEdit(c)}>
+                            <td className="p-4 font-medium text-gray-900 dark:text-gray-100">{c.username}</td>
+                            <td className="p-4 text-gray-700 dark:text-gray-200">{c.cargo || '-'}</td>
 
-                            <td className="p-4 text-right">
-                                <div>
-                                    <Button variant="danger" onClick={(e) => {
+                            <td className="p-4 flex justify-end items-center gap-4">
+                                <button
+                                    onClick={(e) => {
                                         e.stopPropagation();
                                         onDelete(c);
-                                    }}>Deletar</Button>
-                                </div>
+                                    }}
+                                    className="text-red-500 hover:text-red-700 dark:text-red-300 dark:hover:text-red-100 transition"
+                                >
+                                    Excluir
+                                </button>
                             </td>
                         </tr>
                     ))
