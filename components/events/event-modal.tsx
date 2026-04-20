@@ -36,6 +36,8 @@ export default function EventModal({
   const [tipo, setTipo] = useState("");
   const [data, setData] = useState("");
   const [local, setLocal] = useState("");
+  const [observacoes, setObservacoes] = useState("");
+  const [horaInicio, setHoraInicio] = useState("");
 
   const [isSubmiting, setIsSubmiting] = useState(false);
 
@@ -75,16 +77,44 @@ export default function EventModal({
       setNome(editingEvent.nome);
       setTipo(editingEvent.tipo);
       setData(editingEvent.data);
-      setLocal(editingEvent.local);
+  
+      setObservacoes(editingEvent.observacoes || "");
+      setHoraInicio(editingEvent.hora_inicio || "");
+  
+      if (editingEvent.tipo === "operacao-estudio") {
+        const isStudioOption = studioOptions.some(
+          (opt) => opt.value === editingEvent.local
+        );
+  
+        if (isStudioOption) {
+          setLocal(editingEvent.local);
+          setIsOtherSelected(false);
+          setCustomLocal("");
+        } else {
+          setLocal("");
+          setCustomLocal(editingEvent.local);
+          setIsOtherSelected(true);
+        }
+      } else {
+        setLocal(editingEvent.local);
+      }
+  
     } else {
       setNome("");
       setTipo("");
       setData("");
       setLocal("");
+      setObservacoes("");
+      setHoraInicio("");
+      setCustomLocal("");
+      setIsOtherSelected(false);
     }
   }, [editingEvent]);
+  
 
   const handleCreateType = async (name: string) => {
+    const formatted = name.toLowerCase().replace(/\s+/g, '-');
+    
     const { data, error } = await supabase
       .from("event_types")
       .insert([{
@@ -102,7 +132,7 @@ export default function EventModal({
 
     const newType = {
       label: data.name,
-      value: data.name,
+      value: data.value,
     };
 
     setEventTypes((prev) => [...prev, newType]);
@@ -140,8 +170,10 @@ export default function EventModal({
           .update({
             nome,
             tipo,
+            local,
             data,
-            local
+            hora_inicio: horaInicio,
+            observacoes,
           })
           .eq("id", editingEvent.id)
           .select()
@@ -158,8 +190,10 @@ export default function EventModal({
             {
               nome,
               tipo,
+              local,
               data,
-              local
+              hora_inicio: horaInicio,
+              observacoes,
             }
           ])
           .select()
@@ -198,10 +232,12 @@ export default function EventModal({
   const isStudio = tipo === "operacao-estudio";
 
   useEffect(() => {
-    setLocal('');
-    setIsOtherSelected(false);
+    if (!editingEvent) {
+      setLocal('');
+      setIsOtherSelected(false);
+    }
   }, [tipo]);
-  
+
   return (
     <div
       className="fixed inset-0 bg-black/50 flex items-center justify-center"
@@ -245,10 +281,6 @@ export default function EventModal({
             />
           </FormField>
 
-          <FormField label="Data" required error={errors.data}>
-            <InputDate value={data} onChange={setData} />
-          </FormField>
-
           <FormField label="Local" required error={errors.local}>
             {isStudio ? (
               <>
@@ -290,6 +322,31 @@ export default function EventModal({
             )}
           </FormField>
 
+          <FormField label="Data" required error={errors.data}>
+            <InputDate value={data} onChange={setData} />
+          </FormField>
+
+          <FormField label="Horário de início">
+            <Input
+              type="time"
+              step="60"
+              value={horaInicio}
+              onChange={(e) => setHoraInicio(e.target.value)}
+            />
+          </FormField>
+
+          <FormField label="Observações">
+            <textarea
+              value={observacoes}
+              onChange={(e) => setObservacoes(e.target.value)}
+              rows={3}
+              placeholder="Ex: Primeiro turno, entra 16 hrs"
+              className="w-full px-3 py-2 rounded-lg border
+                  bg-white text-gray-900 dark:bg-gray-800 dark:border-gray-700
+                  dark:text-gray-100 focus:outline-none focus:ring-2
+                  focus:ring-blue-500 border-gray-300"
+            />
+          </FormField>
         </div>
 
         <div className="mt-6 flex justify-end gap-2">
