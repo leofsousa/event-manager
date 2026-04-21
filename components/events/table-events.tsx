@@ -3,7 +3,9 @@
 import { Plus } from 'lucide-react';
 import type { Event } from '@/types/type-event'
 import { useState } from "react";
-import ConfirmModal  from "@/components/ui/confirm-modal";
+import ConfirmModal from "@/components/ui/confirm-modal";
+import Button from "@/components/ui/button";
+
 
 type Props = {
   events: Event[];
@@ -68,7 +70,10 @@ export default function TableEvents({
 
           <tbody>
             {events.map((event) => (
-              <tr key={event.id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-blue-950 transition">
+              <tr
+                key={event.id}
+                onClick={() => onEdit(event)}
+                className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-blue-950 transition">
                 <td className="p-4 font-medium text-gray-900 dark:text-gray-100">{event.nome}</td>
 
                 <td className="p-4 text-gray-700 dark:text-gray-200">{event.tipo}</td>
@@ -76,13 +81,11 @@ export default function TableEvents({
                 <td className="p-4 text-gray-700 dark:text-gray-200">{event.local}</td>
 
                 <td className="p-4 flex justify-end items-center gap-4">
+                  
                   <button
-                    onClick={() => onEdit(event)}
-                    className="text-blue-500 hover:text-blue-700 dark:text-blue-300 dark:hover:text-blue-100 transition mr-2">
-                    Editar
-                  </button>
-                  <button
-                    onClick={() => setEventToDelete(event)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEventToDelete(event)}}
                     className="text-red-500 hover:text-red-700 dark:text-red-300 dark:hover:text-red-100 transition"
                   >
                     Excluir
@@ -96,14 +99,14 @@ export default function TableEvents({
       {eventToDelete && (
         <ConfirmModal
           title="Excluir Evento"
-          description={`Tem certeza que deseja excluir "${eventToDelete.nome}"?`} 
+          description={`Tem certeza que deseja excluir "${eventToDelete.nome}"?`}
           onCancel={() => setEventToDelete(null)}
           onConfirm={() => {
             onDelete(eventToDelete.id)
             setEventToDelete(null)
           }}
-          />
-          
+        />
+
       )}
     </>);
 }
