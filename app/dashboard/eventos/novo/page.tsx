@@ -8,15 +8,8 @@ import Button from '@/components/ui/button';
 import FormField from '@/components/events/form-field';
 import Select from '@/components/ui/select';
 import CreateOptionModal from '@/components/modals/create-option-modal';
-import EventShiftsManager from '@/components/events/event-shift-manager';
 import { useToast } from '@/hooks/useToast';
 import { supabase } from '@/lib/supabase';
-
-type Shift = {
-  start_time: string;
-  end_time: string;
-  colaboradores: string[];
-};
 
 export default function NovoEventoPage() {
   const router = useRouter();
@@ -24,8 +17,6 @@ export default function NovoEventoPage() {
 
   const [eventTypes, setEventTypes] = useState<{ label: string; value: string }[]>([]);
   const [isCreatingType, setIsCreatingType] = useState(false);
-
-  const [shifts, setShifts] = useState<Shift[]>([]);
 
   const [nome, setNome] = useState('');
   const [tipo, setTipo] = useState('');
@@ -127,7 +118,7 @@ export default function NovoEventoPage() {
     setIsSubmiting(true);
 
     try {
-      const { data: event, error } = await supabase
+      const { error } = await supabase
         .from('events')
         .insert([{
           nome,
@@ -135,32 +126,9 @@ export default function NovoEventoPage() {
           local,
           data,
           observacoes,
-        }])
-        .select()
-        .single();
+        }]);
 
       if (error) throw error;
-
-      for (const shift of shifts) {
-        const { data: newShift } = await supabase
-          .from('event_shifts')
-          .insert([{
-            event_id: event.id,
-            start_time: shift.start_time,
-            end_time: shift.end_time,
-          }])
-          .select()
-          .single();
-
-        if (shift.colaboradores.length > 0) {
-          await supabase.from('event_shift_collaborators').insert(
-            shift.colaboradores.map((colabId) => ({
-              shift_id: newShift.id,
-              collaborator_id: colabId,
-            }))
-          );
-        }
-      }
 
       showToast('Evento criado com sucesso!');
       router.push('/dashboard/eventos');
@@ -249,11 +217,6 @@ export default function NovoEventoPage() {
             className="w-full px-3 py-2 rounded-lg border"
           />
         </FormField>
-
-        <EventShiftsManager
-          shifts={shifts}
-          setShifts={setShifts}
-        />
 
         <div className="flex justify-end gap-2 mt-4">
           <Button
