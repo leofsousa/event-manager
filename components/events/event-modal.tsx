@@ -10,6 +10,7 @@ import Select from "@/components/ui/select";
 import CreateOptionModal from '@/components/modals/create-option-modal';
 import { useToast } from "@/hooks/useToast";
 import { supabase } from "@/lib/supabase";
+import EventShiftsManager from "./event-shift-manager";
 
 type Props = {
   onClose: () => void;
@@ -31,6 +32,7 @@ export default function EventModal({
   const [isCreatingType, setIsCreatingType] = useState(false);
   const [customLocal, setCustomLocal] = useState("");
   const [isOtherSelected, setIsOtherSelected] = useState(false);
+  const [shifts, setShifts] = useState<Shift[]>([]);
 
   const [nome, setNome] = useState("");
   const [tipo, setTipo] = useState("");
@@ -77,15 +79,15 @@ export default function EventModal({
       setNome(editingEvent.nome);
       setTipo(editingEvent.tipo);
       setData(editingEvent.data);
-  
+
       setObservacoes(editingEvent.observacoes || "");
       setHoraInicio(editingEvent.hora_inicio || "");
-  
+
       if (editingEvent.tipo === "operacao-estudio") {
         const isStudioOption = studioOptions.some(
           (opt) => opt.value === editingEvent.local
         );
-  
+
         if (isStudioOption) {
           setLocal(editingEvent.local);
           setIsOtherSelected(false);
@@ -98,7 +100,7 @@ export default function EventModal({
       } else {
         setLocal(editingEvent.local);
       }
-  
+
     } else {
       setNome("");
       setTipo("");
@@ -110,11 +112,11 @@ export default function EventModal({
       setIsOtherSelected(false);
     }
   }, [editingEvent]);
-  
+
 
   const handleCreateType = async (name: string) => {
     const formatted = name.toLowerCase().replace(/\s+/g, '-');
-    
+
     const { data, error } = await supabase
       .from("event_types")
       .insert([{
@@ -347,6 +349,10 @@ export default function EventModal({
                   focus:ring-blue-500 border-gray-300"
             />
           </FormField>
+          <EventShiftsManager
+            shifts={shifts}
+            setShifts={setShifts}
+          />
         </div>
 
         <div className="mt-6 flex justify-end gap-2">
