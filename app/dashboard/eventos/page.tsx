@@ -1,74 +1,70 @@
 'use client';
 
-import EventModal from '@/components/events/event-modal'
 import TableEvents from '@/components/events/table-events';
 import { useState, useEffect } from 'react';
-import type { Event } from '@/types/type-event'
+import type { Event } from '@/types/type-event';
 import { supabase } from '@/lib/supabase';
-import { useToast } from "@/hooks/useToast"
+import { useToast } from "@/hooks/useToast";
+import { useRouter } from 'next/navigation';
 
 export default function Eventos() {
-  const {showToast} = useToast();
+  const { showToast } = useToast();
+  const router = useRouter();
+
+  const [events, setEvents] = useState<Event[]>([]);
+
   useEffect(() => {
     const fetchEvents = async () => {
       const { data, error } = await supabase
         .from("events")
-        .select("*")
+        .select("*");
 
       if (error) {
         console.log("Erro ao buscar eventos", error);
         return;
       }
 
-      setEvents(data || [])
+      setEvents(data || []);
     };
+
     fetchEvents();
-  }, [])
-
-  const [editingEvent, setEditingEvent] = useState<Event | null>(null);
-  const handleUpdateEvent = (updatedEvent: Event) => {
-    setEvents((prev) =>
-      prev.map((event) =>
-        event.id === updatedEvent.id ? updatedEvent : event)
-    )
-  }
-
-  const handleEdit = (event: Event) => {
-    setEditingEvent(event)
-    setModalOpen(true)
-  }
-
-  const [isModalOpen, setModalOpen] = useState(false);
-  const [events, setEvents] = useState<Event[]>([]);
-  const handleAddEvent = (event: Event) => {
-    setEvents((prev) => [...prev, event]);
-  };
+  }, []);
 
   const handleDelete = async (id: string) => {
     const { error } = await supabase
-    .from("events")
-    .delete()
-    .eq("id", id);
+      .from("events")
+      .delete()
+      .eq("id", id);
 
     if (error) {
       console.error(error);
-      return
+      return;
     }
+
     setEvents((prev) => prev.filter((event) => event.id !== id));
-    showToast("Evento Deletado com sucesso!")
+    showToast("Evento deletado com sucesso!");
   };
 
+  const handleEdit = (event: Event) => {
+    router.push(`/dashboard/eventos/${event.id}`);
+  };
+
+  const handleAdd = () => {
+    router.push('/dashboard/eventos/novo');
+  };
+
+  // 🔽 SORT
   const [sortBy, setSortBy] = useState<"nome" | "data" | null>("nome");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   const handleSort = (field: "nome" | "data") => {
     if (sortBy === field) {
-      setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))
+      setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
     } else {
       setSortBy(field);
-      setSortOrder("asc")
+      setSortOrder("asc");
     }
-  }
+  };
 
   const sortedEvents = [...events].sort((a, b) => {
     if (!sortBy) return 0;
@@ -88,26 +84,17 @@ export default function Eventos() {
     return sortOrder === "asc" ? comparison : -comparison;
   });
 
-  return <div>
-    <TableEvents
-      events={sortedEvents}
-      onDelete={handleDelete}
-      onAdd={() => setModalOpen(true)}
-      onSort={handleSort}
-      sortBy={sortBy}
-      sortOrder={sortOrder}
-      onEdit={handleEdit}
-    />
-    {isModalOpen && (
-      <EventModal
-        onClose={() => {
-          setModalOpen(false)
-          setEditingEvent(null)
-        }}
-        onAddEvent={handleAddEvent}
-        onUpdateEvent={handleUpdateEvent}
-        editingEvent={editingEvent}
+  return (
+    <div>
+      <TableEvents
+        events={sortedEvents}
+        onDelete={handleDelete}
+        onAdd={handleAdd}
+        onSort={handleSort}
+        sortBy={sortBy}
+        sortOrder={sortOrder}
+        onEdit={handleEdit}
       />
-    )}
-  </div>;
+    </div>
+  );
 }

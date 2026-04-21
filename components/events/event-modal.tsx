@@ -328,15 +328,6 @@ export default function EventModal({
             <InputDate value={data} onChange={setData} />
           </FormField>
 
-          <FormField label="Horário de início">
-            <Input
-              type="time"
-              step="60"
-              value={horaInicio}
-              onChange={(e) => setHoraInicio(e.target.value)}
-            />
-          </FormField>
-
           <FormField label="Observações">
             <textarea
               value={observacoes}
