@@ -1,6 +1,7 @@
 'use client';
 
 import TableEvents from '@/components/events/table-events';
+import EventModal from '@/components/events/event-modal';
 import { useState, useEffect } from 'react';
 import type { Event } from '@/types/type-event';
 import { supabase } from '@/lib/supabase';
@@ -12,21 +13,23 @@ export default function Eventos() {
   const router = useRouter();
 
   const [events, setEvents] = useState<Event[]>([]);
+  const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  const [isModalOpen, setModalOpen] = useState(false);
+
+  const fetchEvents = async () => {
+    const { data, error } = await supabase
+      .from("events")
+      .select("*");
+
+    if (error) {
+      console.log("Erro ao buscar eventos", error);
+      return;
+    }
+
+    setEvents(data || []);
+  };
 
   useEffect(() => {
-    const fetchEvents = async () => {
-      const { data, error } = await supabase
-        .from("events")
-        .select("*");
-
-      if (error) {
-        console.log("Erro ao buscar eventos", error);
-        return;
-      }
-
-      setEvents(data || []);
-    };
-
     fetchEvents();
   }, []);
 
@@ -46,14 +49,22 @@ export default function Eventos() {
   };
 
   const handleEdit = (event: Event) => {
-    router.push(`/dashboard/eventos/${event.id}`);
+    setEditingEvent(event);
+    setModalOpen(true);
   };
 
   const handleAdd = () => {
     router.push('/dashboard/eventos/novo');
   };
 
-  // 🔽 SORT
+  const handleUpdateEvent = (updatedEvent: Event) => {
+    setEvents((prev) =>
+      prev.map((event) =>
+        event.id === updatedEvent.id ? updatedEvent : event
+      )
+    );
+  };
+
   const [sortBy, setSortBy] = useState<"nome" | "data" | null>("nome");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
@@ -86,6 +97,7 @@ export default function Eventos() {
 
   return (
     <div>
+
       <TableEvents
         events={sortedEvents}
         onDelete={handleDelete}
@@ -95,6 +107,19 @@ export default function Eventos() {
         sortOrder={sortOrder}
         onEdit={handleEdit}
       />
+
+      {isModalOpen && (
+        <EventModal
+          editingEvent={editingEvent}
+          onClose={() => {
+            setModalOpen(false);
+            setEditingEvent(null);
+          }}
+          onUpdateEvent={handleUpdateEvent}
+          onAddEvent={() => {}}
+        />
+      )}
+
     </div>
   );
 }

@@ -5,6 +5,8 @@ import type { Event } from '@/types/type-event'
 import { useState } from "react";
 import ConfirmModal from "@/components/ui/confirm-modal";
 import Button from "@/components/ui/button";
+import { useRouter } from 'next/navigation';
+
 
 
 type Props = {
@@ -27,6 +29,7 @@ export default function TableEvents({
   onEdit
 }: Props) {
   const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
+  const router = useRouter();
 
   return (
     <>
@@ -72,28 +75,60 @@ export default function TableEvents({
             {events.map((event) => (
               <tr
                 key={event.id}
-                onClick={() => onEdit(event)}
-                className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-blue-950 transition">
-                <td className="p-4 font-medium text-gray-900 dark:text-gray-100">{event.nome}</td>
+                className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-blue-950 transition"
+              >
+                <td className="p-4 font-medium text-gray-900 dark:text-gray-100">
+                  {event.nome}
+                </td>
 
-                <td className="p-4 text-gray-700 dark:text-gray-200">{event.tipo}</td>
-                <td className="p-4 text-gray-700 dark:text-gray-200">{event.data}</td>
-                <td className="p-4 text-gray-700 dark:text-gray-200">{event.local}</td>
+                <td className="p-4 text-gray-700 dark:text-gray-200">
+                  {event.tipo}
+                </td>
+
+                <td className="p-4 text-gray-700 dark:text-gray-200">
+                  {event.data}
+                </td>
+
+                <td className="p-4 text-gray-700 dark:text-gray-200">
+                  {event.local}
+                </td>
 
                 <td className="p-4 flex justify-end items-center gap-4">
-                  
+
+                  <button
+                    onClick={() =>
+                      router.push(`/dashboard/eventos/${event.id}`)
+                    }
+                    className="text-blue-500 hover:text-blue-700 dark:text-blue-300 dark:hover:text-blue-100 transition"
+                  >
+                    Escala
+                  </button>
+
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      setEventToDelete(event)}}
+                      onEdit(event);
+                    }}
+                    className="text-yellow-500 hover:text-yellow-700 dark:text-yellow-300 dark:hover:text-yellow-100 transition"
+                  >
+                    Editar
+                  </button>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEventToDelete(event);
+                    }}
                     className="text-red-500 hover:text-red-700 dark:text-red-300 dark:hover:text-red-100 transition"
                   >
                     Excluir
                   </button>
+
                 </td>
               </tr>
             ))}
           </tbody>
+
         </table>
       </div>
       {eventToDelete && (

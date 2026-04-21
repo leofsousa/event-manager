@@ -340,10 +340,6 @@ export default function EventModal({
                   focus:ring-blue-500 border-gray-300"
             />
           </FormField>
-          <EventShiftsManager
-            shifts={shifts}
-            setShifts={setShifts}
-          />
         </div>
 
         <div className="mt-6 flex justify-end gap-2">
