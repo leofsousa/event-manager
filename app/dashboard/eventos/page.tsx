@@ -24,7 +24,6 @@ export default function Eventos() {
         event_shifts ( id ),
         channels ( sigla )
       `);
-      console.log("EVENTS RAW:", data);
     if (error) {
       console.log("Erro ao buscar eventos", error);
       return;
