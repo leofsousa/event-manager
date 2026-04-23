@@ -10,7 +10,6 @@ import Select from "@/components/ui/select";
 import CreateOptionModal from '@/components/modals/create-option-modal';
 import { useToast } from "@/hooks/useToast";
 import { supabase } from "@/lib/supabase";
-import EventShiftsManager from "./event-shift-manager";
 
 type Props = {
   onClose: () => void;
@@ -30,16 +29,15 @@ export default function EventModal({
 
   const [eventTypes, setEventTypes] = useState<{ label: string; value: string }[]>([]);
   const [isCreatingType, setIsCreatingType] = useState(false);
-  const [customLocal, setCustomLocal] = useState("");
-  const [isOtherSelected, setIsOtherSelected] = useState(false);
-  const [shifts, setShifts] = useState<Shift[]>([]);
 
   const [nome, setNome] = useState("");
   const [tipo, setTipo] = useState("");
   const [data, setData] = useState("");
   const [local, setLocal] = useState("");
   const [observacoes, setObservacoes] = useState("");
-  const [horaInicio, setHoraInicio] = useState("");
+
+  const [customLocal, setCustomLocal] = useState("");
+  const [isOtherSelected, setIsOtherSelected] = useState(false);
 
   const [isSubmiting, setIsSubmiting] = useState(false);
 
@@ -50,12 +48,21 @@ export default function EventModal({
     local: "",
   });
 
+  const studioOptions = [
+    { label: "Estúdio 1", value: "estudio-1" },
+    { label: "Estúdio 2", value: "estudio-2" },
+    { label: "Estúdio 3", value: "estudio-3" },
+    { label: "Estúdio 4", value: "estudio-4" },
+    { label: "Outro", value: "__other__" },
+  ];
+
+  const isStudio = tipo === "operacao-estudio";
+
+  // 🔹 Buscar tipos
   const fetchTypes = async () => {
     const { data, error } = await supabase
       .from("event_types")
       .select("*");
-
-    console.log(data);
 
     if (error) {
       console.error(error);
@@ -74,14 +81,13 @@ export default function EventModal({
     fetchTypes();
   }, []);
 
+  // 🔹 Preencher ao editar
   useEffect(() => {
     if (editingEvent) {
       setNome(editingEvent.nome);
       setTipo(editingEvent.tipo);
       setData(editingEvent.data);
-
       setObservacoes(editingEvent.observacoes || "");
-      setHoraInicio(editingEvent.hora_inicio || "");
 
       if (editingEvent.tipo === "operacao-estudio") {
         const isStudioOption = studioOptions.some(
@@ -107,22 +113,18 @@ export default function EventModal({
       setData("");
       setLocal("");
       setObservacoes("");
-      setHoraInicio("");
       setCustomLocal("");
       setIsOtherSelected(false);
     }
   }, [editingEvent]);
 
-
+  // 🔹 Criar tipo
   const handleCreateType = async (name: string) => {
     const formatted = name.toLowerCase().replace(/\s+/g, '-');
 
     const { data, error } = await supabase
       .from("event_types")
-      .insert([{
-        label: name,
-        value: formatted,
-      }])
+      .insert([{ label: name, value: formatted }])
       .select()
       .single();
 
@@ -133,7 +135,7 @@ export default function EventModal({
     }
 
     const newType = {
-      label: data.name,
+      label: data.label,
       value: data.value,
     };
 
@@ -143,6 +145,7 @@ export default function EventModal({
     showToast("Tipo criado com sucesso!");
   };
 
+  // 🔹 Validação
   const validate = () => {
     const newErrors = {
       nome: "",
@@ -160,6 +163,8 @@ export default function EventModal({
 
     return Object.values(newErrors).every((err) => err === "");
   };
+
+  // 🔹 Submit
   const handleSubmit = async () => {
     if (!validate()) return;
 
@@ -167,14 +172,13 @@ export default function EventModal({
 
     try {
       if (editingEvent) {
-        const { data: responseData, error } = await supabase
+        const { data, error } = await supabase
           .from("events")
           .update({
             nome,
             tipo,
             local,
             data,
-            hora_inicio: horaInicio,
             observacoes,
           })
           .eq("id", editingEvent.id)
@@ -183,35 +187,32 @@ export default function EventModal({
 
         if (error) throw error;
 
-        onUpdateEvent(responseData);
-        showToast("Evento atualizado com sucesso!");
+        onUpdateEvent(data);
+        showToast("Evento atualizado!");
       } else {
-        const { data: responseData, error } = await supabase
+        const { data, error } = await supabase
           .from("events")
-          .insert([
-            {
-              nome,
-              tipo,
-              local,
-              data,
-              hora_inicio: horaInicio,
-              observacoes,
-            }
-          ])
+          .insert([{
+            nome,
+            tipo,
+            local,
+            data,
+            observacoes,
+          }])
           .select()
           .single();
 
         if (error) throw error;
 
-        onAddEvent(responseData);
-        showToast("Evento criado com sucesso!");
+        onAddEvent(data);
+        showToast("Evento criado!");
       }
 
       onClose();
 
     } catch (err) {
       console.error(err);
-      showToast("Erro ao salvar evento");
+      showToast("Erro ao salvar");
     }
 
     setIsSubmiting(false);
@@ -223,23 +224,6 @@ export default function EventModal({
     data.trim() &&
     local.trim();
 
-  const studioOptions = [
-    { label: "Estúdio 1", value: "estudio-1" },
-    { label: "Estúdio 2", value: "estudio-2" },
-    { label: "Estúdio 3", value: "estudio-3" },
-    { label: "Estúdio 4", value: "estudio-4" },
-    { label: "Outro", value: "__other__" },
-  ];
-
-  const isStudio = tipo === "operacao-estudio";
-
-  useEffect(() => {
-    if (!editingEvent) {
-      setLocal('');
-      setIsOtherSelected(false);
-    }
-  }, [tipo]);
-
   return (
     <div
       className="fixed inset-0 bg-black/50 flex items-center justify-center"
@@ -249,23 +233,14 @@ export default function EventModal({
         className="bg-white dark:bg-gray-900 rounded-xl p-6 w-full max-w-md"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
+        <h2 className="text-xl font-semibold mb-4">
           {editingEvent ? "Editar Evento" : "Novo Evento"}
         </h2>
 
         <div className="flex flex-col gap-4">
 
           <FormField label="Nome" required error={errors.nome}>
-            <Input
-              value={nome}
-              error={!!errors.nome}
-              onChange={(e) => {
-                setNome(e.target.value);
-                if (errors.nome) {
-                  setErrors((prev) => ({ ...prev, nome: "" }));
-                }
-              }}
-            />
+            <Input value={nome} onChange={(e) => setNome(e.target.value)} />
           </FormField>
 
           <FormField label="Tipo" required error={errors.tipo}>
@@ -290,9 +265,9 @@ export default function EventModal({
                   value={isOtherSelected ? "__other__" : local}
                   options={studioOptions}
                   onChange={(value) => {
-                    if (value === '__other__') {
+                    if (value === "__other__") {
                       setIsOtherSelected(true);
-                      setLocal('');
+                      setLocal("");
                     } else {
                       setIsOtherSelected(false);
                       setLocal(value);
@@ -301,26 +276,16 @@ export default function EventModal({
                 />
                 {isOtherSelected && (
                   <Input
-                    placeholder="Digite o local"
                     value={customLocal}
                     onChange={(e) => {
                       setCustomLocal(e.target.value);
-                      setLocal(e.target.value)
+                      setLocal(e.target.value);
                     }}
                   />
                 )}
               </>
             ) : (
-              <Input
-                value={local}
-                error={!!errors.local}
-                onChange={(e) => {
-                  setLocal(e.target.value);
-                  if (errors.local) {
-                    setErrors((prev) => ({ ...prev, local: "" }))
-                  }
-                }}
-              />
+              <Input value={local} onChange={(e) => setLocal(e.target.value)} />
             )}
           </FormField>
 
@@ -332,14 +297,10 @@ export default function EventModal({
             <textarea
               value={observacoes}
               onChange={(e) => setObservacoes(e.target.value)}
-              rows={3}
-              placeholder="Ex: Primeiro turno, entra 16 hrs"
-              className="w-full px-3 py-2 rounded-lg border
-                  bg-white text-gray-900 dark:bg-gray-800 dark:border-gray-700
-                  dark:text-gray-100 focus:outline-none focus:ring-2
-                  focus:ring-blue-500 border-gray-300"
+              className="w-full px-3 py-2 rounded-lg border"
             />
           </FormField>
+
         </div>
 
         <div className="mt-6 flex justify-end gap-2">
@@ -347,10 +308,7 @@ export default function EventModal({
             Cancelar
           </Button>
 
-          <Button
-            onClick={handleSubmit}
-            disabled={!isFormValid}
-          >
+          <Button onClick={handleSubmit} disabled={!isFormValid}>
             {isSubmiting ? "Salvando..." : "Salvar"}
           </Button>
         </div>
@@ -358,7 +316,7 @@ export default function EventModal({
 
       {isCreatingType && (
         <CreateOptionModal
-          title="Novo tipo de evento"
+          title="Novo tipo"
           placeholder="Ex: Convenção"
           onClose={() => setIsCreatingType(false)}
           onCreate={(value) => {
