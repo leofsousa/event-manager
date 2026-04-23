@@ -7,6 +7,10 @@ type Props = {
     onAdd?: () => void;
     onEdit: (c: any) => void;
     onDelete: (c: any) => void;
+
+    onSort: (field: "nome" | "cargo") => void;
+    sortBy: "nome" | "cargo" | null;
+    sortOrder: "asc" | "desc";
 }
 
 export default function TableColaboradores({
@@ -14,6 +18,9 @@ export default function TableColaboradores({
     onAdd,
     onEdit,
     onDelete,
+    onSort,
+    sortBy,
+    sortOrder
 }: Props) {
     return (
         <div className="bg-white rounded-xl shadow-sm overflow-hidden dark:bg-blue-900">
@@ -33,8 +40,16 @@ export default function TableColaboradores({
                         </th>
                     </tr>
                     <tr>
-                        <th className="text-left p-4 text-sm font-medium text-gray-600 dark:text-gray-300">Nome</th>
-                        <th className="text-left p-4 text-sm font-medium text-gray-600 dark:text-gray-300">Cargo</th>
+                        <th
+                            className="text-left p-4 text-sm font-medium text-gray-600 dark:text-gray-300"
+                            onClick={() => onSort("nome")}>
+                                Nome {sortBy === "nome" && (sortOrder === "asc" ? "↑" : "↓")}
+                        </th>
+                        <th 
+                        className="text-left p-4 text-sm font-medium text-gray-600 dark:text-gray-300"
+                        onClick={() => onSort("cargo")}
+                        >Cargo {sortBy ===  "cargo" && (sortOrder === "asc" ? "↑" : "↓")}
+                        </th>
                         <th className="text-right p-4 text-sm font-medium text-gray-600 dark:text-gray-300">Ações</th>
                     </tr>
                 </thead>

@@ -18,6 +18,33 @@ export default function Colaboradores() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedColaborator, setSelectedColaborator] = useState<Colaborador | null>(null);
   const [colaboradorToDelete, setColaboradorToDelete] = useState<Colaborador | null>(null);
+  const [sortBy, setSortBy] = useState<"nome" | "cargo" | null>("nome");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+
+  const handleSort = (field: "nome" | "cargo") => {
+    if (sortBy === field) {
+      setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortBy(field);
+      setSortOrder("asc");
+    }
+  };
+
+  const sortColaboradores = [...colaboradores].sort((a, b) => {
+    if (!sortBy) return 0;
+
+    let comparison = 0;
+
+    if (sortBy === "nome") {
+      comparison = (a.username || "").localeCompare(b.username || "");
+    }
+
+    if (sortBy === "cargo") {
+      comparison = (a.cargo || "").localeCompare(b.cargo || "");
+    }
+
+    return sortOrder === "asc" ? comparison : -comparison;
+  })
 
   const fetchColaboradores = async () => {
     const { data, error } = await supabase.from('profiles').select('*')
@@ -41,9 +68,9 @@ export default function Colaboradores() {
     if (!colaboradorToDelete) return;
 
     const { error } = await supabase
-    .from('profiles')
-    .delete()
-    .eq('id', colaboradorToDelete.id);
+      .from('profiles')
+      .delete()
+      .eq('id', colaboradorToDelete.id);
 
     if (error) {
       console.error(error);
@@ -61,7 +88,11 @@ export default function Colaboradores() {
         }}
         onEdit={handleEdit}
         onDelete={(c) => setColaboradorToDelete(c)}
-        colaboradores={colaboradores} />
+        colaboradores={sortColaboradores}
+        onSort={handleSort}
+        sortBy={sortBy}
+        sortOrder={sortOrder}
+      />
       {isModalOpen && (
         <ColaboradorModal
           colaborador={selectedColaborator}
@@ -71,7 +102,7 @@ export default function Colaboradores() {
       )}
       {
         colaboradorToDelete && (
-          <ConfirmModal 
+          <ConfirmModal
             title="Excluir colaborador"
             description={`Tem certeza que deseja excluir ${colaboradorToDelete.username} ?`}
             onConfirm={handleDelete}
