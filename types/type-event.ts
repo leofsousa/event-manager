@@ -5,6 +5,6 @@ export type Event = {
   data: string;
   local: string;
   observacoes: string;
-  channel?: string | null;
+  channel?: {sigla: string} | null;
   hasScale: boolean;
 };

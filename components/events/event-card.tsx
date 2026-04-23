@@ -17,7 +17,7 @@ export default function EventCard({
   onOpenScale
 }: Props) {
 
-  const channel = event.channel; // futuro (sigla ou objeto)
+  const channelSigla = event.channels?.sigla;
 
   return (
     <div className="
@@ -26,8 +26,6 @@ export default function EventCard({
       rounded-xl p-4 shadow-sm hover:shadow-md
       transition flex flex-col justify-between
     ">
-
-      {/* HEADER */}
       <div className="mb-3 flex items-start justify-between gap-2">
 
         <div>
@@ -41,25 +39,24 @@ export default function EventCard({
         </div>
 
         {/* 📌 CHANNEL BADGE (NOVO) */}
-        {channel && (
+        {channelSigla && (
           <span className="
-            text-[11px] px-2 py-1 rounded-md
-            bg-gray-100 dark:bg-gray-700
-            text-gray-700 dark:text-gray-200
-            font-medium whitespace-nowrap
-          ">
-            {channel}
+    text-[11px] px-2 py-1 rounded-md
+    bg-gray-100 dark:bg-gray-700
+    text-gray-700 dark:text-gray-200
+    font-semibold whitespace-nowrap
+  ">
+            {channelSigla}
           </span>
         )}
+
       </div>
 
-      {/* INFO */}
       <div className="text-sm text-gray-700 dark:text-gray-300 space-y-1 mb-4">
         <p>📅 {event.data}</p>
         <p>📍 {event.local}</p>
       </div>
 
-      {/* SCALE STATUS */}
       <div className="mb-4">
         {event.hasScale ? (
           <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-md">
@@ -72,7 +69,6 @@ export default function EventCard({
         )}
       </div>
 
-      {/* ACTIONS */}
       <div className="
         flex flex-col sm:flex-row
         gap-2 sm:gap-2

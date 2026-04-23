@@ -211,7 +211,10 @@ export default function EventModal({
 
         if (error) throw error;
 
-        onUpdateEvent(responseData);
+        onUpdateEvent({
+          ...responseData,
+          channels: responseData.channels || null,
+        });
         showToast("Evento atualizado!");
 
       } else {

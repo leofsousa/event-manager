@@ -28,7 +28,7 @@ export default function EventList({
       const groups: Record<string, Event[]> = {};
     
       events.forEach((event) => {
-        const date = event.data; // ✅ corrigido
+        const date = event.data; 
     
         if (!groups[date]) {
           groups[date] = [];
@@ -64,7 +64,6 @@ export default function EventList({
       <>
         <div className="bg-white dark:bg-blue-900 rounded-xl shadow-sm">
   
-          {/* HEADER */}
           <div className="p-4 flex justify-between items-center">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
               Lista de Eventos

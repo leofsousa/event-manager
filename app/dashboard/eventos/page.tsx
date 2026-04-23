@@ -21,18 +21,21 @@ export default function Eventos() {
       .from("events")
       .select(`
         *,
-        event_shifts ( id )
+        event_shifts ( id ),
+        channels ( sigla )
       `);
-
+      console.log("EVENTS RAW:", data);
     if (error) {
       console.log("Erro ao buscar eventos", error);
       return;
     }
 
-    const eventsWithFlag = (data || []).map((event) => ({
+    const eventsWithFlag = (data || []).map((event: any) => ({
       ...event,
       hasScale: (event.event_shifts || []).length > 0,
+      channels: event.channels || null,
     }));
+    
 
     setEvents(eventsWithFlag);
   };

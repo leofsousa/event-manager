@@ -68,7 +68,6 @@ export default function NovoEventoPage() {
     setEventTypes(formatted);
   };
 
-  // 📌 CHANNELS
   const fetchChannels = async () => {
     const { data, error } = await supabase
       .from('channels')
@@ -202,15 +201,6 @@ export default function NovoEventoPage() {
           />
         </FormField>
 
-        {/* 📌 CANAL (NOVO) */}
-        <FormField label="Canal">
-          <Select
-            value={channel}
-            options={channels}
-            onChange={(value) => setChannel(value)}
-          />
-        </FormField>
-
         <FormField label="Local" required error={errors.local}>
           {isStudio ? (
             <>
@@ -240,6 +230,16 @@ export default function NovoEventoPage() {
           ) : (
             <Input value={local} onChange={(e) => setLocal(e.target.value)} />
           )}
+        </FormField>
+
+
+        {/* 📌 CANAL (NOVO) */}
+        <FormField label="Canal">
+          <Select
+            value={channel}
+            options={channels}
+            onChange={(value) => setChannel(value)}
+          />
         </FormField>
 
         <FormField label="Data" required error={errors.data}>
