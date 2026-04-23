@@ -56,24 +56,21 @@ export default function Sidebar({ open, setOpen }: Props) {
         flex flex-col
       `}
     >
-      {/* HEADER */}
       <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
         <h1 className="text-xl font-bold text-gray-900 dark:text-white">
           Event Manager
         </h1>
       </div>
 
-      {/* MENU (SCROLLÁVEL) */}
       <div className="flex-1 overflow-y-auto px-4 py-4">
         <ul className="flex flex-col gap-2">
-          {menuItem('Dashboard', Home, '/dashboard')}
+          {menuItem('Agenda', Home, '/dashboard')}
           {menuItem('Eventos', Calendar, '/dashboard/eventos')}
           {menuItem('Colaboradores', Users, '/dashboard/colaboradores')}
           {menuItem('Configurações', Settings, '/dashboard/settings')}
         </ul>
       </div>
 
-      {/* FOOTER FIXO */}
       <div className="p-4 border-t border-gray-200 dark:border-gray-700">
         <button
           onClick={handleLogout}

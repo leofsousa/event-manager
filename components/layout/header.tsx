@@ -32,7 +32,7 @@ export default function Header({
       return 'Configurações';
     }
 
-    return 'Dashboard';
+    return 'Agenda';
   };
 
   const [isDark, setIsDark] = useState(false);
