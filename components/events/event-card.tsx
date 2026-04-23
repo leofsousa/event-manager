@@ -16,6 +16,15 @@ export default function EventCard({
   onDelete,
   onOpenScale
 }: Props) {
+  const channelStyles: Record<string, string> = {
+    CR: "bg-[#a9e22c] text-white",
+    CC: "bg-[#d79230] text-white",
+    TV: "bg-[#904712] text-white",
+    "A+": "bg-[#335a45] text-white",
+    RW: "bg-[#006e96] text-white",
+    "RW+": "bg-[#37b4d8] text-white",
+    CB: "bg-white text-black",
+  };
 
   const channelSigla = event.channels?.sigla;
 
@@ -40,12 +49,11 @@ export default function EventCard({
 
         {/* 📌 CHANNEL BADGE (NOVO) */}
         {channelSigla && (
-          <span className="
-    text-[11px] px-2 py-1 rounded-md
-    bg-gray-100 dark:bg-gray-700
-    text-gray-700 dark:text-gray-200
-    font-semibold whitespace-nowrap
-  ">
+          <span className={`
+          text-[11px] px-2 py-1 rounded-md
+          font-semibold whitespace-nowrap
+          ${channelStyles[channelSigla] || "bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-100"}
+        `}>
             {channelSigla}
           </span>
         )}

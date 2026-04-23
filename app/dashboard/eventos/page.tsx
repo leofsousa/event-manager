@@ -68,17 +68,8 @@ export default function Eventos() {
     router.push('/dashboard/eventos/novo');
   };
 
-  const handleUpdateEvent = (updatedEvent: Event) => {
-    setEvents((prev) =>
-      prev.map((event) =>
-        event.id === updatedEvent.id
-          ? {
-              ...updatedEvent,
-              hasScale: event.hasScale,
-            }
-          : event
-      )
-    );
+  const handleUpdateEvent = async (updatedEvent: Event) => {
+    await fetchEvents();
   };
   
 
