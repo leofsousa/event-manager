@@ -26,36 +26,37 @@ export default function EventList({
   
     const groupEventsByDate = (events: Event[]) => {
       const groups: Record<string, Event[]> = {};
-  
+    
       events.forEach((event) => {
-        const date = new Date(event.data).toISOString().split("T")[0];
-  
+        const date = event.data; // ✅ corrigido
+    
         if (!groups[date]) {
           groups[date] = [];
         }
-  
+    
         groups[date].push(event);
       });
-  
+    
       return groups;
     };
-  
+    
     const formatMonth = (date: string) => {
-      return new Date(date).toLocaleDateString("pt-BR", {
+      return new Date(date + "T00:00:00").toLocaleDateString("pt-BR", {
         month: "long",
         year: "numeric",
       });
     };
-  
+    
     const formatDay = (date: string) => {
-      return new Date(date).toLocaleDateString("pt-BR", {
+      return new Date(date + "T00:00:00").toLocaleDateString("pt-BR", {
         day: "2-digit",
         weekday: "long",
       });
     };
-  
+    
     const grouped = groupEventsByDate(events);
     const dates = Object.keys(grouped).sort();
+    
   
     let currentMonth = "";
   
