@@ -27,6 +27,36 @@ export default function TableEvents({
   sortOrder,
   onEdit
 }: Props) {
+  const groupEventsByDate = (events: Event[]) => {
+    const groups: Record<string, Event[]> = {};
+
+    events.forEach((event) => {
+      const date = new Date(event.data).toISOString().split("T")[0];
+
+      if (!groups[date]) {
+        groups[date] = [];
+      }
+
+      groups[date].push(event);
+    });
+
+    return groups;
+  };
+
+  const formatMonth = (date: string) => {
+    return new Date(date).toLocaleDateString("pt-BR", {
+      month: "long",
+      year: "numeric",
+    });
+  };
+  
+  const formatDay = (date: string) => {
+    return new Date(date).toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      weekday: "long",
+    });
+  };
+  
 
   const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
   const router = useRouter();
@@ -79,32 +109,102 @@ export default function TableEvents({
             </thead>
 
             <tbody>
-              {events.map((event) => (
-                <EventRow
-                  key={event.id}
-                  event={event}
-                  onEdit={onEdit}
-                  onDelete={setEventToDelete}
-                  onOpenScale={(id) => router.push(`/dashboard/eventos/${id}`)}
-                />
-              ))}
-            </tbody>
-          </table>
-        </div>
+  {(() => {
+    const grouped = groupEventsByDate(events);
+    const dates = Object.keys(grouped).sort();
 
-        {/* 📱 MOBILE */}
-        <div className="md:hidden flex flex-col gap-3 p-4">
-          {events.map((event) => (
+    let currentMonth = "";
+
+    return dates.map((date) => {
+      const month = formatMonth(date);
+      const showMonth = month !== currentMonth;
+      currentMonth = month;
+
+      return (
+        <>
+          {/* MÊS */}
+          {showMonth && (
+            <tr>
+              <td colSpan={5} className="bg-gray-200 dark:bg-blue-950 px-4 py-2 font-bold text-gray-800 dark:text-white">
+                {month}
+              </td>
+            </tr>
+          )}
+
+          {/* DIA */}
+          <tr>
+            <td colSpan={5} className="px-4 py-2 text-sm text-gray-600 dark:text-gray-300">
+              {formatDay(date)}
+            </td>
+          </tr>
+
+          {/* EVENTOS */}
+          {grouped[date].map((event) => (
             <EventRow
               key={event.id}
               event={event}
-              isMobile
               onEdit={onEdit}
               onDelete={setEventToDelete}
               onOpenScale={(id) => router.push(`/dashboard/eventos/${id}`)}
             />
           ))}
+        </>
+      );
+    });
+  })()}
+</tbody>
+
+          </table>
         </div>
+
+        {/* MOBILE */}
+        <div className="md:hidden flex flex-col gap-4 p-4">
+  {(() => {
+    const grouped = groupEventsByDate(events);
+    const dates = Object.keys(grouped).sort();
+
+    let currentMonth = "";
+
+    return dates.map((date) => {
+      const month = formatMonth(date);
+      const showMonth = month !== currentMonth;
+      currentMonth = month;
+
+      return (
+        <div key={date}>
+
+          {showMonth && (
+            <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-2">
+              {month}
+            </h2>
+          )}
+
+          <div className="flex items-center gap-2 mb-2">
+            <div className="h-px flex-1 bg-gray-300 dark:bg-gray-600" />
+            <span className="text-sm text-gray-600 dark:text-gray-300 whitespace-nowrap">
+              {formatDay(date)}
+            </span>
+            <div className="h-px flex-1 bg-gray-300 dark:bg-gray-600" />
+          </div>
+
+          <div className="flex flex-col gap-3">
+            {grouped[date].map((event) => (
+              <EventRow
+                key={event.id}
+                event={event}
+                isMobile
+                onEdit={onEdit}
+                onDelete={setEventToDelete}
+                onOpenScale={(id) => router.push(`/dashboard/eventos/${id}`)}
+              />
+            ))}
+          </div>
+
+        </div>
+      );
+    });
+  })()}
+</div>
 
       </div>
 
