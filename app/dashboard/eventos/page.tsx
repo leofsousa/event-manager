@@ -1,6 +1,6 @@
 'use client';
 
-import TableEvents from '@/components/events/table-events';
+import EventList from '@/components/events/event-list';
 import EventModal from '@/components/events/event-modal';
 import { useState, useEffect } from 'react';
 import type { Event } from '@/types/type-event';
@@ -23,24 +23,24 @@ export default function Eventos() {
         *,
         event_shifts ( id )
       `);
-  
+
     if (error) {
       console.log("Erro ao buscar eventos", error);
       return;
     }
-  
+
     const eventsWithFlag = (data || []).map((event) => ({
       ...event,
       hasScale: (event.event_shifts || []).length > 0,
     }));
-  
+
     setEvents(eventsWithFlag);
   };
-  
+
   useEffect(() => {
     fetchEvents();
   }, []);
-  
+
 
   const handleDelete = async (id: string) => {
     const { error } = await supabase
@@ -107,15 +107,14 @@ export default function Eventos() {
   return (
     <div>
 
-      <TableEvents
+      <EventList
         events={sortedEvents}
         onDelete={handleDelete}
         onAdd={handleAdd}
-        onSort={handleSort}
-        sortBy={sortBy}
-        sortOrder={sortOrder}
         onEdit={handleEdit}
       />
+
+
 
       {isModalOpen && (
         <EventModal
@@ -125,7 +124,7 @@ export default function Eventos() {
             setEditingEvent(null);
           }}
           onUpdateEvent={handleUpdateEvent}
-          onAddEvent={() => {}}
+          onAddEvent={() => { }}
         />
       )}
 
