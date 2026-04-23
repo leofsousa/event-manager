@@ -69,10 +69,16 @@ export default function Eventos() {
   const handleUpdateEvent = (updatedEvent: Event) => {
     setEvents((prev) =>
       prev.map((event) =>
-        event.id === updatedEvent.id ? updatedEvent : event
+        event.id === updatedEvent.id
+          ? {
+              ...updatedEvent,
+              hasScale: event.hasScale,
+            }
+          : event
       )
     );
   };
+  
 
   const [sortBy, setSortBy] = useState<"nome" | "data" | null>("nome");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");

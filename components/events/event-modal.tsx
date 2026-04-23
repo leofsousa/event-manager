@@ -58,7 +58,6 @@ export default function EventModal({
 
   const isStudio = tipo === "operacao-estudio";
 
-  // 🔹 Buscar tipos
   const fetchTypes = async () => {
     const { data, error } = await supabase
       .from("event_types")
@@ -81,7 +80,6 @@ export default function EventModal({
     fetchTypes();
   }, []);
 
-  // 🔹 Preencher ao editar
   useEffect(() => {
     if (editingEvent) {
       setNome(editingEvent.nome);
@@ -118,11 +116,10 @@ export default function EventModal({
     }
   }, [editingEvent]);
 
-  // 🔹 Criar tipo
   const handleCreateType = async (name: string) => {
     const formatted = name.toLowerCase().replace(/\s+/g, '-');
 
-    const { data, error } = await supabase
+    const { data: responseData, error } = await supabase
       .from("event_types")
       .insert([{ label: name, value: formatted }])
       .select()
@@ -135,8 +132,8 @@ export default function EventModal({
     }
 
     const newType = {
-      label: data.label,
-      value: data.value,
+      label: responseData.label,
+      value: responseData.value,
     };
 
     setEventTypes((prev) => [...prev, newType]);
@@ -145,7 +142,6 @@ export default function EventModal({
     showToast("Tipo criado com sucesso!");
   };
 
-  // 🔹 Validação
   const validate = () => {
     const newErrors = {
       nome: "",
@@ -164,7 +160,6 @@ export default function EventModal({
     return Object.values(newErrors).every((err) => err === "");
   };
 
-  // 🔹 Submit
   const handleSubmit = async () => {
     if (!validate()) return;
 
@@ -172,7 +167,7 @@ export default function EventModal({
 
     try {
       if (editingEvent) {
-        const { data, error } = await supabase
+        const { data: responseData, error } = await supabase
           .from("events")
           .update({
             nome,
@@ -187,10 +182,10 @@ export default function EventModal({
 
         if (error) throw error;
 
-        onUpdateEvent(data);
+        onUpdateEvent(responseData);
         showToast("Evento atualizado!");
       } else {
-        const { data, error } = await supabase
+        const { data: responseData, error } = await supabase
           .from("events")
           .insert([{
             nome,
@@ -204,15 +199,15 @@ export default function EventModal({
 
         if (error) throw error;
 
-        onAddEvent(data);
+        onAddEvent(responseData);
         showToast("Evento criado!");
       }
 
       onClose();
 
-    } catch (err) {
-      console.error(err);
-      showToast("Erro ao salvar");
+    } catch (err: any) {
+      console.error("ERRO REAL:", err);
+      showToast(err.message || "Erro ao salvar");
     }
 
     setIsSubmiting(false);
@@ -297,7 +292,7 @@ export default function EventModal({
             <textarea
               value={observacoes}
               onChange={(e) => setObservacoes(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border"
+              className="w-full px-3 py-2 rounded-lg border resize-none"
             />
           </FormField>
 
