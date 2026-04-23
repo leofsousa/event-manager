@@ -4,4 +4,5 @@ export type Event = {
   tipo: string;
   data: string;
   local: string;
+  hasScale: boolean;
 };

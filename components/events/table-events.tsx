@@ -92,39 +92,47 @@ export default function TableEvents({
                 <td className="p-4 text-gray-700 dark:text-gray-200">
                   {event.local}
                 </td>
+                <td className="p-4 flex justify-end items-center gap-2">
 
-                <td className="p-4 flex justify-end items-center gap-4">
-
-                  <button
-                    onClick={() =>
-                      router.push(`/dashboard/eventos/${event.id}`)
-                    }
-                    className="text-blue-500 hover:text-blue-700 dark:text-blue-300 dark:hover:text-blue-100 transition"
+                  {/* BOTÃO ESCALA */}
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      router.push(`/dashboard/eventos/${event.id}`);
+                    }}
+                    className={`
+    ${event.hasScale
+                        ? "bg-blue-600 hover:bg-blue-500 text-white"
+                        : "bg-green-600 hover:bg-green-500 text-white"
+                      }
+  `}
                   >
-                    Escala
-                  </button>
+                    {event.hasScale ? "Gerenciar escala" : "Criar escala"}
+                  </Button>
 
-                  <button
+                  <Button
+                    variant="secondary"
                     onClick={(e) => {
                       e.stopPropagation();
                       onEdit(event);
                     }}
-                    className="text-yellow-500 hover:text-yellow-700 dark:text-yellow-300 dark:hover:text-yellow-100 transition"
                   >
                     Editar
-                  </button>
+                  </Button>
 
-                  <button
+                  <Button
+                    variant="danger"
                     onClick={(e) => {
                       e.stopPropagation();
                       setEventToDelete(event);
                     }}
-                    className="text-red-500 hover:text-red-700 dark:text-red-300 dark:hover:text-red-100 transition"
                   >
                     Excluir
-                  </button>
+                  </Button>
 
                 </td>
+
+
               </tr>
             ))}
           </tbody>

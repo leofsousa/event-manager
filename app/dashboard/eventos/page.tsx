@@ -19,19 +19,28 @@ export default function Eventos() {
   const fetchEvents = async () => {
     const { data, error } = await supabase
       .from("events")
-      .select("*");
-
+      .select(`
+        *,
+        event_shifts ( id )
+      `);
+  
     if (error) {
       console.log("Erro ao buscar eventos", error);
       return;
     }
-
-    setEvents(data || []);
+  
+    const eventsWithFlag = (data || []).map((event) => ({
+      ...event,
+      hasScale: (event.event_shifts || []).length > 0,
+    }));
+  
+    setEvents(eventsWithFlag);
   };
-
+  
   useEffect(() => {
     fetchEvents();
   }, []);
+  
 
   const handleDelete = async (id: string) => {
     const { error } = await supabase
