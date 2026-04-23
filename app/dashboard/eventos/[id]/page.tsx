@@ -139,6 +139,8 @@ export default function EventEscalaPage() {
       <EventShiftsManager
         shifts={shifts}
         setShifts={setShifts}
+        eventDate={event?.data}
+        eventId={event.id}
       />
 
       <div className="flex justify-end gap-2">
