@@ -4,5 +4,7 @@ export type Event = {
   tipo: string;
   data: string;
   local: string;
+  observacoes: string;
+  channel?: string | null;
   hasScale: boolean;
 };

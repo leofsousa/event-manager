@@ -16,10 +16,13 @@ export default function NovoEventoPage() {
   const { showToast } = useToast();
 
   const [eventTypes, setEventTypes] = useState<{ label: string; value: string }[]>([]);
+  const [channels, setChannels] = useState<{ label: string; value: string }[]>([]);
+
   const [isCreatingType, setIsCreatingType] = useState(false);
 
   const [nome, setNome] = useState('');
   const [tipo, setTipo] = useState('');
+  const [channel, setChannel] = useState('');
   const [data, setData] = useState('');
   const [local, setLocal] = useState('');
   const [observacoes, setObservacoes] = useState('');
@@ -46,6 +49,7 @@ export default function NovoEventoPage() {
 
   const isStudio = tipo === 'operacao-estudio';
 
+  // 📌 TYPES
   const fetchTypes = async () => {
     const { data, error } = await supabase
       .from('event_types')
@@ -64,8 +68,28 @@ export default function NovoEventoPage() {
     setEventTypes(formatted);
   };
 
+  // 📌 CHANNELS
+  const fetchChannels = async () => {
+    const { data, error } = await supabase
+      .from('channels')
+      .select('*');
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    const formatted = (data || []).map((c: any) => ({
+      label: `${c.sigla} - ${c.name}`,
+      value: c.id,
+    }));
+
+    setChannels(formatted);
+  };
+
   useEffect(() => {
     fetchTypes();
+    fetchChannels();
   }, []);
 
   useEffect(() => {
@@ -120,13 +144,16 @@ export default function NovoEventoPage() {
     try {
       const { error } = await supabase
         .from('events')
-        .insert([{
-          nome,
-          tipo,
-          local,
-          data,
-          observacoes,
-        }]);
+        .insert([
+          {
+            nome,
+            tipo,
+            local,
+            data,
+            observacoes,
+            channel_id: channel || null,
+          },
+        ]);
 
       if (error) throw error;
 
@@ -172,6 +199,15 @@ export default function NovoEventoPage() {
                 setTipo(value);
               }
             }}
+          />
+        </FormField>
+
+        {/* 📌 CANAL (NOVO) */}
+        <FormField label="Canal">
+          <Select
+            value={channel}
+            options={channels}
+            onChange={(value) => setChannel(value)}
           />
         </FormField>
 
@@ -222,17 +258,11 @@ export default function NovoEventoPage() {
         </FormField>
 
         <div className="flex justify-end gap-2 mt-4">
-          <Button
-            variant="secondary"
-            onClick={() => router.back()}
-          >
+          <Button variant="secondary" onClick={() => router.back()}>
             Cancelar
           </Button>
 
-          <Button
-            onClick={handleSubmit}
-            disabled={!isFormValid}
-          >
+          <Button onClick={handleSubmit} disabled={!isFormValid}>
             {isSubmiting ? 'Salvando...' : 'Salvar'}
           </Button>
         </div>
