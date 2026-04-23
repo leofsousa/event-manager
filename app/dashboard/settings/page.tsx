@@ -1,3 +1,5 @@
 export default function Settings() {
-  return <h1> Olá mundo </h1>;
+  return (
+   <h1>Configurações</h1>
+  )
 }

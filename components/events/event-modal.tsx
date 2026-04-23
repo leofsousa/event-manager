@@ -5,9 +5,9 @@ import { useState, useEffect } from "react";
 import Input from "@/components/ui/input";
 import InputDate from "@/components/ui/input-date";
 import Button from "@/components/ui/button";
-import FormField from '@/components/events/form-field'
+import FormField from "@/components/events/form-field";
 import Select from "@/components/ui/select";
-import CreateOptionModal from '@/components/modals/create-option-modal';
+import CreateOptionModal from "@/components/modals/create-option-modal";
 import { useToast } from "@/hooks/useToast";
 import { supabase } from "@/lib/supabase";
 
@@ -28,10 +28,13 @@ export default function EventModal({
   const { showToast } = useToast();
 
   const [eventTypes, setEventTypes] = useState<{ label: string; value: string }[]>([]);
+  const [channels, setChannels] = useState<{ label: string; value: string }[]>([]);
+
   const [isCreatingType, setIsCreatingType] = useState(false);
 
   const [nome, setNome] = useState("");
   const [tipo, setTipo] = useState("");
+  const [channel, setChannel] = useState("");
   const [data, setData] = useState("");
   const [local, setLocal] = useState("");
   const [observacoes, setObservacoes] = useState("");
@@ -58,6 +61,7 @@ export default function EventModal({
 
   const isStudio = tipo === "operacao-estudio";
 
+  // 📌 TYPES
   const fetchTypes = async () => {
     const { data, error } = await supabase
       .from("event_types")
@@ -76,16 +80,39 @@ export default function EventModal({
     setEventTypes(formatted);
   };
 
+  // 📌 CHANNELS
+  const fetchChannels = async () => {
+    const { data, error } = await supabase
+      .from("channels")
+      .select("*");
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    const formatted = (data || []).map((c: any) => ({
+      label: `${c.sigla} - ${c.name}`,
+      value: c.id,
+    }));
+
+    setChannels(formatted);
+  };
+
   useEffect(() => {
     fetchTypes();
+    fetchChannels();
   }, []);
 
+  // 📌 EDIT MODE
   useEffect(() => {
     if (editingEvent) {
       setNome(editingEvent.nome);
       setTipo(editingEvent.tipo);
       setData(editingEvent.data);
       setObservacoes(editingEvent.observacoes || "");
+
+      setChannel((editingEvent as any)?.channel_id || "");
 
       if (editingEvent.tipo === "operacao-estudio") {
         const isStudioOption = studioOptions.some(
@@ -113,6 +140,7 @@ export default function EventModal({
       setObservacoes("");
       setCustomLocal("");
       setIsOtherSelected(false);
+      setChannel("");
     }
   }, [editingEvent]);
 
@@ -175,6 +203,7 @@ export default function EventModal({
             local,
             data,
             observacoes,
+            channel_id: channel || null,
           })
           .eq("id", editingEvent.id)
           .select()
@@ -184,6 +213,7 @@ export default function EventModal({
 
         onUpdateEvent(responseData);
         showToast("Evento atualizado!");
+
       } else {
         const { data: responseData, error } = await supabase
           .from("events")
@@ -193,6 +223,7 @@ export default function EventModal({
             local,
             data,
             observacoes,
+            channel_id: channel || null,
           }])
           .select()
           .single();
@@ -253,6 +284,15 @@ export default function EventModal({
             />
           </FormField>
 
+          {/* 📌 CHANNEL */}
+          <FormField label="Canal">
+            <Select
+              value={channel}
+              options={channels}
+              onChange={(value) => setChannel(value)}
+            />
+          </FormField>
+
           <FormField label="Local" required error={errors.local}>
             {isStudio ? (
               <>
@@ -292,7 +332,10 @@ export default function EventModal({
             <textarea
               value={observacoes}
               onChange={(e) => setObservacoes(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border resize-none"
+              className="w-full px-3 py-2 rounded-lg border
+              bg-white text-gray-900 dark:bg-gray-800 dark:border-gray-700
+              dark:text-gray-100 focus:outline-none focus:ring-2
+              focus:ring-blue-500 border-gray-300 resize-none"
             />
           </FormField>
 
