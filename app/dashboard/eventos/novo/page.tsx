@@ -27,6 +27,10 @@ export default function NovoEventoPage() {
   const [local, setLocal] = useState('');
   const [observacoes, setObservacoes] = useState('');
 
+  // 🚐 viagem
+  const [travelStart, setTravelStart] = useState('');
+  const [travelEnd, setTravelEnd] = useState('');
+
   const [customLocal, setCustomLocal] = useState('');
   const [isOtherSelected, setIsOtherSelected] = useState(false);
 
@@ -48,12 +52,10 @@ export default function NovoEventoPage() {
   ];
 
   const isStudio = tipo === 'operacao-estudio';
+  const isExternal = tipo === 'externa';
 
-  // 📌 TYPES
   const fetchTypes = async () => {
-    const { data, error } = await supabase
-      .from('event_types')
-      .select('*');
+    const { data, error } = await supabase.from('event_types').select('*');
 
     if (error) {
       console.error(error);
@@ -69,9 +71,7 @@ export default function NovoEventoPage() {
   };
 
   const fetchChannels = async () => {
-    const { data, error } = await supabase
-      .from('channels')
-      .select('*');
+    const { data, error } = await supabase.from('channels').select('*');
 
     if (error) {
       console.error(error);
@@ -94,6 +94,13 @@ export default function NovoEventoPage() {
   useEffect(() => {
     setLocal('');
     setIsOtherSelected(false);
+  }, [tipo]);
+
+  useEffect(() => {
+    if (!isExternal) {
+      setTravelStart('');
+      setTravelEnd('');
+    }
   }, [tipo]);
 
   const handleCreateType = async (name: string) => {
@@ -141,24 +148,25 @@ export default function NovoEventoPage() {
     setIsSubmiting(true);
 
     try {
-      const { error } = await supabase
-        .from('events')
-        .insert([
-          {
-            nome,
-            tipo,
-            local,
-            data,
-            observacoes,
-            channel_id: channel || null,
-          },
-        ]);
+      const { error } = await supabase.from('events').insert([
+        {
+          nome,
+          tipo,
+          local,
+          data,
+          observacoes,
+          channel_id: channel || null,
+
+          // 🚐 viagem
+          travel_start_date: travelStart || null,
+          travel_end_date: travelEnd || null,
+        },
+      ]);
 
       if (error) throw error;
 
       showToast('Evento criado com sucesso!');
       router.push('/dashboard/eventos');
-
     } catch (err) {
       console.error(err);
       showToast('Erro ao salvar');
@@ -232,8 +240,7 @@ export default function NovoEventoPage() {
           )}
         </FormField>
 
-
-        {/* 📌 CANAL (NOVO) */}
+        {/* 📺 CANAL */}
         <FormField label="Canal">
           <Select
             value={channel}
@@ -245,6 +252,19 @@ export default function NovoEventoPage() {
         <FormField label="Data" required error={errors.data}>
           <InputDate value={data} onChange={setData} />
         </FormField>
+
+        {/* 🚐 VIAGEM */}
+        {isExternal && (
+          <div className="grid grid-cols-2 gap-2">
+            <FormField label="Início viagem">
+              <InputDate value={travelStart} onChange={setTravelStart} />
+            </FormField>
+
+            <FormField label="Fim viagem">
+              <InputDate value={travelEnd} onChange={setTravelEnd} />
+            </FormField>
+          </div>
+        )}
 
         <FormField label="Observações">
           <textarea
