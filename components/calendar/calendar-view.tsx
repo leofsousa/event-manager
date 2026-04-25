@@ -28,15 +28,54 @@ export default function CalendarView({ events, mode = 'admin' }: Props) {
 
   // 📦 agrupar eventos por data
   const groupedEvents = useMemo(() => {
-    return events.reduce((acc, event) => {
-      const date = event.data;
-
-      if (!acc[date]) acc[date] = [];
-      acc[date].push(event);
-
-      return acc;
-    }, {} as Record<string, Event[]>);
+    const map: Record<string, Event[]> = {};
+  
+    const addToDate = (date: Date, event: Event) => {
+      const dateStr = date.toLocaleDateString('en-CA');
+  
+      if (!map[dateStr]) map[dateStr] = [];
+  
+      map[dateStr].push(event);
+    };
+  
+    events.forEach((event) => {
+      const baseDate = new Date(event.data);
+  
+      // 📌 EVENTO PRINCIPAL
+      addToDate(baseDate, event);
+  
+      // 🚐 VIAGEM ANTES
+      const before = event.travel_days_before || 0;
+      for (let i = 1; i <= before; i++) {
+        const d = new Date(baseDate);
+        d.setDate(d.getDate() - i);
+  
+        addToDate(d, {
+          ...event,
+          id: `${event.id}-before-${i}`,
+          isTravel: true,
+          travelType: 'before',
+        } as Event);
+      }
+  
+      // 🚐 VIAGEM DEPOIS
+      const after = event.travel_days_after || 0;
+      for (let i = 1; i <= after; i++) {
+        const d = new Date(baseDate);
+        d.setDate(d.getDate() + i);
+  
+        addToDate(d, {
+          ...event,
+          id: `${event.id}-after-${i}`,
+          isTravel: true,
+          travelType: 'after',
+        } as Event);
+      }
+    });
+  
+    return map;
   }, [events]);
+  
 
   // 📅 helpers semana
   const getWeekDays = (date: Date) => {

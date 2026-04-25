@@ -5,7 +5,7 @@ type Props = {
     mode: 'admin' | 'viewer';
     alignRight?: boolean;
     alignTop?: boolean;
-
+    onClick?: (event: Event) => void;
 };
 
 
@@ -19,16 +19,23 @@ const channelStyles: Record<string, string> = {
     CB: "bg-white text-black",
 };
 
-export default function CalendarEventItem({ event, alignRight, alignTop }: Props) {
+export default function CalendarEventItem({ event, alignRight, alignTop, onClick }: Props) {
     const sigla = event.channels?.sigla;
 
     return (
-        <div className="relative group flex items-center gap-1 text-[11px] ">
-
-            {/* BADGE */}
+        <div
+        onClick={() => onClick?.(event)}
+        className="relative group flex items-center gap-1 text-[12px] sm:text-[11px] cursor-pointer"
+      >
             {sigla && (
                 <span
-                    className={`px-1 rounded font-semibold ${channelStyles[sigla]}`}
+                    className={`
+                 px-1.5 py-[2px]
+                 sm:px-1 sm:py-0
+                 text-[11px] sm:text-[10px]
+                 rounded font-semibold
+                 ${channelStyles[sigla]}
+               `}
                 >
                     {sigla}
                 </span>
