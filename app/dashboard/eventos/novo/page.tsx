@@ -27,7 +27,6 @@ export default function NovoEventoPage() {
   const [local, setLocal] = useState('');
   const [observacoes, setObservacoes] = useState('');
 
-  // 🚐 viagem
   const [travelStart, setTravelStart] = useState('');
   const [travelEnd, setTravelEnd] = useState('');
 
@@ -57,10 +56,7 @@ export default function NovoEventoPage() {
   const fetchTypes = async () => {
     const { data, error } = await supabase.from('event_types').select('*');
 
-    if (error) {
-      console.error(error);
-      return;
-    }
+    if (error) return;
 
     const formatted = (data || []).map((t: any) => ({
       label: t.label,
@@ -73,10 +69,7 @@ export default function NovoEventoPage() {
   const fetchChannels = async () => {
     const { data, error } = await supabase.from('channels').select('*');
 
-    if (error) {
-      console.error(error);
-      return;
-    }
+    if (error) return;
 
     const formatted = (data || []).map((c: any) => ({
       label: `${c.sigla} - ${c.name}`,
@@ -101,7 +94,7 @@ export default function NovoEventoPage() {
       setTravelStart('');
       setTravelEnd('');
     }
-  }, [tipo]);
+  }, [isExternal]);
 
   const handleCreateType = async (name: string) => {
     const formatted = name.toLowerCase().replace(/\s+/g, '-');
@@ -113,7 +106,6 @@ export default function NovoEventoPage() {
       .single();
 
     if (error) {
-      console.error(error);
       showToast('Erro ao criar tipo');
       return;
     }
@@ -137,6 +129,18 @@ export default function NovoEventoPage() {
     if (!data.trim()) newErrors.data = 'Data é obrigatória';
     if (!local.trim()) newErrors.local = 'Local é obrigatório';
 
+    if (isExternal) {
+      if (!travelStart || !travelEnd) {
+        showToast('Preencha as datas de viagem');
+        return false;
+      }
+
+      if (travelStart > travelEnd) {
+        showToast('Data de início da viagem maior que a de retorno');
+        return false;
+      }
+    }
+
     setErrors(newErrors);
 
     return Object.values(newErrors).every((err) => err === '');
@@ -156,10 +160,8 @@ export default function NovoEventoPage() {
           data,
           observacoes,
           channel_id: channel || null,
-
-          // 🚐 viagem
-          travel_start_date: travelStart || null,
-          travel_end_date: travelEnd || null,
+          travel_start_date: isExternal ? travelStart : null,
+          travel_end_date: isExternal ? travelEnd : null,
         },
       ]);
 
@@ -167,6 +169,7 @@ export default function NovoEventoPage() {
 
       showToast('Evento criado com sucesso!');
       router.push('/dashboard/eventos');
+
     } catch (err) {
       console.error(err);
       showToast('Erro ao salvar');
@@ -240,7 +243,6 @@ export default function NovoEventoPage() {
           )}
         </FormField>
 
-        {/* 📺 CANAL */}
         <FormField label="Canal">
           <Select
             value={channel}
@@ -253,7 +255,6 @@ export default function NovoEventoPage() {
           <InputDate value={data} onChange={setData} />
         </FormField>
 
-        {/* 🚐 VIAGEM */}
         {isExternal && (
           <div className="grid grid-cols-2 gap-2">
             <FormField label="Início viagem">

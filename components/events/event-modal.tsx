@@ -39,6 +39,9 @@ export default function EventModal({
   const [local, setLocal] = useState("");
   const [observacoes, setObservacoes] = useState("");
 
+  const [dataSaida, setDataSaida] = useState("");
+  const [dataRetorno, setDataRetorno] = useState("");
+
   const [customLocal, setCustomLocal] = useState("");
   const [isOtherSelected, setIsOtherSelected] = useState(false);
 
@@ -60,8 +63,8 @@ export default function EventModal({
   ];
 
   const isStudio = tipo === "operacao-estudio";
+  const isExterna = tipo === "externa";
 
-  // 📌 TYPES
   const fetchTypes = async () => {
     const { data, error } = await supabase
       .from("event_types")
@@ -80,7 +83,6 @@ export default function EventModal({
     setEventTypes(formatted);
   };
 
-  // 📌 CHANNELS
   const fetchChannels = async () => {
     const { data, error } = await supabase
       .from("channels")
@@ -104,7 +106,6 @@ export default function EventModal({
     fetchChannels();
   }, []);
 
-  // 📌 EDIT MODE
   useEffect(() => {
     if (editingEvent) {
       setNome(editingEvent.nome);
@@ -113,6 +114,9 @@ export default function EventModal({
       setObservacoes(editingEvent.observacoes || "");
 
       setChannel((editingEvent as any)?.channel_id || "");
+
+      setDataSaida((editingEvent as any)?.data_saida || "");
+      setDataRetorno((editingEvent as any)?.data_retorno || "");
 
       if (editingEvent.tipo === "operacao-estudio") {
         const isStudioOption = studioOptions.some(
@@ -141,6 +145,9 @@ export default function EventModal({
       setCustomLocal("");
       setIsOtherSelected(false);
       setChannel("");
+
+      setDataSaida("");
+      setDataRetorno("");
     }
   }, [editingEvent]);
 
@@ -204,17 +211,17 @@ export default function EventModal({
             data,
             observacoes,
             channel_id: channel || null,
+
+            data_saida: dataSaida || null,
+            data_retorno: dataRetorno || null,
           })
           .eq("id", editingEvent.id)
-          .select()
+          .select("*, channels(sigla)")
           .single();
 
         if (error) throw error;
 
-        onUpdateEvent({
-          ...responseData,
-          channels: responseData.channels || null,
-        });
+        onUpdateEvent(responseData);
         showToast("Evento atualizado!");
 
       } else {
@@ -227,8 +234,11 @@ export default function EventModal({
             data,
             observacoes,
             channel_id: channel || null,
+
+            data_saida: dataSaida || null,
+            data_retorno: dataRetorno || null,
           }])
-          .select()
+          .select("*, channels(sigla)")
           .single();
 
         if (error) throw error;
@@ -287,7 +297,6 @@ export default function EventModal({
             />
           </FormField>
 
-          {/* 📌 CHANNEL */}
           <FormField label="Canal">
             <Select
               value={channel}
@@ -331,14 +340,24 @@ export default function EventModal({
             <InputDate value={data} onChange={setData} />
           </FormField>
 
+          {/* 🚐 VIAGEM */}
+          {isExterna && (
+            <>
+              <FormField label="Data de saída">
+                <InputDate value={dataSaida} onChange={setDataSaida} />
+              </FormField>
+
+              <FormField label="Data de retorno">
+                <InputDate value={dataRetorno} onChange={setDataRetorno} />
+              </FormField>
+            </>
+          )}
+
           <FormField label="Observações">
             <textarea
               value={observacoes}
               onChange={(e) => setObservacoes(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border
-              bg-white text-gray-900 dark:bg-gray-800 dark:border-gray-700
-              dark:text-gray-100 focus:outline-none focus:ring-2
-              focus:ring-blue-500 border-gray-300 resize-none"
+              className="w-full px-3 py-2 rounded-lg border resize-none"
             />
           </FormField>
 
