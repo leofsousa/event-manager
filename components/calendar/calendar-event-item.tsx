@@ -1,9 +1,11 @@
 import type { Event } from '@/types/type-event';
 
 type Props = {
-  event: Event;
-  mode: 'admin' | 'viewer';
+    event: Event;
+    mode: 'admin' | 'viewer';
+    alignRight?: boolean;
 };
+
 
 const channelStyles: Record<string, string> = {
     CR: "bg-[#a9e22c] text-white",
@@ -13,28 +15,63 @@ const channelStyles: Record<string, string> = {
     RW: "bg-[#006e96] text-white",
     "RW+": "bg-[#37b4d8] text-white",
     CB: "bg-white text-black",
-  };
+};
 
-export default function CalendarEventItem({ event }: Props) {
-  const sigla = event.channels?.sigla;
+export default function CalendarEventItem({ event, alignRight }: Props) {
+    const sigla = event.channels?.sigla;
 
-  return (
-    <div className="flex items-center gap-1 text-[11px] truncate">
+    return (
+        <div className="relative group flex items-center gap-1 text-[11px] ">
 
-      {/* BADGE */}
-      {sigla && (
-        <span
-          className={`px-1 rounded text-white font-semibold ${channelStyles[sigla]}`}
-        >
-          {sigla}
-        </span>
-      )}
+            {/* BADGE */}
+            {sigla && (
+                <span
+                    className={`px-1 rounded font-semibold ${channelStyles[sigla]}`}
+                >
+                    {sigla}
+                </span>
+            )}
 
-      {/* NOME */}
-      <span className="truncate">
-        {event.nome}
-      </span>
+            {/* NOME */}
+            <span className="truncate">
+                {event.nome}
+            </span>
 
-    </div>
-  );
+            <div
+                className={`
+        absolute top-full mt-1
+        ${alignRight ? 'right-0' : 'left-0'}
+        hidden group-hover:block
+        z-50
+        w-56 p-2 rounded-md shadow-lg
+        bg-white dark:bg-gray-900
+        border border-gray-200 dark:border-gray-700
+        text-xs
+      `}
+            >
+                <p className="font-semibold">{event.nome}</p>
+
+                <p className="text-gray-600 dark:text-gray-300">
+                    📍 {event.local}
+                </p>
+
+                <p className="text-gray-600 dark:text-gray-300">
+                    📅 {event.data}
+                </p>
+
+                {sigla && (
+                    <p className="text-gray-600 dark:text-gray-300">
+                        📺 {sigla}
+                    </p>
+                )}
+
+                {event.tipo && (
+                    <p className="text-gray-600 dark:text-gray-300">
+                        🏷 {event.tipo}
+                    </p>
+                )}
+            </div>
+
+        </div>
+    );
 }
