@@ -2,20 +2,20 @@
 
 import type { Event } from "@/types/type-event";
 import Button from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
 type Props = {
   event: Event;
-  onEdit: (event: Event) => void;
   onDelete: (event: Event) => void;
-  onOpenScale: (id: string) => void;
 };
 
 export default function EventCard({
   event,
-  onEdit,
   onDelete,
-  onOpenScale
 }: Props) {
+
+  const router = useRouter();
+
   const channelStyles: Record<string, string> = {
     CR: "bg-[#a9e22c] text-white",
     CC: "bg-[#d79230] text-white",
@@ -35,6 +35,7 @@ export default function EventCard({
       rounded-xl p-4 shadow-sm hover:shadow-md
       transition flex flex-col justify-between
     ">
+
       <div className="mb-3 flex items-start justify-between gap-2">
 
         <div>
@@ -47,13 +48,12 @@ export default function EventCard({
           </p>
         </div>
 
-        {/* 📌 CHANNEL BADGE (NOVO) */}
         {channelSigla && (
           <span className={`
-          text-[11px] px-2 py-1 rounded-md
-          font-semibold whitespace-nowrap
-          ${channelStyles[channelSigla] || "bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-100"}
-        `}>
+            text-[11px] px-2 py-1 rounded-md
+            font-semibold whitespace-nowrap
+            ${channelStyles[channelSigla] || "bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-100"}
+          `}>
             {channelSigla}
           </span>
         )}
@@ -77,26 +77,25 @@ export default function EventCard({
         )}
       </div>
 
-      <div className="
-        flex flex-col sm:flex-row
-        gap-2 sm:gap-2
-      ">
+      <div className="flex flex-col sm:flex-row gap-2">
+
         <Button
           className={
             event.hasScale
               ? "bg-blue-600 hover:bg-blue-500"
               : "bg-green-600 hover:bg-green-500"
           }
-          onClick={() => onOpenScale(event.id)}
+          onClick={() => router.push(`/dashboard/eventos/${event.id}/escala`)}
         >
           {event.hasScale ? "Gerenciar escala" : "Criar escala"}
         </Button>
 
         <div className="flex gap-2 w-full sm:w-auto">
+
           <Button
             variant="secondary"
             className="flex-1 sm:flex-none"
-            onClick={() => onEdit(event)}
+            onClick={() => router.push(`/dashboard/eventos/${event.id}`)}
           >
             Editar
           </Button>
@@ -108,7 +107,9 @@ export default function EventCard({
           >
             Excluir
           </Button>
+
         </div>
+
       </div>
     </div>
   );
