@@ -15,7 +15,6 @@ export default function CalendarView({ events, mode = 'admin' }: Props) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isMobile, setIsMobile] = useState(false);
 
-  // 📱 detectar mobile
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 640);
     check();
@@ -26,58 +25,51 @@ export default function CalendarView({ events, mode = 'admin' }: Props) {
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
 
-  // 📦 agrupar eventos por data
   const groupedEvents = useMemo(() => {
     const map: Record<string, Event[]> = {};
-  
+
     const addToDate = (date: Date, event: Event) => {
       const dateStr = date.toLocaleDateString('en-CA');
-  
+
       if (!map[dateStr]) map[dateStr] = [];
-  
+
       map[dateStr].push(event);
     };
-  
+
     events.forEach((event) => {
-      const baseDate = new Date(event.data);
-  
-      // 📌 EVENTO PRINCIPAL
-      addToDate(baseDate, event);
-  
-      // 🚐 VIAGEM ANTES
-      const before = event.travel_days_before || 0;
-      for (let i = 1; i <= before; i++) {
-        const d = new Date(baseDate);
-        d.setDate(d.getDate() - i);
-  
-        addToDate(d, {
-          ...event,
-          id: `${event.id}-before-${i}`,
-          isTravel: true,
-          travelType: 'before',
-        } as Event);
-      }
-  
-      // 🚐 VIAGEM DEPOIS
-      const after = event.travel_days_after || 0;
-      for (let i = 1; i <= after; i++) {
-        const d = new Date(baseDate);
-        d.setDate(d.getDate() + i);
-  
-        addToDate(d, {
-          ...event,
-          id: `${event.id}-after-${i}`,
-          isTravel: true,
-          travelType: 'after',
-        } as Event);
+      const eventDate = new Date(event.data);
+
+      // evento principal
+      addToDate(eventDate, event);
+
+      // viagem (intervalo)
+      if (event.data_saida && event.data_retorno) {
+        const start = new Date(event.data_saida);
+        const end = new Date(event.data_retorno);
+
+        let current = new Date(start);
+
+        while (current <= end) {
+          const currentStr = current.toLocaleDateString('en-CA');
+          const eventStr = eventDate.toLocaleDateString('en-CA');
+
+          // evita duplicar o dia do evento
+          if (currentStr !== eventStr) {
+            addToDate(new Date(current), {
+              ...event,
+              id: `${event.id}-travel-${currentStr}`,
+              isTravel: true,
+            } as Event);
+          }
+
+          current.setDate(current.getDate() + 1);
+        }
       }
     });
-  
+
     return map;
   }, [events]);
-  
 
-  // 📅 helpers semana
   const getWeekDays = (date: Date) => {
     const start = new Date(date);
     start.setDate(date.getDate() - date.getDay());
@@ -95,7 +87,6 @@ export default function CalendarView({ events, mode = 'admin' }: Props) {
     return newDate;
   };
 
-  // 🔁 navegação
   const handlePrev = () => {
     if (isMobile) {
       setCurrentDate(addDays(currentDate, -7));
@@ -115,7 +106,6 @@ export default function CalendarView({ events, mode = 'admin' }: Props) {
   return (
     <div className="flex flex-col gap-4">
 
-      {/* HEADER */}
       <div className="flex items-center justify-between">
 
         <button
@@ -145,7 +135,6 @@ export default function CalendarView({ events, mode = 'admin' }: Props) {
 
       {isMobile ? (
         <div className="flex flex-col gap-2">
-
           {getWeekDays(currentDate).map((date) => {
             const dateStr = date.toLocaleDateString('en-CA');
             const dayEvents = groupedEvents[dateStr] || [];
@@ -159,7 +148,6 @@ export default function CalendarView({ events, mode = 'admin' }: Props) {
               />
             );
           })}
-
         </div>
       ) : (
         <CalendarGrid

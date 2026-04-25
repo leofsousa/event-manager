@@ -60,12 +60,31 @@ export default function EditEventoPage() {
     setNome(data.nome);
     setTipo(data.tipo);
     setData(data.data);
-    setLocal(data.local);
     setObservacoes(data.observacoes || '');
     setChannel(data.channel_id || '');
 
-    setTravelStart(data.travel_start_date || '');
-    setTravelEnd(data.travel_end_date || '');
+    // local studio handling
+    if (data.tipo === 'operacao-estudio') {
+      const isStudioOption = studioOptions.some(
+        (opt) => opt.value === data.local
+      );
+
+      if (isStudioOption) {
+        setLocal(data.local);
+        setIsOtherSelected(false);
+        setCustomLocal('');
+      } else {
+        setLocal('');
+        setCustomLocal(data.local);
+        setIsOtherSelected(true);
+      }
+    } else {
+      setLocal(data.local);
+    }
+
+    // viagem (CORRIGIDO)
+    setTravelStart(data.data_saida || '');
+    setTravelEnd(data.data_retorno || '');
 
     setLoading(false);
   };
@@ -93,10 +112,12 @@ export default function EditEventoPage() {
   };
 
   useEffect(() => {
+    if (!id) return;
+
     fetchEvent();
     fetchTypes();
     fetchChannels();
-  }, []);
+  }, [id]);
 
   useEffect(() => {
     if (!isExternal) {
@@ -116,8 +137,8 @@ export default function EditEventoPage() {
           data,
           observacoes,
           channel_id: channel || null,
-          travel_start_date: travelStart || null,
-          travel_end_date: travelEnd || null,
+          data_saida: travelStart || null,
+          data_retorno: travelEnd || null,
         })
         .eq('id', id);
 
