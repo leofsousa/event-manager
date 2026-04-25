@@ -56,9 +56,9 @@ export default function CalendarDayCell({ date, events, mode }: Props) {
                     />
                 ))}
 
-                {events.length > 3 && (
+                {events.length > 5 && (
                     <span className="text-[10px] text-gray-500">
-                        +{events.length - 3}
+                        +{events.length - 5}
                     </span>
                 )}
             </div>

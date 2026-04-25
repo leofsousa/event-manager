@@ -4,6 +4,8 @@ type Props = {
     event: Event;
     mode: 'admin' | 'viewer';
     alignRight?: boolean;
+    alignTop?: boolean;
+
 };
 
 
@@ -17,7 +19,7 @@ const channelStyles: Record<string, string> = {
     CB: "bg-white text-black",
 };
 
-export default function CalendarEventItem({ event, alignRight }: Props) {
+export default function CalendarEventItem({ event, alignRight, alignTop }: Props) {
     const sigla = event.channels?.sigla;
 
     return (
