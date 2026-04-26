@@ -7,4 +7,5 @@ export type Event = {
   observacoes: string;
   channel?: {sigla: string} | null;
   hasScale: boolean;
+  isUserScaled?: boolean;
 };

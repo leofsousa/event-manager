@@ -26,12 +26,23 @@ export default function EventCard({ event, onDelete, mode = 'admin' }: Props) {
   const channelSigla = event.channels?.sigla;
 
   return (
-    <div className="
+    <div className={`
       bg-white dark:bg-gray-800
-      border border-gray-200 dark:border-gray-700
-      rounded-xl p-4 shadow-sm hover:shadow-md
+      border-2 rounded-xl p-4 shadow-sm hover:shadow-md
       transition flex flex-col justify-between
-    ">
+      ${event.isUserScaled
+        ? 'border-blue-500 dark:border-blue-400'
+        : 'border-gray-200 dark:border-gray-700'
+      }
+    `}>
+
+      {/* BADGE ESCALADO */}
+      {event.isUserScaled && (
+        <span className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-1 rounded-md w-fit mb-3">
+          ✅ Você está escalado
+        </span>
+      )}
+
       <div className="mb-3 flex items-start justify-between gap-2">
         <div>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -69,7 +80,6 @@ export default function EventCard({ event, onDelete, mode = 'admin' }: Props) {
         )}
       </div>
 
-      {/* Botões condicionais por role */}
       {mode === 'admin' && (
         <div className="flex flex-col sm:flex-row gap-2">
           <Button
