@@ -20,9 +20,12 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-  // Não logado → login
+  console.log('>>> MIDDLEWARE PATH:', request.nextUrl.pathname);
+  console.log('>>> USER:', user?.id ?? 'null');
+  console.log('>>> USER ERROR:', userError?.message ?? 'none');
+
   if (!user) {
     if (!request.nextUrl.pathname.startsWith('/login')) {
       return NextResponse.redirect(new URL('/login', request.url));
@@ -30,22 +33,22 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  // Busca role do perfil
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('role')
     .eq('id', user.id)
     .single();
 
+  console.log('>>> PROFILE:', profile);
+  console.log('>>> PROFILE ERROR:', profileError?.message ?? 'none');
+
   const role = profile?.role;
   const path = request.nextUrl.pathname;
 
-  // Colaborador tentando acessar /dashboard → redireciona
   if (role === 'colaborador' && path.startsWith('/dashboard')) {
     return NextResponse.redirect(new URL('/colaborador', request.url));
   }
 
-  // Admin tentando acessar /colaborador → redireciona
   if (role === 'admin' && path.startsWith('/colaborador')) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
