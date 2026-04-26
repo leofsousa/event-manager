@@ -11,6 +11,7 @@ type Option = {
     placeholder?: string;
     showCreateOption?: boolean;
     createOptionLabel?: string;
+    id?: string;
   };
   
   export default function Select({
@@ -20,10 +21,12 @@ type Option = {
     error,
     placeholder = "Selecione uma opção",
     showCreateOption = false,
-    createOptionLabel = "Criar novo"
+    createOptionLabel = "Criar novo",
+    id
   }: SelectProps) {
     return (
       <select
+        id={id}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className={`w-full px-3 py-2 rounded-lg border

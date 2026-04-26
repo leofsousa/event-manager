@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Input from '@/components/ui/input';
 import InputDate from '@/components/ui/input-date';
@@ -42,13 +42,13 @@ export default function NovoEventoPage() {
     local: '',
   });
 
-  const studioOptions = [
+  const studioOptions = useMemo(() => [
     { label: 'Estúdio 1', value: 'estudio-1' },
     { label: 'Estúdio 2', value: 'estudio-2' },
     { label: 'Estúdio 3', value: 'estudio-3' },
     { label: 'Estúdio 4', value: 'estudio-4' },
     { label: 'Outro', value: '__other__' },
-  ];
+  ], []);
 
   const isStudio = tipo === 'operacao-estudio';
   const isExternal = tipo === 'externa';
@@ -160,8 +160,8 @@ export default function NovoEventoPage() {
           data,
           observacoes,
           channel_id: channel || null,
-          travel_start_date: isExternal ? travelStart : null,
-          travel_end_date: isExternal ? travelEnd : null,
+          data_saida: isExternal ? travelStart : null,
+          data_retorno: isExternal ? travelEnd : null,
         },
       ]);
 
@@ -193,12 +193,13 @@ export default function NovoEventoPage() {
 
       <div className="flex flex-col gap-4">
 
-        <FormField label="Nome" required error={errors.nome}>
-          <Input value={nome} onChange={(e) => setNome(e.target.value)} />
+        <FormField label="Nome" htmlFor="nome" required error={errors.nome}>
+          <Input id="nome" value={nome} onChange={(e) => setNome(e.target.value)} />
         </FormField>
 
-        <FormField label="Tipo" required error={errors.tipo}>
+        <FormField label="Tipo" htmlFor="tipo" required error={errors.tipo}>
           <Select
+            id="tipo"
             value={tipo}
             options={eventTypes}
             showCreateOption
@@ -212,10 +213,11 @@ export default function NovoEventoPage() {
           />
         </FormField>
 
-        <FormField label="Local" required error={errors.local}>
+        <FormField label="Local" htmlFor="local" required error={errors.local}>
           {isStudio ? (
             <>
               <Select
+                id="local"
                 value={isOtherSelected ? '__other__' : local}
                 options={studioOptions}
                 onChange={(value) => {
@@ -230,6 +232,7 @@ export default function NovoEventoPage() {
               />
               {isOtherSelected && (
                 <Input
+                  id="local"
                   value={customLocal}
                   onChange={(e) => {
                     setCustomLocal(e.target.value);
@@ -239,36 +242,38 @@ export default function NovoEventoPage() {
               )}
             </>
           ) : (
-            <Input value={local} onChange={(e) => setLocal(e.target.value)} />
+            <Input id="local" value={local} onChange={(e) => setLocal(e.target.value)} />
           )}
         </FormField>
 
-        <FormField label="Canal">
+        <FormField label="Canal" htmlFor="canal" required={false}>
           <Select
+            id="canal"
             value={channel}
             options={channels}
             onChange={(value) => setChannel(value)}
           />
         </FormField>
 
-        <FormField label="Data" required error={errors.data}>
-          <InputDate value={data} onChange={setData} />
+        <FormField label="Data" htmlFor="data" required error={errors.data}>
+          <InputDate id="data" value={data} onChange={setData} />
         </FormField>
 
         {isExternal && (
           <div className="grid grid-cols-2 gap-2">
-            <FormField label="Início viagem">
-              <InputDate value={travelStart} onChange={setTravelStart} />
+            <FormField label="Início viagem" htmlFor="viagem-inicio" required={false}>
+              <InputDate id="viagem-inicio" value={travelStart} onChange={setTravelStart} />
             </FormField>
 
-            <FormField label="Fim viagem">
-              <InputDate value={travelEnd} onChange={setTravelEnd} />
+            <FormField label="Fim viagem" htmlFor="viagem-fim" required={false}>
+              <InputDate id="viagem-fim" value={travelEnd} onChange={setTravelEnd} />
             </FormField>
           </div>
         )}
 
-        <FormField label="Observações">
+        <FormField label="Observações" htmlFor="observacoes" required={false}>
           <textarea
+            id="observacoes"
             value={observacoes}
             onChange={(e) => setObservacoes(e.target.value)}
             className="w-full px-3 py-2 rounded-lg border

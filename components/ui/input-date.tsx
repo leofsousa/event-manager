@@ -1,11 +1,13 @@
 type Props = {
   value: string;
   onChange: (value: string) => void;
+  id?: string;
 };
 
-export default function InputDate({ value, onChange }: Props) {
+export default function InputDate({ value, onChange, id }: Props) {
   return (
     <input
+      id={id}
       type="date"
       value={value}
       onChange={(e) => onChange(e.target.value)}

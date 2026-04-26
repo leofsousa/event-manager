@@ -68,6 +68,10 @@ export default function Eventos() {
     router.push('/dashboard/eventos/novo');
   };
 
+  const handleAddEvent = async (newEvent: Event) => {
+    await fetchEvents();
+  };
+
   const handleUpdateEvent = async (updatedEvent: Event) => {
     await fetchEvents();
   };
@@ -123,7 +127,7 @@ export default function Eventos() {
             setEditingEvent(null);
           }}
           onUpdateEvent={handleUpdateEvent}
-          onAddEvent={() => { }}
+          onAddEvent={handleAddEvent}
         />
       )}
 

@@ -1,7 +1,7 @@
 "use client";
 
 import type { Event } from "@/types/type-event";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Input from "@/components/ui/input";
 import InputDate from "@/components/ui/input-date";
 import Button from "@/components/ui/button";
@@ -54,13 +54,13 @@ export default function EventModal({
     local: "",
   });
 
-  const studioOptions = [
+  const studioOptions = useMemo(() => [
     { label: "Estúdio 1", value: "estudio-1" },
     { label: "Estúdio 2", value: "estudio-2" },
     { label: "Estúdio 3", value: "estudio-3" },
     { label: "Estúdio 4", value: "estudio-4" },
     { label: "Outro", value: "__other__" },
-  ];
+  ], []);
 
   const isStudio = tipo === "operacao-estudio";
   const isExterna = tipo === "externa";
@@ -149,7 +149,7 @@ export default function EventModal({
       setDataSaida("");
       setDataRetorno("");
     }
-  }, [editingEvent]);
+  }, [editingEvent, studioOptions]);
 
   const handleCreateType = async (name: string) => {
     const formatted = name.toLowerCase().replace(/\s+/g, '-');
@@ -278,12 +278,13 @@ export default function EventModal({
 
         <div className="flex flex-col gap-4">
 
-          <FormField label="Nome" required error={errors.nome}>
-            <Input value={nome} onChange={(e) => setNome(e.target.value)} />
+          <FormField label="Nome" htmlFor="nome" required error={errors.nome}>
+            <Input id="nome" value={nome} onChange={(e) => setNome(e.target.value)} />
           </FormField>
 
-          <FormField label="Tipo" required error={errors.tipo}>
+          <FormField label="Tipo" htmlFor="tipo" required error={errors.tipo}>
             <Select
+              id="tipo"
               value={tipo}
               options={eventTypes}
               showCreateOption
@@ -297,18 +298,20 @@ export default function EventModal({
             />
           </FormField>
 
-          <FormField label="Canal">
+          <FormField label="Canal" htmlFor="canal" required={false}>
             <Select
+              id="canal"
               value={channel}
               options={channels}
               onChange={(value) => setChannel(value)}
             />
           </FormField>
 
-          <FormField label="Local" required error={errors.local}>
+          <FormField label="Local" htmlFor="local" required error={errors.local}>
             {isStudio ? (
               <>
                 <Select
+                  id="local"
                   value={isOtherSelected ? "__other__" : local}
                   options={studioOptions}
                   onChange={(value) => {
@@ -323,6 +326,7 @@ export default function EventModal({
                 />
                 {isOtherSelected && (
                   <Input
+                    id="local"
                     value={customLocal}
                     onChange={(e) => {
                       setCustomLocal(e.target.value);
@@ -332,29 +336,30 @@ export default function EventModal({
                 )}
               </>
             ) : (
-              <Input value={local} onChange={(e) => setLocal(e.target.value)} />
+              <Input id="local" value={local} onChange={(e) => setLocal(e.target.value)} />
             )}
           </FormField>
 
-          <FormField label="Data" required error={errors.data}>
-            <InputDate value={data} onChange={setData} />
+          <FormField label="Data" htmlFor="data" required error={errors.data}>
+            <InputDate id="data" value={data} onChange={setData} />
           </FormField>
 
           {/* 🚐 VIAGEM */}
           {isExterna && (
             <>
-              <FormField label="Data de saída">
-                <InputDate value={dataSaida} onChange={setDataSaida} />
+              <FormField label="Data de saída" htmlFor="data-saida" required={false}>
+                <InputDate id="data-saida" value={dataSaida} onChange={setDataSaida} />
               </FormField>
 
-              <FormField label="Data de retorno">
-                <InputDate value={dataRetorno} onChange={setDataRetorno} />
+              <FormField label="Data de retorno" htmlFor="data-retorno" required={false}>
+                <InputDate id="data-retorno" value={dataRetorno} onChange={setDataRetorno} />
               </FormField>
             </>
           )}
 
-          <FormField label="Observações">
+          <FormField label="Observações" htmlFor="observacoes" required={false}>
             <textarea
+              id="observacoes"
               value={observacoes}
               onChange={(e) => setObservacoes(e.target.value)}
               className="w-full px-3 py-2 rounded-lg border resize-none"
