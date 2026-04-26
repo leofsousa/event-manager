@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 type Props = {
   date: Date;
   events: Event[];
-  mode: 'admin' | 'viewer';
+  mode: 'admin' | 'colaborador';
 };
 
 export default function CalendarDayCell({ date, events, mode }: Props) {

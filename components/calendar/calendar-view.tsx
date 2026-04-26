@@ -4,13 +4,15 @@ import { useMemo, useState, useEffect } from 'react';
 import type { Event } from '@/types/type-event';
 import CalendarGrid from '@/components/calendar/calendar-grid';
 import CalendarDayCell from '@/components/calendar/calendar-day-cell';
+import TodayEventsSection from '@/components/calendar/today-events-section';
 
 type Props = {
   events: Event[];
-  mode?: 'admin' | 'viewer';
+  mode?: 'admin' | 'colaborador';
+  onDelete?: (event: Event) => void;
 };
 
-export default function CalendarView({ events, mode = 'admin' }: Props) {
+export default function CalendarView({ events, mode = 'admin', onDelete }: Props) {
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isMobile, setIsMobile] = useState(false);
@@ -25,35 +27,34 @@ export default function CalendarView({ events, mode = 'admin' }: Props) {
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
 
+  const todayStr = new Date().toLocaleDateString('en-CA');
+
+  const todayEvents = useMemo(() => {
+    return events.filter((e) => e.data === todayStr && !(e as any).isTravel);
+  }, [events, todayStr]);
+
   const groupedEvents = useMemo(() => {
     const map: Record<string, Event[]> = {};
 
     const addToDate = (date: Date, event: Event) => {
       const dateStr = date.toLocaleDateString('en-CA');
-
       if (!map[dateStr]) map[dateStr] = [];
-
       map[dateStr].push(event);
     };
 
     events.forEach((event) => {
       const eventDate = new Date(event.data);
-
-      // evento principal
       addToDate(eventDate, event);
 
-      // viagem (intervalo)
       if (event.data_saida && event.data_retorno) {
         const start = new Date(event.data_saida);
         const end = new Date(event.data_retorno);
-
         let current = new Date(start);
 
         while (current <= end) {
           const currentStr = current.toLocaleDateString('en-CA');
           const eventStr = eventDate.toLocaleDateString('en-CA');
 
-          // evita duplicar o dia do evento
           if (currentStr !== eventStr) {
             addToDate(new Date(current), {
               ...event,
@@ -106,8 +107,15 @@ export default function CalendarView({ events, mode = 'admin' }: Props) {
   return (
     <div className="flex flex-col gap-4">
 
-      <div className="flex items-center justify-between">
+      {/* SECTION: EVENTOS DE HOJE */}
+      <TodayEventsSection
+        events={todayEvents}
+        mode={mode}
+        onDelete={onDelete}
+      />
 
+      {/* NAVEGAÇÃO */}
+      <div className="flex items-center justify-between">
         <button
           onClick={handlePrev}
           className="px-2 py-1 rounded bg-gray-200 dark:bg-gray-700"
@@ -130,9 +138,9 @@ export default function CalendarView({ events, mode = 'admin' }: Props) {
         >
           →
         </button>
-
       </div>
 
+      {/* GRID */}
       {isMobile ? (
         <div className="flex flex-col gap-2">
           {getWeekDays(currentDate).map((date) => {
