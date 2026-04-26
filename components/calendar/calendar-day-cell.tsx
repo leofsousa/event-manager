@@ -3,6 +3,7 @@
 import type { Event } from '@/types/type-event';
 import CalendarEventItem from '@/components/calendar/calendar-event-item';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 type Props = {
   date: Date;
@@ -12,6 +13,7 @@ type Props = {
 
 export default function CalendarDayCell({ date, events, mode }: Props) {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const router = useRouter();
 
   const todayStr = new Date().toLocaleDateString('en-CA');
   const dateStr = date.toLocaleDateString('en-CA');
@@ -30,12 +32,10 @@ export default function CalendarDayCell({ date, events, mode }: Props) {
           }
         `}
       >
-
         <div className="flex items-center justify-between">
           <span className="text-xs text-gray-500">
             {date.toLocaleDateString('pt-BR', { weekday: 'short' })}
           </span>
-
           <span
             className={`text-sm font-bold ${
               isToday
@@ -58,14 +58,12 @@ export default function CalendarDayCell({ date, events, mode }: Props) {
               onClick={setSelectedEvent}
             />
           ))}
-
           {events.length > 5 && (
             <span className="text-[10px] text-gray-500">
               +{events.length - 5}
             </span>
           )}
         </div>
-
       </div>
 
       {/* MODAL */}
@@ -99,12 +97,23 @@ export default function CalendarDayCell({ date, events, mode }: Props) {
               </p>
             )}
 
-            <button
-              onClick={() => setSelectedEvent(null)}
-              className="mt-4 w-full bg-blue-600 text-white py-2 rounded"
-            >
-              Fechar
-            </button>
+            {/* BOTÕES */}
+            <div className="mt-4 flex gap-2">
+              {mode === 'admin' && !(selectedEvent as any).isTravel && (
+                <button
+                  onClick={() => router.push(`/dashboard/eventos/${selectedEvent.id}`)}
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-100 py-2 rounded text-sm font-medium transition"
+                >
+                  ✏️ Editar
+                </button>
+              )}
+              <button
+                onClick={() => setSelectedEvent(null)}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded text-sm font-medium transition"
+              >
+                Fechar
+              </button>
+            </div>
           </div>
         </div>
       )}
