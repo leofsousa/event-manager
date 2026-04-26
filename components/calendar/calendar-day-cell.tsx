@@ -9,15 +9,29 @@ type Props = {
   date: Date;
   events: Event[];
   mode: 'admin' | 'colaborador';
+  travelPosition?: 'start' | 'middle' | 'end' | null;
 };
 
-export default function CalendarDayCell({ date, events, mode }: Props) {
+export default function CalendarDayCell({ date, events, mode, travelPosition }: Props) {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const router = useRouter();
 
   const todayStr = new Date().toLocaleDateString('en-CA');
   const dateStr = date.toLocaleDateString('en-CA');
   const isToday = todayStr === dateStr;
+
+  const travelBg = travelPosition
+    ? 'bg-purple-50 dark:bg-purple-900/10'
+    : '';
+
+  const travelBorder =
+    travelPosition === 'start'
+      ? 'border-l-4 border-l-purple-400'
+      : travelPosition === 'end'
+      ? 'border-r-4 border-r-purple-400'
+      : travelPosition === 'middle'
+      ? 'border-l-4 border-r-4 border-l-purple-200 border-r-purple-200'
+      : '';
 
   return (
     <>
@@ -28,6 +42,8 @@ export default function CalendarDayCell({ date, events, mode }: Props) {
           transition overflow-visible relative
           ${isToday
             ? 'bg-blue-50 border-blue-400 dark:bg-blue-900/20 dark:border-blue-500 z-10'
+            : travelPosition
+            ? `${travelBg} ${travelBorder} border-gray-200 dark:border-gray-700`
             : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
           }
         `}
@@ -40,6 +56,8 @@ export default function CalendarDayCell({ date, events, mode }: Props) {
             className={`text-sm font-bold ${
               isToday
                 ? 'text-blue-600 dark:text-blue-400'
+                : travelPosition
+                ? 'text-purple-600 dark:text-purple-400'
                 : 'text-gray-800 dark:text-gray-100'
             }`}
           >
@@ -97,7 +115,6 @@ export default function CalendarDayCell({ date, events, mode }: Props) {
               </p>
             )}
 
-            {/* BOTÕES */}
             <div className="mt-4 flex gap-2">
               {mode === 'admin' && !(selectedEvent as any).isTravel && (
                 <button
