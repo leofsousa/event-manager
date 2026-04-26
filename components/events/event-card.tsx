@@ -37,10 +37,22 @@ export default function EventCard({ event, onDelete, mode = 'admin' }: Props) {
     `}>
 
       {/* BADGE ESCALADO */}
-      {event.isUserScaled && (
-        <span className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-1 rounded-md w-fit mb-3">
-          ✅ Você está escalado
-        </span>
+      {event.isUserScaled && event.userShift && (
+        <div className="flex flex-col gap-1 mb-3">
+          <span className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-1 rounded-md w-fit">
+            ✅ Você está escalado
+          </span>
+
+          <span className="text-xs text-gray-500 dark:text-gray-400 px-1">
+            🕐 Turno: {event.userShift.start_time} - {event.userShift.end_time}
+          </span>
+
+          {event.isFirstShift && event.arrivalTime && (
+            <span className="text-xs text-blue-500 dark:text-blue-400 px-1">
+              📍 Chegada: {event.arrivalTime}
+            </span>
+          )}
+        </div>
       )}
 
       <div className="mb-3 flex items-start justify-between gap-2">

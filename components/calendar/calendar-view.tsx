@@ -43,12 +43,12 @@ export default function CalendarView({ events, mode = 'admin', onDelete }: Props
     };
 
     events.forEach((event) => {
-      const eventDate = new Date(event.data);
+      const eventDate = new Date(event.data + 'T00:00:00');
       addToDate(eventDate, event);
 
       if (event.data_saida && event.data_retorno) {
-        const start = new Date(event.data_saida);
-        const end = new Date(event.data_retorno);
+        const start = new Date(event.data_saida + 'T00:00:00');
+        const end = new Date(event.data_retorno + 'T00:00:00');
         let current = new Date(start);
 
         while (current <= end) {
@@ -127,9 +127,9 @@ export default function CalendarView({ events, mode = 'admin', onDelete }: Props
           {isMobile
             ? `Semana de ${currentDate.toLocaleDateString('pt-BR')}`
             : currentDate.toLocaleDateString('pt-BR', {
-                month: 'long',
-                year: 'numeric',
-              })}
+              month: 'long',
+              year: 'numeric',
+            })}
         </h2>
 
         <button
