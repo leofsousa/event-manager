@@ -42,7 +42,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             <div className="fixed top-4 right-4 flex flex-col gap-2 z-50">
                 {toasts.map((toast) => (
                     <div
-                        key={toasts.id}
+                        key={toast.id}
                         className={`
                         px-4 py-2 rounded-lg shadow-md text-white
                         transform transition-all duration-300
