@@ -70,7 +70,7 @@ export default function CalendarDayCell({ date, events, mode, travelPosition }: 
             <CalendarEventItem
               key={event.id}
               event={event}
-              mode={mode}
+              mode={mode === 'admin' ? 'admin' : 'viewer'}
               alignRight={date.getDay() >= 4}
               alignTop={date.getDate() > 21}
               onClick={setSelectedEvent}
@@ -101,8 +101,8 @@ export default function CalendarDayCell({ date, events, mode, travelPosition }: 
             <p>📅 {selectedEvent.data}</p>
             <p>📍 {selectedEvent.local}</p>
 
-            {selectedEvent.channels?.sigla && (
-              <p>📺 {selectedEvent.channels.sigla}</p>
+            {selectedEvent.channel?.sigla && (
+              <p>📺 {selectedEvent.channel.sigla}</p>
             )}
 
             {selectedEvent.tipo && (

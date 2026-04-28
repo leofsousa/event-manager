@@ -1,8 +1,8 @@
 type FormFieldProps = {
     label: string;
-    htmlFor: string;
+    htmlFor?: string;
     error?: string;
-    required: boolean;
+    required?: boolean;
     children: React.ReactNode;
 }
 

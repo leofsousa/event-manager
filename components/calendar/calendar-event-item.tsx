@@ -25,7 +25,7 @@ export default function CalendarEventItem({
   onClick,
 }: Props) {
 
-  const sigla = event.channels?.sigla;
+  const sigla = event.channel?.sigla;
   const isTravel = (event as any).isTravel;
 
   return (
