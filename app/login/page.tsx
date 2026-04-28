@@ -4,7 +4,6 @@ import { Moon, Sun } from 'lucide-react';
 import Button from '@/components/ui/button';
 import Input from '@/components/ui/input';
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
 
@@ -51,16 +50,31 @@ export default function Login() {
       alert('Preencha corretamente os campos')
       return
     }
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password: senha,
-    });
-    if (error) {
+    
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password: senha,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        alert(data.error || "Erro ao fazer login");
+        return;
+      }
+
+      router.push('/dashboard')
+    } catch (error) {
       console.error(error);
       alert("Erro ao fazer login");
-      return;
     }
-    router.push('/dashboard')
   }
 
   return (
