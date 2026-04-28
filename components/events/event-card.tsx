@@ -78,6 +78,33 @@ export default function EventCard({ event, onDelete, mode = 'admin' }: Props) {
       <div className="text-sm text-gray-700 dark:text-gray-300 space-y-1 mb-4">
         <p>📅 {event.data}</p>
         <p>📍 {event.local}</p>
+
+        {event.userShift?.start_time && (
+          <p>⏰ Início: {event.userShift.start_time}</p>
+        )}
+
+        {event.userShift?.start_time && event.userShift?.end_time && (() => {
+          const toMinutes = (t: string) => {
+            const [h, m] = t.split(':').map(Number);
+            return h * 60 + m;
+          };
+
+          const start = toMinutes(event.userShift!.start_time);
+          let end = toMinutes(event.userShift!.end_time);
+          if (end <= start) end += 1440;
+
+          const total = end - start;
+          const hours = Math.floor(total / 60);
+          const minutes = total % 60;
+
+          const duration = hours > 0 && minutes > 0
+            ? `${hours}h ${minutes}min`
+            : hours > 0
+              ? `${hours}h`
+              : `${minutes}min`;
+
+          return <p>⏱ Duração: {duration}</p>;
+        })()}
       </div>
 
       <div className="mb-4">
