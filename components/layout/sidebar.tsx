@@ -1,6 +1,6 @@
 'use client';
 
-import { Home, Calendar, Users, Settings, LogOut } from 'lucide-react';
+import { Home, Calendar, Users, Settings, LogOut, Navigation } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -83,6 +83,7 @@ export default function Sidebar({ open, setOpen }: Props) {
         <ul className="flex flex-col gap-2">
           {menuItem('Agenda', Home, '/dashboard')}
           {menuItem('Eventos', Calendar, '/dashboard/eventos')}
+          {menuItem('Viagens', Navigation, '/dashboard/viagens')}
           {menuItem('Colaboradores', Users, '/dashboard/colaboradores')}
           {menuItem('Configurações', Settings, '/dashboard/settings')}
         </ul>

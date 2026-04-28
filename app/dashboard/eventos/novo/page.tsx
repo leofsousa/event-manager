@@ -10,10 +10,12 @@ import Select from '@/components/ui/select';
 import CreateOptionModal from '@/components/modals/create-option-modal';
 import { useToast } from '@/hooks/useToast';
 import { supabase } from '@/lib/supabase';
+import { useSearchParams } from 'next/navigation';
 
 export default function NovoEventoPage() {
   const router = useRouter();
   const { showToast } = useToast();
+  const searchParams = useSearchParams();
 
   const [eventTypes, setEventTypes] = useState<{ label: string; value: string }[]>([]);
   const [channels, setChannels] = useState<{ label: string; value: string }[]>([]);
@@ -52,6 +54,7 @@ export default function NovoEventoPage() {
 
   const isStudio = tipo === 'operacao-estudio';
   const isExternal = tipo === 'externa';
+  const viagemId = searchParams.get('viagemId');
 
   const fetchTypes = async () => {
     const { data, error } = await supabase.from('event_types').select('*');
@@ -162,6 +165,7 @@ export default function NovoEventoPage() {
           channel_id: channel || null,
           data_saida: isExternal ? travelStart : null,
           data_retorno: isExternal ? travelEnd : null,
+          viagem_id: viagemId || null,
         },
       ]);
 
