@@ -18,24 +18,24 @@ type Props = {
   shifts: Shift[];
   setShifts: React.Dispatch<React.SetStateAction<Shift[]>>;
   eventDate: string;
-  eventId?: string; 
+  eventId?: string;
+  isViagem?: boolean;
 };
 
 export default function EventShiftsManager({
   shifts,
   setShifts,
   eventDate,
-  eventId
+  eventId,
+  isViagem = false
 }: Props) {
-  const { showToast } = useToast();
 
-  const toMinutes = (time: string) => {
-    if (!time) return 0;
-    const parts = time.split(":");
-    const h = Number(parts[0] || 0);
-    const m = Number(parts[1] || 0);
-    return h * 60 + m;
-  };
+  const { showToast } = useToast();
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  // =========================
+  // CONFLICT LOGIC
+  // =========================
 
   const hasConflict = (a: any, b: any) => {
     const toMinutes = (time: string) => {
@@ -43,37 +43,24 @@ export default function EventShiftsManager({
       const [h, m] = time.split(":");
       return Number(h) * 60 + Number(m);
     };
-  
+
     const normalize = (start: number, end: number) => {
       if (end <= start) {
-        return { start, end: end + 1440 }; 
+        return { start, end: end + 1440 };
       }
       return { start, end };
     };
-  
-    const aStartRaw = toMinutes(a.start_time);
-    const aEndRaw = toMinutes(a.end_time);
-    const bStartRaw = toMinutes(b.start_time);
-    const bEndRaw = toMinutes(b.end_time);
-  
-    const aNorm = normalize(aStartRaw, aEndRaw);
-    const bNorm = normalize(bStartRaw, bEndRaw);
-  
-    const conflict =
-      aNorm.start < bNorm.end &&
-      aNorm.end > bNorm.start;
-  
-    console.log("CHECK FINAL:", {
-      a: aNorm,
-      b: bNorm,
-      conflict
-    });
-  
-    return conflict;
-  };
-  
 
-  const fetchConflicts = async (eventDate: string, eventId?: string) => {
+    const aNorm = normalize(toMinutes(a.start_time), toMinutes(a.end_time));
+    const bNorm = normalize(toMinutes(b.start_time), toMinutes(b.end_time));
+
+    return (
+      aNorm.start < bNorm.end &&
+      aNorm.end > bNorm.start
+    );
+  };
+
+  const fetchConflicts = async () => {
     const normalizedDate = eventDate?.split("T")[0];
 
     let query = supabase
@@ -97,20 +84,18 @@ export default function EventShiftsManager({
       query = query.neq("id", eventId);
     }
 
-    const { data, error } = await query;
-
-    if (error) {
-      console.error("Erro ao buscar conflitos:", error);
-      return [];
-    }
-
+    const { data } = await query;
     return data || [];
   };
 
-  const [activeIndex, setActiveIndex] = useState(0);
+  // =========================
+  // SHIFT CONTROL
+  // =========================
 
   const addShift = () => {
-    setShifts((prev) => [
+    if (isViagem) return; // 🚫 viagem não pode ter múltiplos turnos
+
+    setShifts(prev => [
       ...prev,
       {
         start_time: '',
@@ -121,96 +106,127 @@ export default function EventShiftsManager({
   };
 
   const removeShift = (index: number) => {
-    setShifts((prev) => prev.filter((_, i) => i !== index));
+    if (isViagem) return;
+
+    setShifts(prev => prev.filter((_, i) => i !== index));
     setActiveIndex(0);
   };
 
   const updateShift = (index: number, updated: Partial<Shift>) => {
-    setShifts((prev) =>
+    setShifts(prev =>
       prev.map((shift, i) =>
         i === index ? { ...shift, ...updated } : shift
       )
     );
   };
 
+  // =========================
+  // INIT
+  // =========================
+
   useEffect(() => {
     if (shifts.length === 0) {
-      addShift();
+      setShifts([
+        {
+          start_time: '',
+          end_time: '',
+          colaboradores: [],
+        },
+      ]);
     }
-  }, []);
+
+    if (isViagem && shifts.length > 1) {
+      setShifts([shifts[0]]);
+    }
+  }, [isViagem]);
 
   const currentShift = shifts[activeIndex];
+
+  // =========================
+  // UI
+  // =========================
 
   return (
     <div className="space-y-4">
 
-      <div className="flex gap-2 flex-wrap">
-        {shifts.map((shift, index) => (
+      {/* TURNOS */}
+      {!isViagem && (
+        <div className="flex gap-2 flex-wrap">
+          {shifts.map((shift, index) => (
+            <button
+              key={index}
+              onClick={() => setActiveIndex(index)}
+              className={`px-3 py-1 rounded-lg text-sm transition ${
+                activeIndex === index
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-200 dark:bg-gray-700'
+              }`}
+            >
+              Turno {index + 1}
+              {shift.start_time && shift.end_time && (
+                <span className="ml-2 text-xs opacity-80">
+                  ({shift.start_time} - {shift.end_time})
+                </span>
+              )}
+            </button>
+          ))}
+
           <button
-            key={index}
-            onClick={() => setActiveIndex(index)}
-            className={`px-3 py-1 rounded-lg text-sm transition ${
-              activeIndex === index
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-200 dark:bg-gray-700'
-            }`}
+            onClick={addShift}
+            className="px-3 py-1 rounded-lg bg-green-500 text-white"
           >
-            Turno {index + 1}
-            {shift.start_time && shift.end_time && (
-              <span className="ml-2 text-xs opacity-80">
-                ({shift.start_time} - {shift.end_time})
-              </span>
-            )}
+            +
           </button>
-        ))}
+        </div>
+      )}
 
-        <button
-          onClick={() => {
-            addShift();
-            setActiveIndex(shifts.length);
-          }}
-          className="px-3 py-1 rounded-lg bg-green-500 text-white"
-        >
-          +
-        </button>
-      </div>
-
+      {/* CARD */}
       {currentShift && (
         <div className="border rounded-xl p-4 space-y-4">
 
-          <div className="flex gap-2">
-            <Input
-              type="time"
-              step={900}
-              value={currentShift.start_time}
-              onChange={(e) =>
-                updateShift(activeIndex, {
-                  start_time: e.target.value,
-                })
-              }
-            />
+          {/* HORÁRIO */}
+          {!isViagem && (
+            <div className="flex gap-2">
+              <Input
+                type="time"
+                step={900}
+                value={currentShift.start_time}
+                onChange={(e) =>
+                  updateShift(activeIndex, {
+                    start_time: e.target.value,
+                  })
+                }
+              />
 
-            <Input
-              type="time"
-              value={currentShift.end_time}
-              onChange={(e) =>
-                updateShift(activeIndex, {
-                  end_time: e.target.value,
-                })
-              }
-            />
-          </div>
+              <Input
+                type="time"
+                value={currentShift.end_time}
+                onChange={(e) =>
+                  updateShift(activeIndex, {
+                    end_time: e.target.value,
+                  })
+                }
+              />
+            </div>
+          )}
 
+          {/* COLABORADORES */}
           <EventColaboradoresSelect
             selected={currentShift.colaboradores}
             onChange={async (ids) => {
 
+              // 🚀 viagem = sem conflito
+              if (isViagem) {
+                updateShift(activeIndex, { colaboradores: ids });
+                return;
+              }
+
               const currentShiftUpdated = {
-                ...shifts[activeIndex],
+                ...currentShift,
                 colaboradores: ids
               };
 
-              const events = await fetchConflicts(eventDate, eventId);
+              const events = await fetchConflicts();
 
               let hasAnyConflict = false;
 
@@ -225,22 +241,13 @@ export default function EventShiftsManager({
                       !shift.end_time
                     ) continue;
 
-                    const isSameCollaborator = shift.event_shift_collaborators.some(
+                    const isSame = shift.event_shift_collaborators.some(
                       (c: any) => c.collaborator_id === colabId
                     );
 
-                    if (!isSameCollaborator) continue;
+                    if (!isSame) continue;
 
-                    const conflict = hasConflict(currentShiftUpdated, shift);
-
-                    console.log({
-                      currentShiftUpdated,
-                      comparingWith: shift,
-                      colabId,
-                      conflict
-                    });
-
-                    if (conflict) {
+                    if (hasConflict(currentShiftUpdated, shift)) {
                       hasAnyConflict = true;
                     }
                   }
@@ -248,7 +255,7 @@ export default function EventShiftsManager({
               }
 
               if (hasAnyConflict) {
-                showToast("⚠️ Um ou mais colaboradores já estão em outro evento nesse horário");
+                showToast("⚠️ Conflito de horário detectado");
               }
 
               updateShift(activeIndex, {
@@ -257,7 +264,8 @@ export default function EventShiftsManager({
             }}
           />
 
-          {shifts.length > 1 && (
+          {/* REMOVER */}
+          {!isViagem && shifts.length > 1 && (
             <div className="flex justify-end">
               <Button
                 variant="danger"
@@ -267,6 +275,7 @@ export default function EventShiftsManager({
               </Button>
             </div>
           )}
+
         </div>
       )}
     </div>

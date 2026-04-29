@@ -15,6 +15,7 @@ type Shift = {
 };
 
 export default function EventEscalaPage() {
+
   const { id } = useParams();
   const router = useRouter();
   const { showToast } = useToast();
@@ -40,7 +41,7 @@ export default function EventEscalaPage() {
   };
 
   const fetchShifts = async () => {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('event_shifts')
       .select(`
         id,
@@ -52,15 +53,10 @@ export default function EventEscalaPage() {
       `)
       .eq('event_id', id);
 
-    if (error) {
-      console.error(error);
-      return;
-    }
-
     const formatted = (data || []).map((shift: any) => ({
       id: shift.id,
-      start_time: shift.start_time,
-      end_time: shift.end_time,
+      start_time: shift.start_time || '',
+      end_time: shift.end_time || '',
       colaboradores: shift.event_shift_collaborators.map(
         (c: any) => c.collaborator_id
       ),
@@ -91,8 +87,8 @@ export default function EventEscalaPage() {
           .from('event_shifts')
           .insert([{
             event_id: id,
-            start_time: shift.start_time,
-            end_time: shift.end_time,
+            start_time: shift.start_time || null,
+            end_time: shift.end_time || null,
           }])
           .select()
           .single();
@@ -123,6 +119,8 @@ export default function EventEscalaPage() {
   if (isLoading) return <p>Carregando...</p>;
   if (!event) return <p>Evento não encontrado</p>;
 
+  const isViagem = !!event?.viagem_id;
+
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
 
@@ -134,13 +132,22 @@ export default function EventEscalaPage() {
         <p className="text-sm text-gray-500">
           {event.data} • {event.local}
         </p>
+
+        {isViagem && (
+          <p className="text-sm text-blue-500 mt-1">
+            Escala vinculada à viagem (sem horários)
+          </p>
+        )}
       </div>
+
       <EventShiftsManager
         shifts={shifts}
         setShifts={setShifts}
         eventDate={event?.data}
         eventId={event.id}
+        isViagem={isViagem}
       />
+
       <div className="flex justify-end gap-2">
         <Button variant="secondary" onClick={() => router.back()}>
           Voltar

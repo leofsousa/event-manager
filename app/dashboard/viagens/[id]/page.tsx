@@ -230,7 +230,7 @@ export default function ViagemDetalhePage() {
           </h2>
           <Button
             variant="secondary"
-            onClick={() => router.push(`/dashboard/eventos/novo?viagem_id=${id}`)}
+            onClick={() => router.push(`/dashboard/eventos/novo?viagemId=${viagem.id}`)}
           >
             + Criar novo evento
           </Button>
@@ -312,10 +312,12 @@ export default function ViagemDetalhePage() {
         </p>
 
         <EventShiftsManager
-          shifts={shifts}
-          setShifts={setShifts}
-          eventDate={viagem.data_saida}
-        />
+  shifts={shifts}
+  setShifts={setShifts}
+  eventDate={viagem.data_saida}
+  isViagem={true}
+/>
+
 
         <div className="flex justify-end mt-4">
           <Button onClick={handleSaveScale} disabled={isSavingScale}>
