@@ -251,7 +251,10 @@ export default function EditEventoPage() {
           <textarea
             value={observacoes}
             onChange={(e) => setObservacoes(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg border"
+            className="w-full px-3 py-2 rounded-lg border
+            bg-white text-gray-900 dark:bg-gray-800 dark:border-gray-700
+            dark:text-gray-100 focus:outline-none focus:ring-2
+            focus:ring-blue-500 border-gray-300 resize-none"
           />
         </FormField>
 

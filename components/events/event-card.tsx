@@ -12,6 +12,7 @@ type Props = {
 
 export default function EventCard({ event, onDelete, mode = 'admin' }: Props) {
   const router = useRouter();
+  const isFromViagem = !!event.viagem_id;
 
   const channelStyles: Record<string, string> = {
     CR: "bg-[#a9e22c] text-white",
@@ -23,7 +24,15 @@ export default function EventCard({ event, onDelete, mode = 'admin' }: Props) {
     CB: "bg-white text-black",
   };
 
-  const channelSigla = event.channels?.sigla;
+  const channelSigla = event.channel?.sigla;
+
+  // ✅ NOVA REGRA
+  const isTravelEvent = !!event.viagem_id;
+
+  // 👉 considera escala se:
+  // - tem escala própria
+  // - OU pertence a uma viagem
+  const hasScale = event.hasScale || isTravelEvent;
 
   return (
     <div className={`
@@ -43,9 +52,12 @@ export default function EventCard({ event, onDelete, mode = 'admin' }: Props) {
             ✅ Você está escalado
           </span>
 
-          <span className="text-xs text-gray-500 dark:text-gray-400 px-1">
-            🕐 Turno: {event.userShift.start_time} - {event.userShift.end_time}
-          </span>
+          {/* 🔥 só mostra horário se NÃO for viagem */}
+          {!isTravelEvent && (
+            <span className="text-xs text-gray-500 dark:text-gray-400 px-1">
+              🕐 Turno: {event.userShift.start_time} - {event.userShift.end_time}
+            </span>
+          )}
 
           {event.isFirstShift && event.arrivalTime && (
             <span className="text-xs text-blue-500 dark:text-blue-400 px-1">
@@ -79,11 +91,12 @@ export default function EventCard({ event, onDelete, mode = 'admin' }: Props) {
         <p>📅 {event.data}</p>
         <p>📍 {event.local}</p>
 
-        {event.userShift?.start_time && (
+        {/* 🔥 NÃO mostra horário em viagem */}
+        {!isTravelEvent && event.userShift?.start_time && (
           <p>⏰ Início: {event.userShift.start_time}</p>
         )}
 
-        {event.userShift?.start_time && event.userShift?.end_time && (() => {
+        {!isTravelEvent && event.userShift?.start_time && event.userShift?.end_time && (() => {
           const toMinutes = (t: string) => {
             const [h, m] = t.split(':').map(Number);
             return h * 60 + m;
@@ -107,10 +120,11 @@ export default function EventCard({ event, onDelete, mode = 'admin' }: Props) {
         })()}
       </div>
 
+      {/* 🔥 BADGE ESCALA */}
       <div className="mb-4">
-        {event.hasScale ? (
+        {hasScale ? (
           <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-md">
-            Com escala
+            {isTravelEvent ? 'Escala da viagem' : 'Com escala'}
           </span>
         ) : (
           <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-md">
@@ -122,15 +136,26 @@ export default function EventCard({ event, onDelete, mode = 'admin' }: Props) {
       {mode === 'admin' && (
         <div className="flex flex-col sm:flex-row gap-2">
           <Button
+            disabled={isFromViagem}
             className={
-              event.hasScale
-                ? "bg-blue-600 hover:bg-blue-500"
-                : "bg-green-600 hover:bg-green-500"
+              isFromViagem
+                ? "bg-gray-400 cursor-not-allowed"
+                : event.hasScale
+                  ? "bg-blue-600 hover:bg-blue-500"
+                  : "bg-green-600 hover:bg-green-500"
             }
-            onClick={() => router.push(`/dashboard/eventos/${event.id}/escala`)}
+            onClick={() => {
+              if (isFromViagem) return;
+              router.push(`/dashboard/eventos/${event.id}/escala`);
+            }}
           >
-            {event.hasScale ? "Gerenciar escala" : "Criar escala"}
+            {isFromViagem
+              ? "Escala via viagem 🔒"
+              : event.hasScale
+                ? "Gerenciar escala"
+                : "Criar escala"}
           </Button>
+
 
           <div className="flex gap-2 w-full sm:w-auto">
             <Button

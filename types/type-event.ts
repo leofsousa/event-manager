@@ -15,4 +15,6 @@ export type Event = {
     end_time: string;
   } | null;
   arrivalTime?: string | null;
+  viagem_id?: string | null;
+
 };
