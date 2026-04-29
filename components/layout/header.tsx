@@ -32,6 +32,10 @@ export default function Header({
       return 'Configurações';
     }
 
+    if (pathName.startsWith('/dashboard/viagens')) {
+      return 'Viagens';
+    }
+
     return 'Agenda';
   };
 
