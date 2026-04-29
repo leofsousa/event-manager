@@ -8,6 +8,15 @@ type Props = {
   mode: 'admin' | 'colaborador';
 };
 
+interface TravelBlock {
+  id: string;
+  nome: string;
+  startIndex: number;
+  endIndex: number;
+  startDate: string;
+  endDate: string;
+}
+
 export default function CalendarGrid({ year, month, eventsByDate, mode }: Props) {
   const firstDay = new Date(year, month, 1);
   const startDay = firstDay.getDay();
@@ -20,57 +29,87 @@ export default function CalendarGrid({ year, month, eventsByDate, mode }: Props)
     cells.push(new Date(year, month, day));
   }
 
-  const viagensMap = new Map<string, { start: string; end: string }>();
+  // Mapa de viagens com suas datas e informações
+  const viagensMap = new Map<string, { 
+    nome: string;
+    start: string; 
+    end: string;
+    startIndex: number;
+    endIndex: number;
+  }>();
 
+  // Buscar viagens dos eventos com isTravelBlock
   Object.values(eventsByDate).forEach((events) => {
     events.forEach((event) => {
-      if (event.viagem && event.viagem.id) {
-
+      if (event.isTravelBlock && event.viagem && event.viagem.id) {
         if (!viagensMap.has(event.viagem.id)) {
-          viagensMap.set(event.viagem.id, {
-            start: new Date(event.viagem.data_saida + 'T00:00:00').toLocaleDateString('en-CA'),
-            end: new Date(event.viagem.data_retorno + 'T00:00:00').toLocaleDateString('en-CA'),
-          });
+          const startStr = event.viagem.data_saida;
+          const endStr = event.viagem.data_retorno;
+          
+          // Encontrar índices na grade
+          let startIdx = cells.findIndex(d => d && d.toLocaleDateString('en-CA') === startStr);
+          let endIdx = cells.findIndex(d => d && d.toLocaleDateString('en-CA') === endStr);
+          
+          // Se encontrou ambas as datas no mês, usar os índices
+          if (startIdx !== -1 && endIdx !== -1) {
+            viagensMap.set(event.viagem.id, {
+              nome: event.viagem.nome,
+              start: startStr,
+              end: endStr,
+              startIndex: startIdx,
+              endIndex: endIdx,
+            });
+          }
         }
-
       }
     });
   });
 
-  const travelRanges = Array.from(viagensMap.values());
-
-  const getTravelPosition = (dateStr: string): 'start' | 'middle' | 'end' | null => {
-    for (const range of travelRanges) {
-      if (dateStr === range.start) return 'start';
-      if (dateStr === range.end) return 'end';
-      if (dateStr > range.start && dateStr < range.end) return 'middle';
-    }
-    return null;
-  };
+  const travelBlocks = Array.from(viagensMap.values());
 
   return (
     <div className="overflow-x-auto">
-      <div className="grid grid-cols-7 gap-2 min-w-[700px]">
+      <div className="relative">
+        {/* BLOCOS DE VIAGEM CONTÍNUOS - Grid com posicionamento */}
+        <div 
+          className="grid gap-2 min-w-[700px] mb-2"
+          style={{ gridTemplateColumns: 'repeat(7, 1fr)' }}
+        >
+          {travelBlocks.map((travel) => {
+            return (
+              <div
+                key={`travel-${travel.startIndex}`}
+                className="h-7 bg-purple-400 dark:bg-purple-600 text-white dark:text-white rounded-lg flex items-center px-3 text-xs font-bold overflow-hidden whitespace-nowrap shadow-md"
+                style={{
+                  gridColumn: `${travel.startIndex + 1} / span ${travel.endIndex - travel.startIndex + 1}`,
+                }}
+              >
+                🚐 {travel.nome}
+              </div>
+            );
+          })}
+        </div>
 
-        {cells.map((date, index) => {
-          if (!date) return <div key={index} />;
+        {/* GRADE DE DIAS */}
+        <div className="grid grid-cols-7 gap-2 min-w-[700px]">
 
-          const dateStr = date.toLocaleDateString('en-CA');
-          const dayEvents = eventsByDate[dateStr] || [];
+          {cells.map((date, index) => {
+            if (!date) return <div key={index} />;
 
-          const travelPosition = getTravelPosition(dateStr);
+            const dateStr = date.toLocaleDateString('en-CA');
+            const dayEvents = eventsByDate[dateStr] || [];
 
-          return (
-            <CalendarDayCell
-              key={index}
-              date={date}
-              events={dayEvents}
-              mode={mode}
-              travelPosition={travelPosition}
-            />
-          );
-        })}
+            return (
+              <CalendarDayCell
+                key={index}
+                date={date}
+                events={dayEvents}
+                mode={mode}
+              />
+            );
+          })}
 
+        </div>
       </div>
     </div>
   );
