@@ -20,19 +20,24 @@ export default function CalendarGrid({ year, month, eventsByDate, mode }: Props)
     cells.push(new Date(year, month, day));
   }
 
-  // Coleta todos os ranges de viagem
-  const travelRanges: { start: string; end: string }[] = [];
+  const viagensMap = new Map<string, { start: string; end: string }>();
 
   Object.values(eventsByDate).forEach((events) => {
     events.forEach((event) => {
-      if (event.data_saida && event.data_retorno) {
-        travelRanges.push({
-          start: new Date(event.data_saida + 'T00:00:00').toLocaleDateString('en-CA'),
-          end: new Date(event.data_retorno + 'T00:00:00').toLocaleDateString('en-CA'),
-        });
+      if (event.viagem && event.viagem.id) {
+
+        if (!viagensMap.has(event.viagem.id)) {
+          viagensMap.set(event.viagem.id, {
+            start: new Date(event.viagem.data_saida + 'T00:00:00').toLocaleDateString('en-CA'),
+            end: new Date(event.viagem.data_retorno + 'T00:00:00').toLocaleDateString('en-CA'),
+          });
+        }
+
       }
     });
   });
+
+  const travelRanges = Array.from(viagensMap.values());
 
   const getTravelPosition = (dateStr: string): 'start' | 'middle' | 'end' | null => {
     for (const range of travelRanges) {
@@ -46,11 +51,13 @@ export default function CalendarGrid({ year, month, eventsByDate, mode }: Props)
   return (
     <div className="overflow-x-auto">
       <div className="grid grid-cols-7 gap-2 min-w-[700px]">
+
         {cells.map((date, index) => {
           if (!date) return <div key={index} />;
 
           const dateStr = date.toLocaleDateString('en-CA');
           const dayEvents = eventsByDate[dateStr] || [];
+
           const travelPosition = getTravelPosition(dateStr);
 
           return (
@@ -63,6 +70,7 @@ export default function CalendarGrid({ year, month, eventsByDate, mode }: Props)
             />
           );
         })}
+
       </div>
     </div>
   );

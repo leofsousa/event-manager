@@ -22,18 +22,25 @@ export default function Eventos() {
       .select(`
         *,
         event_shifts ( id ),
-        channels ( sigla )
-      `);
+        channels ( sigla ),
+        viagem:viagens (
+          id,
+          nome,
+          data_saida,
+          data_retorno
+  )
+`);
     if (error) {
       console.log("Erro ao buscar eventos", error);
       return;
     }
 
     const eventsWithFlag = (data || []).map((event: any) => ({
-      ...event,
-      hasScale: (event.event_shifts || []).length > 0,
-      channels: event.channels || null,
-    }));
+  ...event,
+  hasScale: (event.event_shifts || []).length > 0,
+  channels: event.channels || null,
+  viagem: event.viagem || null, // 👈 ESSENCIAL
+}));
     
 
     setEvents(eventsWithFlag);

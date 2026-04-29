@@ -2,7 +2,7 @@ import type { Event } from '@/types/type-event';
 
 type Props = {
   event: Event;
-  mode: 'admin' | 'viewer';
+  mode: 'admin' | 'colaborador';
   alignRight?: boolean;
   alignTop?: boolean;
   onClick?: (event: Event) => void;
@@ -26,15 +26,14 @@ export default function CalendarEventItem({
 }: Props) {
 
   const sigla = event.channel?.sigla;
-  const isTravel = (event as any).isTravel;
+
+  const isTravelBlock = event.isTravelBlock;
+  const isTravel = event.isTravel;
 
   return (
     <div
-      onClick={() => onClick?.(event)}
-      className="
-        relative group cursor-pointer
-        text-[11px] sm:text-[12px]
-      "
+      onClick={() => !isTravelBlock && onClick?.(event)}
+      className="relative group cursor-pointer text-[11px] sm:text-[12px]"
     >
 
       {/* ITEM */}
@@ -42,16 +41,26 @@ export default function CalendarEventItem({
         className={`
           flex items-center gap-1 px-1.5 py-[2px] rounded
           transition
-          
-          ${isTravel
-            ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
-            : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+
+          ${
+            isTravelBlock
+              ? 'bg-purple-200 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300 font-semibold'
+              : isTravel
+              ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+              : 'hover:bg-gray-100 dark:hover:bg-gray-700'
           }
         `}
       >
 
-        {/* BADGE */}
-        {!isTravel && sigla && (
+        {/* VIAGEM BLOCO */}
+        {isTravelBlock && (
+          <span className="text-[10px]">
+            🚐
+          </span>
+        )}
+
+        {/* BADGE CANAL */}
+        {!isTravelBlock && !isTravel && sigla && (
           <span
             className={`
               px-1.5 py-[1px] rounded font-semibold
@@ -63,8 +72,8 @@ export default function CalendarEventItem({
           </span>
         )}
 
-        {/* VIAGEM ICON */}
-        {isTravel && (
+        {/* ÍCONE VIAGEM (fallback) */}
+        {isTravel && !isTravelBlock && (
           <span className="text-[10px]">
             🚐
           </span>
@@ -97,24 +106,36 @@ export default function CalendarEventItem({
           {event.nome}
         </p>
 
-        <p>📅 {event.data}</p>
-        <p>📍 {event.local}</p>
+        {/* VIAGEM BLOCO */}
+        {isTravelBlock ? (
+          <>
+            <p className="text-purple-500 font-medium">
+              🚐 Viagem
+            </p>
 
-        {sigla && !isTravel && (
-          <p>📺 {sigla}</p>
+            {event.viagem?.data_saida && event.viagem?.data_retorno && (
+              <p>
+                {event.viagem.data_saida} → {event.viagem.data_retorno}
+              </p>
+            )}
+          </>
+        ) : (
+          <>
+            <p>📅 {event.data}</p>
+            <p>📍 {event.local}</p>
+
+            {sigla && (
+              <p>📺 {sigla}</p>
+            )}
+
+            {event.tipo && (
+              <p>🏷 {event.tipo}</p>
+            )}
+          </>
         )}
 
-        {event.tipo && !isTravel && (
-          <p>🏷 {event.tipo}</p>
-        )}
-
-        {isTravel && (
-          <p className="text-purple-500">
-            Dia de deslocamento
-          </p>
-        )}
-
-        {event.observacoes && (
+        {/* OBS */}
+        {event.observacoes && !isTravelBlock && (
           <p className="mt-1 text-gray-500">
             {event.observacoes}
           </p>

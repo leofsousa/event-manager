@@ -1,9 +1,5 @@
-'use client';
-
+import CalendarEventItem from './calendar-event-item';
 import type { Event } from '@/types/type-event';
-import CalendarEventItem from '@/components/calendar/calendar-event-item';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 
 type Props = {
   date: Date;
@@ -12,128 +8,68 @@ type Props = {
   travelPosition?: 'start' | 'middle' | 'end' | null;
 };
 
-export default function CalendarDayCell({ date, events, mode, travelPosition }: Props) {
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-  const router = useRouter();
+export default function CalendarDayCell({
+  date,
+  events,
+  mode,
+  travelPosition,
+}: Props) {
 
-  const todayStr = new Date().toLocaleDateString('en-CA');
-  const dateStr = date.toLocaleDateString('en-CA');
-  const isToday = todayStr === dateStr;
+  const dateStr = date.toLocaleDateString('pt-BR');
 
-  const travelBg = travelPosition
-    ? 'bg-purple-50 dark:bg-purple-900/10'
-    : '';
-
-  const travelBorder =
-    travelPosition === 'start'
-      ? 'border-l-4 border-l-purple-400'
-      : travelPosition === 'end'
-      ? 'border-r-4 border-r-purple-400'
-      : travelPosition === 'middle'
-      ? 'border-l-4 border-r-4 border-l-purple-200 border-r-purple-200'
-      : '';
+  // separa viagem do resto
+  const travelBlock = events.find((e) => e.isTravelBlock);
+  const normalEvents = events.filter((e) => !e.isTravelBlock);
 
   return (
-    <>
-      <div
-        className={`
-          min-h-[140px] sm:min-h-[160px]
-          border rounded-lg p-2 flex flex-col gap-1
-          transition overflow-visible relative
-          ${isToday
-            ? 'bg-blue-50 border-blue-400 dark:bg-blue-900/20 dark:border-blue-500 z-10'
-            : travelPosition
-            ? `${travelBg} ${travelBorder} border-gray-200 dark:border-gray-700`
-            : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
-          }
-        `}
-      >
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-gray-500">
-            {date.toLocaleDateString('pt-BR', { weekday: 'short' })}
-          </span>
-          <span
-            className={`text-sm font-bold ${
-              isToday
-                ? 'text-blue-600 dark:text-blue-400'
-                : travelPosition
-                ? 'text-purple-600 dark:text-purple-400'
-                : 'text-gray-800 dark:text-gray-100'
-            }`}
-          >
-            {date.getDate()}
-          </span>
-        </div>
+    <div className="flex flex-col border rounded-xl p-2 min-h-[100px] bg-white dark:bg-gray-800">
 
-        <div className="flex flex-col gap-1">
-          {events.slice(0, 5).map((event) => (
-            <CalendarEventItem
-              key={event.id}
-              event={event}
-              mode={mode === 'admin' ? 'admin' : 'viewer'}
-              alignRight={date.getDay() >= 4}
-              alignTop={date.getDate() > 21}
-              onClick={setSelectedEvent}
-            />
-          ))}
-          {events.length > 5 && (
-            <span className="text-[10px] text-gray-500">
-              +{events.length - 5}
+      {/* DATA */}
+      <div className="text-xs font-semibold text-gray-500 mb-1">
+        {dateStr}
+      </div>
+
+      {/* 🔥 BLOCO DE VIAGEM CONTÍNUO */}
+      {travelBlock && (
+        <div
+          className={`
+            flex items-center gap-1 px-2 py-[3px]
+            text-[11px] font-semibold
+            bg-purple-200 text-purple-800
+            dark:bg-purple-900/40 dark:text-purple-300
+
+            ${
+              travelPosition === 'start'
+                ? 'rounded-l-lg'
+                : travelPosition === 'end'
+                ? 'rounded-r-lg'
+                : 'rounded-none'
+            }
+          `}
+        >
+          {/* só mostra ícone no começo */}
+          {travelPosition === 'start' && <span>🚐</span>}
+
+          {/* só mostra nome no começo */}
+          {travelPosition === 'start' && (
+            <span className="truncate">
+              {travelBlock.nome}
             </span>
           )}
         </div>
+      )}
+
+      {/* EVENTOS NORMAIS */}
+      <div className="flex flex-col gap-[2px] mt-1">
+        {normalEvents.map((event) => (
+          <CalendarEventItem
+            key={event.id}
+            event={event}
+            mode={mode}
+          />
+        ))}
       </div>
 
-      {/* MODAL */}
-      {selectedEvent && (
-        <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-          onClick={() => setSelectedEvent(null)}
-        >
-          <div
-            className="bg-white dark:bg-gray-900 rounded-xl p-4 w-full max-w-sm"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-lg font-semibold mb-2">
-              {selectedEvent.nome}
-            </h3>
-
-            <p>📅 {selectedEvent.data}</p>
-            <p>📍 {selectedEvent.local}</p>
-
-            {selectedEvent.channel?.sigla && (
-              <p>📺 {selectedEvent.channel.sigla}</p>
-            )}
-
-            {selectedEvent.tipo && (
-              <p>🏷 {selectedEvent.tipo}</p>
-            )}
-
-            {selectedEvent.observacoes && (
-              <p className="mt-2 text-sm text-gray-500">
-                {selectedEvent.observacoes}
-              </p>
-            )}
-
-            <div className="mt-4 flex gap-2">
-              {mode === 'admin' && !(selectedEvent as any).isTravel && (
-                <button
-                  onClick={() => router.push(`/dashboard/eventos/${selectedEvent.id}`)}
-                  className="flex-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-100 py-2 rounded text-sm font-medium transition"
-                >
-                  ✏️ Editar
-                </button>
-              )}
-              <button
-                onClick={() => setSelectedEvent(null)}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded text-sm font-medium transition"
-              >
-                Fechar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
+    </div>
   );
 }

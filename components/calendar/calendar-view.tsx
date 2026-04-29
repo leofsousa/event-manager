@@ -5,6 +5,7 @@ import type { Event } from '@/types/type-event';
 import CalendarGrid from '@/components/calendar/calendar-grid';
 import CalendarDayCell from '@/components/calendar/calendar-day-cell';
 import TodayEventsSection from '@/components/calendar/today-events-section';
+import { supabase } from '@/lib/supabase';
 
 type Props = {
   events: Event[];
@@ -14,8 +15,18 @@ type Props = {
 
 export default function CalendarView({ events, mode = 'admin', onDelete }: Props) {
 
+  const [viagens, setViagens] = useState<any[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+  const fetchViagens = async () => {
+    const { data } = await supabase.from('viagens').select('*');
+    setViagens(data || []);
+  };
+
+  fetchViagens();
+}, []);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 640);
@@ -23,6 +34,7 @@ export default function CalendarView({ events, mode = 'admin', onDelete }: Props
     window.addEventListener('resize', check);
     return () => window.removeEventListener('resize', check);
   }, []);
+
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -33,48 +45,61 @@ export default function CalendarView({ events, mode = 'admin', onDelete }: Props
     return events.filter((e) => e.data === todayStr && !(e as any).isTravel);
   }, [events, todayStr]);
 
-  const groupedEvents = useMemo(() => {
-    const map: Record<string, Event[]> = {};
+ const groupedEvents = useMemo(() => {
+  const map: Record<string, Event[]> = {};
 
-    const addToDate = (date: Date, event: Event) => {
-      const dateStr = date.toLocaleDateString('en-CA');
-      if (!map[dateStr]) map[dateStr] = [];
-      map[dateStr].push(event);
-    };
+  const addToDate = (date: Date, event: Event) => {
+    const dateStr = date.toLocaleDateString('en-CA');
+    if (!map[dateStr]) map[dateStr] = [];
+    map[dateStr].push(event);
+  };
 
-    events.forEach((event: any) => {
-      const eventDate = new Date(event.data + 'T00:00:00');
+  const viagensProcessadas = new Set<string>();
 
-      // EVENTO PRINCIPAL
-      addToDate(eventDate, event);
+  events.forEach((event) => {
+    const eventDate = new Date(event.data + 'T00:00:00');
 
-      // VIAGEM (NOVO PADRÃO)
-      if (event.viagem?.data_saida && event.viagem?.data_retorno) {
+    // ✅ EVENTO NORMAL (sempre aparece)
+    addToDate(eventDate, event);
 
-        const start = new Date(event.viagem.data_saida + 'T00:00:00');
-        const end = new Date(event.viagem.data_retorno + 'T00:00:00');
+    // ✅ BLOCO DE VIAGEM (apenas 1 vez por viagem)
+    if (event.viagem && !viagensProcessadas.has(event.viagem.id)) {
 
-        let current = new Date(start);
+      viagensProcessadas.add(event.viagem.id);
 
-        while (current <= end) {
-          const currentStr = current.toLocaleDateString('en-CA');
-          const eventStr = eventDate.toLocaleDateString('en-CA');
+      const start = new Date(event.viagem.data_saida + 'T00:00:00');
+      const end = new Date(event.viagem.data_retorno + 'T00:00:00');
 
-          if (currentStr !== eventStr) {
-            addToDate(new Date(current), {
-              ...event,
-              id: `${event.id}-travel-${currentStr}`,
-              isTravel: true,
-            });
-          }
+      let current = new Date(start);
 
-          current.setDate(current.getDate() + 1);
-        }
+      while (current <= end) {
+
+        const dateStr = current.toLocaleDateString('en-CA');
+
+        addToDate(new Date(current), {
+          id: `viagem-${event.viagem.id}-${dateStr}`,
+          nome: `🚐 ${event.viagem.nome}`,
+          tipo: 'viagem',
+          data: dateStr,
+          local: '',
+          observacoes: '',
+          hasScale: true,
+
+          viagem_id: event.viagem.id,
+          isTravel: true,
+          isTravelBlock: true,
+          viagem: event.viagem,
+        });
+
+        current.setDate(current.getDate() + 1);
       }
-    });
+    }
+  });
 
-    return map;
-  }, [events]);
+  return map;
+}, [events]);
+
+
 
   const getWeekDays = (date: Date) => {
     const start = new Date(date);
