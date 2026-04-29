@@ -31,9 +31,7 @@ export default function EditEventoPage() {
   const [data, setData] = useState('');
   const [local, setLocal] = useState('');
   const [observacoes, setObservacoes] = useState('');
-
-  const [travelStart, setTravelStart] = useState('');
-  const [travelEnd, setTravelEnd] = useState('');
+  const [viagemId, setViagemId] = useState<string | null>(null);
 
   const [customLocal, setCustomLocal] = useState('');
   const [isOtherSelected, setIsOtherSelected] = useState(false);
@@ -46,7 +44,6 @@ export default function EditEventoPage() {
   });
 
   const isStudio = tipo === 'operacao-estudio';
-  const isExternal = tipo === 'externa';
 
   const studioOptions = [
     { label: 'Estúdio 1', value: 'estudio-1' },
@@ -74,8 +71,9 @@ export default function EditEventoPage() {
     setData(data.data);
     setObservacoes(data.observacoes || '');
     setChannel(data.channel_id || '');
+    setViagemId(data.viagem_id || null);
 
-    // local studio handling
+    // local
     if (data.tipo === 'operacao-estudio') {
       const isStudioOption = studioOptions.some(
         (opt) => opt.value === data.local
@@ -93,10 +91,6 @@ export default function EditEventoPage() {
     } else {
       setLocal(data.local);
     }
-
-    // viagem (CORRIGIDO)
-    setTravelStart(data.data_saida || '');
-    setTravelEnd(data.data_retorno || '');
 
     setLoading(false);
   };
@@ -131,13 +125,6 @@ export default function EditEventoPage() {
     fetchChannels();
   }, [id]);
 
-  useEffect(() => {
-    if (!isExternal) {
-      setTravelStart('');
-      setTravelEnd('');
-    }
-  }, [tipo]);
-
   const handleCreateType = async (name: string) => {
     const formatted = name.toLowerCase().replace(/\s+/g, '-');
 
@@ -169,8 +156,7 @@ export default function EditEventoPage() {
           data,
           observacoes,
           channel_id: channel || null,
-          data_saida: travelStart || null,
-          data_retorno: travelEnd || null,
+          viagem_id: viagemId || null,
         })
         .eq('id', id);
 
@@ -199,6 +185,7 @@ export default function EditEventoPage() {
         <FormField label="Nome" htmlFor="nome" required error={errors.nome}>
           <Input id="nome" value={nome} onChange={(e) => setNome(e.target.value)} />
         </FormField>
+
         <FormField label="Tipo" htmlFor="tipo" required error={errors.tipo}>
           <Select
             id="tipo"
@@ -214,6 +201,7 @@ export default function EditEventoPage() {
             }}
           />
         </FormField>
+
         <FormField label="Local" htmlFor="local" required error={errors.local}>
           {isStudio ? (
             <>
@@ -247,40 +235,23 @@ export default function EditEventoPage() {
           )}
         </FormField>
 
-        <FormField label="Canal" htmlFor="canal" required={false}>
+        <FormField label="Canal">
           <Select
-            id="canal"
             value={channel}
             options={channels}
             onChange={(value) => setChannel(value)}
           />
         </FormField>
 
-        <FormField label="Data" htmlFor="data" required error={errors.data}>
-          <InputDate id="data" value={data} onChange={setData} />
+        <FormField label="Data" required>
+          <InputDate value={data} onChange={setData} />
         </FormField>
 
-        {isExternal && (
-          <div className="grid grid-cols-2 gap-2">
-            <FormField label="Início viagem" htmlFor="viagem-inicio" required={false}>
-              <InputDate id="viagem-inicio" value={travelStart} onChange={setTravelStart} />
-            </FormField>
-
-            <FormField label="Fim viagem" htmlFor="viagem-fim" required={false}>
-              <InputDate id="viagem-fim" value={travelEnd} onChange={setTravelEnd} />
-            </FormField>
-          </div>
-        )}
-
-        <FormField label="Observações" htmlFor="observacoes" required={false}>
+        <FormField label="Observações">
           <textarea
-            id="observacoes"
             value={observacoes}
             onChange={(e) => setObservacoes(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg border
-            bg-white text-gray-900 dark:bg-gray-800 dark:border-gray-700
-            dark:text-gray-100 focus:outline-none focus:ring-2
-            focus:ring-blue-500 border-gray-300 resize-none"
+            className="w-full px-3 py-2 rounded-lg border"
           />
         </FormField>
 
@@ -307,6 +278,7 @@ export default function EditEventoPage() {
           }}
         />
       )}
+
     </div>
   );
 }

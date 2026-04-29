@@ -62,8 +62,9 @@ export default function EventModal({
     { label: "Outro", value: "__other__" },
   ], []);
 
+  const isInViagem = !!viagemId;
   const isStudio = tipo === "operacao-estudio";
-  const isExterna = tipo === "externa";
+  const isExternal = tipo === 'externa' && !isInViagem;
 
   const fetchTypes = async () => {
     const { data, error } = await supabase

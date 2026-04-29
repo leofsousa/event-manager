@@ -42,13 +42,18 @@ export default function CalendarView({ events, mode = 'admin', onDelete }: Props
       map[dateStr].push(event);
     };
 
-    events.forEach((event) => {
+    events.forEach((event: any) => {
       const eventDate = new Date(event.data + 'T00:00:00');
+
+      // EVENTO PRINCIPAL
       addToDate(eventDate, event);
 
-      if (event.data_saida && event.data_retorno) {
-        const start = new Date(event.data_saida + 'T00:00:00');
-        const end = new Date(event.data_retorno + 'T00:00:00');
+      // VIAGEM (NOVO PADRÃO)
+      if (event.viagem?.data_saida && event.viagem?.data_retorno) {
+
+        const start = new Date(event.viagem.data_saida + 'T00:00:00');
+        const end = new Date(event.viagem.data_retorno + 'T00:00:00');
+
         let current = new Date(start);
 
         while (current <= end) {
@@ -60,7 +65,7 @@ export default function CalendarView({ events, mode = 'admin', onDelete }: Props
               ...event,
               id: `${event.id}-travel-${currentStr}`,
               isTravel: true,
-            } as Event);
+            });
           }
 
           current.setDate(current.getDate() + 1);
@@ -107,14 +112,12 @@ export default function CalendarView({ events, mode = 'admin', onDelete }: Props
   return (
     <div className="flex flex-col gap-4">
 
-      {/* SECTION: EVENTOS DE HOJE */}
       <TodayEventsSection
         events={todayEvents}
         mode={mode}
         onDelete={onDelete}
       />
 
-      {/* NAVEGAÇÃO */}
       <div className="flex items-center justify-between">
         <button
           onClick={handlePrev}
@@ -140,7 +143,6 @@ export default function CalendarView({ events, mode = 'admin', onDelete }: Props
         </button>
       </div>
 
-      {/* GRID */}
       {isMobile ? (
         <div className="flex flex-col gap-2">
           {getWeekDays(currentDate).map((date) => {

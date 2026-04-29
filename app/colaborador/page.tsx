@@ -17,6 +17,10 @@ export default function ColaboradorPage() {
         .from('events')
         .select(`
           *,
+          viagem:viagem_id (
+            data_saida,
+            data_retorno
+          ),  
           channels(sigla),
           event_shifts(
             id,

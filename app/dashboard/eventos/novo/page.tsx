@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Input from '@/components/ui/input';
 import InputDate from '@/components/ui/input-date';
 import Button from '@/components/ui/button';
@@ -10,12 +10,13 @@ import Select from '@/components/ui/select';
 import CreateOptionModal from '@/components/modals/create-option-modal';
 import { useToast } from '@/hooks/useToast';
 import { supabase } from '@/lib/supabase';
-import { useSearchParams } from 'next/navigation';
 
 export default function NovoEventoPage() {
   const router = useRouter();
   const { showToast } = useToast();
   const searchParams = useSearchParams();
+
+  const viagemId = searchParams.get('viagemId');
 
   const [eventTypes, setEventTypes] = useState<{ label: string; value: string }[]>([]);
   const [channels, setChannels] = useState<{ label: string; value: string }[]>([]);
@@ -28,9 +29,6 @@ export default function NovoEventoPage() {
   const [data, setData] = useState('');
   const [local, setLocal] = useState('');
   const [observacoes, setObservacoes] = useState('');
-
-  const [travelStart, setTravelStart] = useState('');
-  const [travelEnd, setTravelEnd] = useState('');
 
   const [customLocal, setCustomLocal] = useState('');
   const [isOtherSelected, setIsOtherSelected] = useState(false);
@@ -53,13 +51,9 @@ export default function NovoEventoPage() {
   ], []);
 
   const isStudio = tipo === 'operacao-estudio';
-  const isExternal = tipo === 'externa';
-  const viagemId = searchParams.get('viagemId');
 
   const fetchTypes = async () => {
-    const { data, error } = await supabase.from('event_types').select('*');
-
-    if (error) return;
+    const { data } = await supabase.from('event_types').select('*');
 
     const formatted = (data || []).map((t: any) => ({
       label: t.label,
@@ -70,9 +64,7 @@ export default function NovoEventoPage() {
   };
 
   const fetchChannels = async () => {
-    const { data, error } = await supabase.from('channels').select('*');
-
-    if (error) return;
+    const { data } = await supabase.from('channels').select('*');
 
     const formatted = (data || []).map((c: any) => ({
       label: `${c.sigla} - ${c.name}`,
@@ -91,13 +83,6 @@ export default function NovoEventoPage() {
     setLocal('');
     setIsOtherSelected(false);
   }, [tipo]);
-
-  useEffect(() => {
-    if (!isExternal) {
-      setTravelStart('');
-      setTravelEnd('');
-    }
-  }, [isExternal]);
 
   const handleCreateType = async (name: string) => {
     const formatted = name.toLowerCase().replace(/\s+/g, '-');
@@ -132,18 +117,6 @@ export default function NovoEventoPage() {
     if (!data.trim()) newErrors.data = 'Data é obrigatória';
     if (!local.trim()) newErrors.local = 'Local é obrigatório';
 
-    if (isExternal) {
-      if (!travelStart || !travelEnd) {
-        showToast('Preencha as datas de viagem');
-        return false;
-      }
-
-      if (travelStart > travelEnd) {
-        showToast('Data de início da viagem maior que a de retorno');
-        return false;
-      }
-    }
-
     setErrors(newErrors);
 
     return Object.values(newErrors).every((err) => err === '');
@@ -163,8 +136,6 @@ export default function NovoEventoPage() {
           data,
           observacoes,
           channel_id: channel || null,
-          data_saida: isExternal ? travelStart : null,
-          data_retorno: isExternal ? travelEnd : null,
           viagem_id: viagemId || null,
         },
       ]);
@@ -197,13 +168,12 @@ export default function NovoEventoPage() {
 
       <div className="flex flex-col gap-4">
 
-        <FormField label="Nome" htmlFor="nome" required error={errors.nome}>
-          <Input id="nome" value={nome} onChange={(e) => setNome(e.target.value)} />
+        <FormField label="Nome" required error={errors.nome}>
+          <Input value={nome} onChange={(e) => setNome(e.target.value)} />
         </FormField>
 
-        <FormField label="Tipo" htmlFor="tipo" required error={errors.tipo}>
+        <FormField label="Tipo" required error={errors.tipo}>
           <Select
-            id="tipo"
             value={tipo}
             options={eventTypes}
             showCreateOption
@@ -217,11 +187,10 @@ export default function NovoEventoPage() {
           />
         </FormField>
 
-        <FormField label="Local" htmlFor="local" required error={errors.local}>
+        <FormField label="Local" required error={errors.local}>
           {isStudio ? (
             <>
               <Select
-                id="local"
                 value={isOtherSelected ? '__other__' : local}
                 options={studioOptions}
                 onChange={(value) => {
@@ -236,7 +205,6 @@ export default function NovoEventoPage() {
               />
               {isOtherSelected && (
                 <Input
-                  id="local"
                   value={customLocal}
                   onChange={(e) => {
                     setCustomLocal(e.target.value);
@@ -246,38 +214,24 @@ export default function NovoEventoPage() {
               )}
             </>
           ) : (
-            <Input id="local" value={local} onChange={(e) => setLocal(e.target.value)} />
+            <Input value={local} onChange={(e) => setLocal(e.target.value)} />
           )}
         </FormField>
 
-        <FormField label="Canal" htmlFor="canal" required={false}>
+        <FormField label="Canal">
           <Select
-            id="canal"
             value={channel}
             options={channels}
             onChange={(value) => setChannel(value)}
           />
         </FormField>
 
-        <FormField label="Data" htmlFor="data" required error={errors.data}>
-          <InputDate id="data" value={data} onChange={setData} />
+        <FormField label="Data" required error={errors.data}>
+          <InputDate value={data} onChange={setData} />
         </FormField>
 
-        {isExternal && (
-          <div className="grid grid-cols-2 gap-2">
-            <FormField label="Início viagem" htmlFor="viagem-inicio" required={false}>
-              <InputDate id="viagem-inicio" value={travelStart} onChange={setTravelStart} />
-            </FormField>
-
-            <FormField label="Fim viagem" htmlFor="viagem-fim" required={false}>
-              <InputDate id="viagem-fim" value={travelEnd} onChange={setTravelEnd} />
-            </FormField>
-          </div>
-        )}
-
-        <FormField label="Observações" htmlFor="observacoes" required={false}>
+        <FormField label="Observações">
           <textarea
-            id="observacoes"
             value={observacoes}
             onChange={(e) => setObservacoes(e.target.value)}
             className="w-full px-3 py-2 rounded-lg border
