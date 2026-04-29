@@ -12,13 +12,15 @@ export default function Home() {
     if (loading) return;
 
     if (user) {
-      router.replace('/dashboard')
+      router.replace('/dashboard');
     } else {
-      router.replace('/login')
+      router.replace('/login');
     }
-  }, [user, loading, router]
+  }, [user, loading, router]);
 
-  )
+  if (loading) {
+    return <p>Carregando...</p>;
+  }
 
-  return null
+  return null;
 }

@@ -4,13 +4,15 @@ import { Moon, Sun } from 'lucide-react';
 import Button from '@/components/ui/button';
 import Input from '@/components/ui/input';
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/auth-context';
 
 export default function Login() {
-  const { user, loading } = useAuth();
-  const router = useRouter();
+  const { loading } = useAuth();
   const [isDark, setIsDark] = useState(false);
+  const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const toggleTheme = () => {
     const newTheme = !isDark;
@@ -35,46 +37,46 @@ export default function Login() {
     }
   }, []);
 
-  useEffect(() => {
-    if (loading) return;
-
-    if (user) {
-      router.replace('/dashboard');
-    }
-  }, [user, loading, router]);
-  const [email, setEmail] = useState('');
-  const [senha, setSenha] = useState('');
-
   const handleLogin = async () => {
     if (!email || !senha) {
-      alert('Preencha corretamente os campos')
-      return
+      alert('Preencha corretamente os campos');
+      return;
     }
-    
+
+    setIsLoggingIn(true);
+
     try {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          password: senha,
-        }),
-      })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: senha }),
+      });
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (!response.ok) {
-        alert(data.error || "Erro ao fazer login");
+        alert(data.error || 'Erro ao fazer login');
+        setIsLoggingIn(false);
         return;
       }
 
-      router.push('/dashboard')
+      // Sincroniza sessão no client — onAuthStateChange dispara e auth-context redireciona
+      await supabase.auth.signInWithPassword({ email, password: senha });
+
     } catch (error) {
       console.error(error);
-      alert("Erro ao fazer login");
+      alert('Erro ao fazer login');
+      setIsLoggingIn(false);
     }
+  };
+
+  // Mostra loading enquanto verifica sessão inicial
+  if (loading) {
+    return (
+      <div className="h-screen w-full bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
+        <p className="text-gray-400 text-sm">Carregando...</p>
+      </div>
+    );
   }
 
   return (
@@ -90,21 +92,27 @@ export default function Login() {
             {isDark ? <Sun size={18} /> : <Moon size={18} />}
           </button>
         </div>
+
         <h1 className="text-center w-full text-2xl font-bold text-gray-900 dark:text-white tracking-tight mb-2">
           Event Manager
         </h1>
+
         <Input
           value={email}
           placeholder="Login"
           onChange={(e) => setEmail(e.target.value)}
         />
+
         <Input
           value={senha}
           type="password"
           placeholder="Senha"
           onChange={(e) => setSenha(e.target.value)}
         />
-        <Button onClick={handleLogin}>Entrar</Button>
+
+        <Button onClick={handleLogin} disabled={isLoggingIn}>
+          {isLoggingIn ? 'Entrando...' : 'Entrar'}
+        </Button>
       </div>
     </div>
   );

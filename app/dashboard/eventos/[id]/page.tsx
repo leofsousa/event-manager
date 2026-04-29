@@ -12,7 +12,9 @@ import { useToast } from '@/hooks/useToast';
 import { supabase } from '@/lib/supabase';
 
 export default function EditEventoPage() {
-  const { id } = useParams();
+  const params = useParams();
+  const id = params?.id as string;
+
   const router = useRouter();
   const { showToast } = useToast();
 

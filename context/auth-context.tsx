@@ -20,6 +20,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<any>(null);
   const [role, setRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
   const router = useRouter();
   const pathname = usePathname();
 
@@ -29,18 +30,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .select('role')
       .eq('id', userId)
       .single();
+
     return data?.role ?? null;
   };
 
   useEffect(() => {
+    let isMounted = true;
+
     const init = async () => {
-      const { data } = await supabase.auth.getUser();
-      const currentUser = data.user;
+      const { data } = await supabase.auth.getSession();
+
+      if (!isMounted) return;
+
+      const currentUser = data.session?.user ?? null;
 
       if (currentUser) {
         const userRole = await fetchProfile(currentUser.id);
         setUser(currentUser);
         setRole(userRole);
+      } else {
+        setUser(null);
+        setRole(null);
       }
 
       setLoading(false);
@@ -49,8 +59,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     init();
 
     const { data: listener } = supabase.auth.onAuthStateChange(
-      async (_, session) => {
+      async (_event, session) => {
         const currentUser = session?.user ?? null;
+
         setUser(currentUser);
 
         if (currentUser) {
@@ -62,14 +73,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     );
 
-    return () => listener.subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      listener.subscription.unsubscribe();
+    };
   }, []);
 
-  // Redirecionamento por role
   useEffect(() => {
     if (loading) return;
+
+    if (!user && !pathname.startsWith('/login')) {
+      router.replace('/login');
+      return;
+    }
+
     if (!user) return;
-    if (pathname.startsWith('/login')) return;
+
+    if (pathname.startsWith('/login')) {
+      if (role === 'admin') router.replace('/dashboard');
+      if (role === 'colaborador') router.replace('/colaborador');
+      return;
+    }
 
     if (role === 'colaborador' && pathname.startsWith('/dashboard')) {
       router.replace('/colaborador');
@@ -78,7 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (role === 'admin' && pathname.startsWith('/colaborador')) {
       router.replace('/dashboard');
     }
-  }, [role, loading, pathname]);
+  }, [role, loading, pathname, user, router]);
 
   return (
     <AuthContext.Provider value={{ user, role, loading }}>
