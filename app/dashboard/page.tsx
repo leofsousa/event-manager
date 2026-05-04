@@ -36,7 +36,10 @@ export default function Dashboard() {
         event_shifts(
           id,
           start_time,
-          end_time
+          end_time,
+          event_shift_collaborators(
+            collaborator_id
+          )
         )
       `);
 
@@ -57,21 +60,49 @@ export default function Dashboard() {
       const shifts = event.event_shifts || [];
       const hasScale = shifts.length > 0;
 
-      const firstShift = shifts
-        .filter((s: any) => s.start_time)
-        .sort((a: any, b: any) => toMinutes(a.start_time) - toMinutes(b.start_time))[0] ?? null;
+      const userShift = shifts.find((shift: any) =>
+        shift.event_shift_collaborators?.some(
+          (collaborator: any) => collaborator.collaborator_id === user?.id
+        )
+      ) ?? null;
+
+      const isUserScaled = !!userShift;
+
+      let arrivalTime: string | null = null;
+      let isFirstShift = false;
+
+      if (userShift?.start_time) {
+        const earliestShift = [...shifts]
+          .filter((s: any) => s.start_time)
+          .sort((a: any, b: any) => toMinutes(a.start_time) - toMinutes(b.start_time))[0] ?? null;
+
+        isFirstShift = earliestShift?.id === userShift.id;
+
+        if (isFirstShift) {
+          const [h, m] = userShift.start_time.split(':').map(Number);
+          const arrival = new Date();
+          arrival.setHours(h - 1, m, 0);
+          arrivalTime = arrival.toLocaleTimeString('pt-BR', {
+            hour: '2-digit',
+            minute: '2-digit',
+          });
+        }
+      }
 
       return {
         ...event,
         channel: event.channels ?? event.channel ?? null,
         hasScale,
-        userShift: firstShift,
+        isUserScaled,
+        userShift,
+        isFirstShift,
+        arrivalTime,
       };
     });
 
     setEvents(formatted);
     setLoadingEvents(false);
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     if (!loading && user) {
