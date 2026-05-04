@@ -4,11 +4,13 @@ import { Moon, Sun } from 'lucide-react';
 import Button from '@/components/ui/button';
 import Input from '@/components/ui/input';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/auth-context';
 
 export default function Login() {
   const { loading } = useAuth();
+  const router = useRouter();
   const [isDark, setIsDark] = useState(false);
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
@@ -38,34 +40,64 @@ export default function Login() {
   }, []);
 
   const handleLogin = async () => {
+    console.log('1. handleLogin iniciado');
+
     if (!email || !senha) {
       alert('Preencha corretamente os campos');
       return;
     }
 
+    console.log('2. Campos validados');
     setIsLoggingIn(true);
 
     try {
+      console.log('3. Iniciando requisição para /api/auth/login');
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password: senha }),
       });
 
+      console.log('4. Resposta recebida:', response.status);
       const data = await response.json();
+      console.log('5. Dados parseados:', data);
 
       if (!response.ok) {
+        console.log('6. Erro na resposta:', data.error);
         alert(data.error || 'Erro ao fazer login');
         setIsLoggingIn(false);
         return;
       }
 
-      // Sincroniza sessão no client — onAuthStateChange dispara e auth-context redireciona
-      await supabase.auth.signInWithPassword({ email, password: senha });
+      console.log('7. Login da API bem-sucedido, agora chamando Supabase client');
+      const { data: clientData, error: clientError } = await supabase.auth.signInWithPassword({
+        email,
+        password: senha,
+      });
 
+      if (clientError) {
+        console.error('8. Erro no signInWithPassword do client:', clientError);
+        alert(clientError.message || 'Erro ao autenticar o cliente');
+        setIsLoggingIn(false);
+        return;
+      }
+
+      console.log('9. login client bem-sucedido', clientData);
+
+      const role = data.role;
+      if (role === 'admin') {
+        router.replace('/dashboard');
+      } else if (role === 'colaborador') {
+        router.replace('/colaborador');
+      } else {
+        console.warn('Role retornada inválida:', role);
+        router.replace('/login');
+      }
+
+      setIsLoggingIn(false);
     } catch (error) {
-      console.error(error);
-      alert('Erro ao fazer login');
+      console.error('10. ERRO na requisição:', error);
+      alert('Erro ao fazer login: ' + (error instanceof Error ? error.message : String(error)));
       setIsLoggingIn(false);
     }
   };

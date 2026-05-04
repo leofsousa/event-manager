@@ -4,9 +4,13 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter, usePathname } from 'next/navigation';
 
+// Roles válidas no sistema
+const VALID_ROLES = ['admin', 'colaborador'] as const;
+type ValidRole = typeof VALID_ROLES[number];
+
 type AuthContextType = {
   user: any;
-  role: string | null;
+  role: ValidRole | null;
   loading: boolean;
 };
 
@@ -18,7 +22,7 @@ const AuthContext = createContext<AuthContextType>({
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<any>(null);
-  const [role, setRole] = useState<string | null>(null);
+  const [role, setRole] = useState<ValidRole | null>(null);
   const [loading, setLoading] = useState(true);
 
   const router = useRouter();
@@ -31,7 +35,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .eq('id', userId)
       .single();
 
-    return data?.role ?? null;
+    const fetchedRole = data?.role ?? null;
+    
+    // Validar que a role é uma das permitidas
+    if (fetchedRole && VALID_ROLES.includes(fetchedRole as ValidRole)) {
+      return fetchedRole as ValidRole;
+    }
+    
+    console.warn(`Role inválida encontrada: ${fetchedRole}. Usando null.`);
+    return null;
   };
 
   useEffect(() => {
@@ -90,8 +102,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user) return;
 
     if (pathname.startsWith('/login')) {
-      if (role === 'admin') router.replace('/dashboard');
-      if (role === 'colaborador') router.replace('/colaborador');
+      if (role === 'admin') {
+        router.replace('/dashboard');
+      }
+      if (role === 'colaborador') {
+        router.replace('/colaborador');
+      }
       return;
     }
 
