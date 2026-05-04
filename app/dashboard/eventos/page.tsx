@@ -2,7 +2,7 @@
 
 import EventList from '@/components/events/event-list';
 import EventModal from '@/components/events/event-modal';
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { Event } from '@/types/type-event';
 import { supabase } from '@/lib/supabase';
 import { useToast } from "@/hooks/useToast";
@@ -13,10 +13,15 @@ export default function Eventos() {
   const router = useRouter();
 
   const [events, setEvents] = useState<Event[]>([]);
+  const [loadingEvents, setLoadingEvents] = useState(true);
+  const [eventsError, setEventsError] = useState<string | null>(null);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [isModalOpen, setModalOpen] = useState(false);
 
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async () => {
+    setLoadingEvents(true);
+    setEventsError(null);
+
     const { data, error } = await supabase
       .from("events")
       .select(`
@@ -28,27 +33,31 @@ export default function Eventos() {
           nome,
           data_saida,
           data_retorno
-  )
-`);
+        )
+      `);
+
     if (error) {
       console.log("Erro ao buscar eventos", error);
+      setEventsError(error.message);
+      setEvents([]);
+      setLoadingEvents(false);
       return;
     }
 
     const eventsWithFlag = (data || []).map((event: any) => ({
-  ...event,
-  hasScale: (event.event_shifts || []).length > 0,
-  channels: event.channels || null,
-  viagem: event.viagem || null, // 👈 ESSENCIAL
-}));
-    
+      ...event,
+      hasScale: (event.event_shifts || []).length > 0,
+      channels: event.channels || null,
+      viagem: event.viagem || null,
+    }));
 
     setEvents(eventsWithFlag);
-  };
+    setLoadingEvents(false);
+  }, []);
 
   useEffect(() => {
     fetchEvents();
-  }, []);
+  }, [fetchEvents]);
 
 
   const handleDelete = async (id: string) => {
@@ -116,15 +125,18 @@ export default function Eventos() {
 
   return (
     <div>
-
-      <EventList
-        events={sortedEvents}
-        onDelete={handleDelete}
-        onAdd={handleAdd}
-        onEdit={handleEdit}
-      />
-
-
+      {loadingEvents ? (
+        <div className="text-gray-700 dark:text-gray-200">Carregando eventos...</div>
+      ) : eventsError ? (
+        <div className="text-red-500">Erro ao carregar eventos: {eventsError}</div>
+      ) : (
+        <EventList
+          events={sortedEvents}
+          onDelete={handleDelete}
+          onAdd={handleAdd}
+          onEdit={handleEdit}
+        />
+      )}
 
       {isModalOpen && (
         <EventModal
@@ -137,7 +149,6 @@ export default function Eventos() {
           onAddEvent={handleAddEvent}
         />
       )}
-
     </div>
   );
 }

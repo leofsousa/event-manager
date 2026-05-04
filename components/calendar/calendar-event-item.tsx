@@ -55,7 +55,7 @@ export default function CalendarEventItem({
   const sigla = event.channel?.sigla;
   const isTravelBlock = event.isTravelBlock;
   const isTravel = event.isTravel;
-
+  const isUserScaled = event.isUserScaled;
   const isClickable = !!onClick && !isTravelBlock;
 
   return (
@@ -72,7 +72,9 @@ export default function CalendarEventItem({
           transition
 
           ${
-            isTravelBlock
+            isUserScaled
+              ? 'bg-blue-100 text-blue-800 dark:bg-blue-300 dark:bg-opacity-40 font-semibold'
+              : isTravelBlock
               ? 'bg-purple-200 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300 font-semibold'
               : isTravel
               ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
@@ -133,6 +135,18 @@ export default function CalendarEventItem({
         <p className="font-semibold mb-1">
           {event.nome}
         </p>
+
+        {isUserScaled && event.userShift && (
+          <div className="mb-2 rounded-md bg-blue-50 dark:bg-blue-900/20 p-2 text-blue-700 dark:text-blue-200 text-[12px]">
+            <p className="font-semibold">✅ Você está escalado</p>
+            {event.userShift.start_time && event.userShift.end_time && (
+              <p>🕐 Turno: {event.userShift.start_time} - {event.userShift.end_time}</p>
+            )}
+            {event.isFirstShift && event.arrivalTime && (
+              <p>📍 Chegada: {event.arrivalTime}</p>
+            )}
+          </div>
+        )}
 
         {/* VIAGEM BLOCO */}
         {isTravelBlock ? (

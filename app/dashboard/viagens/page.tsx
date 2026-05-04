@@ -18,15 +18,28 @@ type Viagem = {
 export default function ViagensPage() {
   const router = useRouter();
   const [viagens, setViagens] = useState<Viagem[]>([]);
+  const [loadingViagens, setLoadingViagens] = useState(true);
+  const [viagensError, setViagensError] = useState<string | null>(null);
 
   const fetchViagens = async () => {
+    setLoadingViagens(true);
+    setViagensError(null);
+
     const { data, error } = await supabase
       .from('viagens')
       .select('*')
       .order('data_saida', { ascending: true });
 
-    if (error) { console.error(error); return; }
+    if (error) {
+      console.error(error);
+      setViagens([]);
+      setViagensError(error.message);
+      setLoadingViagens(false);
+      return;
+    }
+
     setViagens(data || []);
+    setLoadingViagens(false);
   };
 
   useEffect(() => { fetchViagens(); }, []);
@@ -51,7 +64,15 @@ export default function ViagensPage() {
         </Button>
       </div>
 
-      {viagens.length === 0 ? (
+      {loadingViagens ? (
+        <div className="text-center py-16 text-gray-400 dark:text-gray-500">
+          Carregando viagens...
+        </div>
+      ) : viagensError ? (
+        <div className="text-center py-16 text-red-500 dark:text-red-400">
+          Erro ao carregar viagens: {viagensError}
+        </div>
+      ) : viagens.length === 0 ? (
         <div className="text-center py-16 text-gray-400 dark:text-gray-500">
           Nenhuma viagem cadastrada ainda.
         </div>

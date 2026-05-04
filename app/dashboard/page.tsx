@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/auth-context';
@@ -11,6 +11,8 @@ export default function Dashboard() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [events, setEvents] = useState<Event[]>([]);
+  const [loadingEvents, setLoadingEvents] = useState(true);
+  const [eventsError, setEventsError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -18,13 +20,16 @@ export default function Dashboard() {
     }
   }, [user, loading]);
 
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async () => {
+    setLoadingEvents(true);
+    setEventsError(null);
+
     const { data, error } = await supabase
       .from("events")
       .select(`
         *,
         viagem:viagem_id (
-        data_saida,
+          data_saida,
           data_retorno
         ),
         channels(sigla),
@@ -35,7 +40,13 @@ export default function Dashboard() {
         )
       `);
 
-    if (error) { console.error(error); return; }
+    if (error) {
+      console.error(error);
+      setEventsError(error.message);
+      setEvents([]);
+      setLoadingEvents(false);
+      return;
+    }
 
     const toMinutes = (time: string) => {
       const [h, m] = time.split(':').map(Number);
@@ -59,17 +70,30 @@ export default function Dashboard() {
     });
 
     setEvents(formatted);
-  };
-
-  useEffect(() => {
-    fetchEvents();
+    setLoadingEvents(false);
   }, []);
 
-  if (loading) return <p>Carregando...</p>;
+  useEffect(() => {
+    if (!loading && user) {
+      fetchEvents();
+    }
+  }, [loading, user, fetchEvents]);
+
+  if (loading || loadingEvents) {
+    return (
+      <div className="p-4">
+        <p className="text-gray-700 dark:text-gray-200">Carregando agenda...</p>
+      </div>
+    );
+  }
+
   if (!user) return null;
 
   return (
     <div className="p-4">
+      {eventsError && (
+        <p className="mb-4 text-sm text-red-500">Erro ao carregar eventos: {eventsError}</p>
+      )}
       <CalendarView events={events} mode="admin" onDelete={fetchEvents as any} />
     </div>
   );
