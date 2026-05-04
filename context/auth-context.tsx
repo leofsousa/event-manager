@@ -4,7 +4,6 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter, usePathname } from 'next/navigation';
 
-// Roles válidas no sistema
 const VALID_ROLES = ['admin', 'colaborador'] as const;
 type ValidRole = typeof VALID_ROLES[number];
 
@@ -36,13 +35,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .single();
 
     const fetchedRole = data?.role ?? null;
-    
-    // Validar que a role é uma das permitidas
+
     if (fetchedRole && VALID_ROLES.includes(fetchedRole as ValidRole)) {
       return fetchedRole as ValidRole;
     }
-    
-    console.warn(`Role inválida encontrada: ${fetchedRole}. Usando null.`);
+
     return null;
   };
 
@@ -50,22 +47,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let isMounted = true;
 
     const init = async () => {
-      const { data } = await supabase.auth.getSession();
+      try {
+        const { data } = await supabase.auth.getSession();
 
-      if (!isMounted) return;
+        if (!isMounted) return;
 
-      const currentUser = data.session?.user ?? null;
+        const currentUser = data.session?.user ?? null;
 
-      if (currentUser) {
-        const userRole = await fetchProfile(currentUser.id);
-        setUser(currentUser);
-        setRole(userRole);
-      } else {
-        setUser(null);
-        setRole(null);
+        if (currentUser) {
+          const userRole = await fetchProfile(currentUser.id);
+          if (!isMounted) return;
+
+          setUser(currentUser);
+          setRole(userRole);
+        } else {
+          setUser(null);
+          setRole(null);
+        }
+      } catch (err) {
+        console.error('Erro no init auth:', err);
+      } finally {
+        if (isMounted) setLoading(false); // 🔥 GARANTIDO
       }
-
-      setLoading(false);
     };
 
     init();
@@ -102,12 +105,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user) return;
 
     if (pathname.startsWith('/login')) {
-      if (role === 'admin') {
-        router.replace('/dashboard');
-      }
-      if (role === 'colaborador') {
-        router.replace('/colaborador');
-      }
+      if (role === 'admin') router.replace('/dashboard');
+      if (role === 'colaborador') router.replace('/colaborador');
       return;
     }
 
