@@ -82,6 +82,7 @@ export default function ColaboradorPage() {
 
         return {
           ...event,
+          channel: event.channels ?? event.channel ?? null,
           hasScale,
           isUserScaled,
           userShift,

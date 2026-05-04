@@ -1,11 +1,19 @@
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import type { Event } from '@/types/type-event';
 import CalendarGrid from '@/components/calendar/calendar-grid';
 import CalendarDayCell from '@/components/calendar/calendar-day-cell';
 import TodayEventsSection from '@/components/calendar/today-events-section';
-import { supabase } from '@/lib/supabase';
+import Button from '@/components/ui/button';
+
+type TravelRange = {
+  id: string;
+  nome: string;
+  data_saida: string;
+  data_retorno: string;
+};
 
 type Props = {
   events: Event[];
@@ -15,18 +23,10 @@ type Props = {
 
 export default function CalendarView({ events, mode = 'admin', onDelete }: Props) {
 
-  const [viagens, setViagens] = useState<any[]>([]);
+  const router = useRouter();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-  const fetchViagens = async () => {
-    const { data } = await supabase.from('viagens').select('*');
-    setViagens(data || []);
-  };
-
-  fetchViagens();
-}, []);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 640);
@@ -45,59 +45,37 @@ export default function CalendarView({ events, mode = 'admin', onDelete }: Props
     return events.filter((e) => e.data === todayStr && !(e as any).isTravel);
   }, [events, todayStr]);
 
- const groupedEvents = useMemo(() => {
-  const map: Record<string, Event[]> = {};
+  const { groupedEvents, travelRanges } = useMemo(() => {
+    const map: Record<string, Event[]> = {};
+    const travelRanges: TravelRange[] = [];
+    const travelsProcessed = new Set<string>();
 
-  const addToDate = (date: Date, event: Event) => {
-    const dateStr = date.toLocaleDateString('en-CA');
-    if (!map[dateStr]) map[dateStr] = [];
-    map[dateStr].push(event);
-  };
+    const addToDate = (date: Date, event: Event) => {
+      const dateStr = date.toLocaleDateString('en-CA');
+      if (!map[dateStr]) map[dateStr] = [];
+      map[dateStr].push(event);
+    };
 
-  const viagensProcessadas = new Set<string>();
+    events.forEach((event) => {
+      const eventDate = new Date(event.data + 'T00:00:00');
+      addToDate(eventDate, event);
 
-  events.forEach((event) => {
-    const eventDate = new Date(event.data + 'T00:00:00');
-
-    // ✅ EVENTO NORMAL (sempre aparece)
-    addToDate(eventDate, event);
-
-    // ✅ BLOCO DE VIAGEM (apenas 1 vez por viagem)
-    if (event.viagem && !viagensProcessadas.has(event.viagem.id)) {
-
-      viagensProcessadas.add(event.viagem.id);
-
-      const start = new Date(event.viagem.data_saida + 'T00:00:00');
-      const end = new Date(event.viagem.data_retorno + 'T00:00:00');
-
-      let current = new Date(start);
-
-      while (current <= end) {
-
-        const dateStr = current.toLocaleDateString('en-CA');
-
-        addToDate(new Date(current), {
-          id: `viagem-${event.viagem.id}-${dateStr}`,
-          nome: `🚐 ${event.viagem.nome}`,
-          tipo: 'viagem',
-          data: dateStr,
-          local: '',
-          observacoes: '',
-          hasScale: true,
-
-          viagem_id: event.viagem.id,
-          isTravel: true,
-          isTravelBlock: true,
-          viagem: event.viagem,
+      if (event.viagem && !travelsProcessed.has(event.viagem.id)) {
+        travelsProcessed.add(event.viagem.id);
+        travelRanges.push({
+          id: event.viagem.id,
+          nome: event.viagem.nome,
+          data_saida: event.viagem.data_saida,
+          data_retorno: event.viagem.data_retorno,
         });
-
-        current.setDate(current.getDate() + 1);
       }
-    }
-  });
+    });
 
-  return map;
-}, [events]);
+    return {
+      groupedEvents: map,
+      travelRanges,
+    };
+  }, [events]);
 
 
 
@@ -134,8 +112,64 @@ export default function CalendarView({ events, mode = 'admin', onDelete }: Props
     }
   };
 
+  const handleEventClick = (event: Event) => {
+    if (mode === 'admin') {
+      setSelectedEvent(event);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-4">
+
+      {selectedEvent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-lg rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-2xl overflow-hidden">
+            <div className="flex items-start justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400 mb-1">
+                  Evento
+                </p>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  {selectedEvent.nome}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedEvent(null)}
+                className="text-gray-500 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="px-6 py-5 space-y-3 text-sm text-gray-700 dark:text-gray-300">
+              <p><span className="font-semibold">Tipo:</span> {selectedEvent.tipo}</p>
+              <p><span className="font-semibold">Data:</span> {selectedEvent.data}</p>
+              <p><span className="font-semibold">Local:</span> {selectedEvent.local}</p>
+              {selectedEvent.observacoes && (
+                <p><span className="font-semibold">Observações:</span> {selectedEvent.observacoes}</p>
+              )}
+              {selectedEvent.channel?.sigla && (
+                <p><span className="font-semibold">Canal:</span> {selectedEvent.channel.sigla}</p>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-3 px-6 py-5 sm:flex-row sm:justify-end">
+              <Button variant="secondary" onClick={() => setSelectedEvent(null)}>
+                Fechar
+              </Button>
+              <Button
+                onClick={() => {
+                  router.push(`/dashboard/eventos/${selectedEvent.id}`);
+                  setSelectedEvent(null);
+                }}
+              >
+                Editar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <TodayEventsSection
         events={todayEvents}
@@ -180,6 +214,7 @@ export default function CalendarView({ events, mode = 'admin', onDelete }: Props
                 date={date}
                 events={dayEvents}
                 mode={mode}
+                onEventClick={handleEventClick}
               />
             );
           })}
@@ -189,7 +224,9 @@ export default function CalendarView({ events, mode = 'admin', onDelete }: Props
           year={year}
           month={month}
           eventsByDate={groupedEvents}
+          travelRanges={travelRanges}
           mode={mode}
+          onEventClick={handleEventClick}
         />
       )}
 

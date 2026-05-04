@@ -1,23 +1,34 @@
 import CalendarDayCell from '@/components/calendar/calendar-day-cell';
 import type { Event } from '@/types/type-event';
 
+type TravelRange = {
+  id: string;
+  nome: string;
+  data_saida: string;
+  data_retorno: string;
+};
+
+type CalendarTravelDay = {
+  id: string;
+  nome: string;
+  isStart: boolean;
+  isEnd: boolean;
+  isSingle: boolean;
+};
+
 type Props = {
   year: number;
   month: number;
   eventsByDate: Record<string, Event[]>;
+  travelRanges?: TravelRange[];
   mode: 'admin' | 'colaborador';
+  onEventClick?: (event: Event) => void;
 };
 
-interface TravelBlock {
-  id: string;
-  nome: string;
-  startIndex: number;
-  endIndex: number;
-  startDate: string;
-  endDate: string;
-}
+const formatDate = (date: Date) => date.toLocaleDateString('en-CA');
+const weekDayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
-export default function CalendarGrid({ year, month, eventsByDate, mode }: Props) {
+export default function CalendarGrid({ year, month, eventsByDate, travelRanges = [], mode, onEventClick }: Props) {
   const firstDay = new Date(year, month, 1);
   const startDay = firstDay.getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -29,86 +40,82 @@ export default function CalendarGrid({ year, month, eventsByDate, mode }: Props)
     cells.push(new Date(year, month, day));
   }
 
-  // Mapa de viagens com suas datas e informações
-  const viagensMap = new Map<string, { 
-    nome: string;
-    start: string; 
-    end: string;
-    startIndex: number;
-    endIndex: number;
-  }>();
-
-  // Buscar viagens dos eventos com isTravelBlock
-  Object.values(eventsByDate).forEach((events) => {
-    events.forEach((event) => {
-      if (event.isTravelBlock && event.viagem && event.viagem.id) {
-        if (!viagensMap.has(event.viagem.id)) {
-          const startStr = event.viagem.data_saida;
-          const endStr = event.viagem.data_retorno;
-          
-          // Encontrar índices na grade
-          let startIdx = cells.findIndex(d => d && d.toLocaleDateString('en-CA') === startStr);
-          let endIdx = cells.findIndex(d => d && d.toLocaleDateString('en-CA') === endStr);
-          
-          // Se encontrou ambas as datas no mês, usar os índices
-          if (startIdx !== -1 && endIdx !== -1) {
-            viagensMap.set(event.viagem.id, {
-              nome: event.viagem.nome,
-              start: startStr,
-              end: endStr,
-              startIndex: startIdx,
-              endIndex: endIdx,
-            });
-          }
-        }
-      }
-    });
+  const dateIndexMap = new Map<string, number>();
+  cells.forEach((date, index) => {
+    if (date) {
+      dateIndexMap.set(formatDate(date), index);
+    }
   });
 
-  const travelBlocks = Array.from(viagensMap.values());
+  const firstVisibleDate = cells.find(Boolean) as Date | undefined;
+  const lastVisibleDate = [...cells].reverse().find(Boolean) as Date | undefined;
+
+  const travelDays: Record<string, CalendarTravelDay[]> = {};
+
+  travelRanges.forEach((travel) => {
+    const start = new Date(`${travel.data_saida}T00:00:00`);
+    const end = new Date(`${travel.data_retorno}T00:00:00`);
+    if (!firstVisibleDate || !lastVisibleDate) return;
+
+    const clipStart = start < firstVisibleDate ? firstVisibleDate : start;
+    const clipEnd = end > lastVisibleDate ? lastVisibleDate : end;
+    if (clipStart > clipEnd) return;
+
+    let current = new Date(clipStart);
+    while (current <= clipEnd) {
+      const dateKey = formatDate(current);
+      const isStart = current.getTime() === start.getTime();
+      const isEnd = current.getTime() === end.getTime();
+      const travelItem = {
+        id: travel.id,
+        nome: travel.nome,
+        isStart,
+        isEnd,
+        isSingle: isStart && isEnd,
+      };
+
+      if (!travelDays[dateKey]) {
+        travelDays[dateKey] = [];
+      }
+      travelDays[dateKey].push(travelItem);
+
+      current.setDate(current.getDate() + 1);
+    }
+  });
 
   return (
     <div className="overflow-x-auto">
       <div className="relative">
-        {/* BLOCOS DE VIAGEM CONTÍNUOS - Grid com posicionamento */}
-        <div 
-          className="grid gap-2 min-w-[700px] mb-2"
-          style={{ gridTemplateColumns: 'repeat(7, 1fr)' }}
-        >
-          {travelBlocks.map((travel) => {
-            return (
-              <div
-                key={`travel-${travel.startIndex}`}
-                className="h-7 bg-purple-400 dark:bg-purple-600 text-white dark:text-white rounded-lg flex items-center px-3 text-xs font-bold overflow-hidden whitespace-nowrap shadow-md"
-                style={{
-                  gridColumn: `${travel.startIndex + 1} / span ${travel.endIndex - travel.startIndex + 1}`,
-                }}
-              >
-                🚐 {travel.nome}
-              </div>
-            );
-          })}
+        <div className="grid grid-cols-7 gap-2 min-w-[700px] mb-2 text-center text-xs font-semibold text-gray-500 dark:text-gray-400">
+          {weekDayNames.map((name) => (
+            <div key={name} className="py-2">
+              {name}
+            </div>
+          ))}
         </div>
 
-        {/* GRADE DE DIAS */}
-        <div className="grid grid-cols-7 gap-2 min-w-[700px]">
-
+        <div
+          className="grid grid-cols-7 gap-2 min-w-[700px] mb-2"
+          style={{ gridTemplateColumns: 'repeat(7, 1fr)', gridAutoRows: 'minmax(100px, auto)' }}
+        >
           {cells.map((date, index) => {
             if (!date) return <div key={index} />;
 
-            const dateStr = date.toLocaleDateString('en-CA');
+            const dateStr = formatDate(date);
             const dayEvents = eventsByDate[dateStr] || [];
+            const travel = travelDays[dateStr] || [];
 
             return (
               <CalendarDayCell
                 key={index}
                 date={date}
                 events={dayEvents}
+                travel={travel}
                 mode={mode}
+                onEventClick={onEventClick}
               />
             );
           })}
-
         </div>
       </div>
     </div>

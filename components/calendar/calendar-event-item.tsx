@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import type { Event } from '@/types/type-event';
 
 type Props = {
@@ -20,20 +21,48 @@ const channelStyles: Record<string, string> = {
 
 export default function CalendarEventItem({
   event,
-  alignRight,
-  alignTop,
+  alignRight: alignRightProp,
+  alignTop: alignTopProp,
   onClick,
 }: Props) {
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [alignRightState, setAlignRightState] = useState(false);
+  const [alignTopState, setAlignTopState] = useState(false);
 
+  useEffect(() => {
+    const updatePosition = () => {
+      const wrapper = wrapperRef.current;
+      if (!wrapper) return;
+
+      const rect = wrapper.getBoundingClientRect();
+      const margin = 20;
+      setAlignRightState(rect.right > window.innerWidth - margin);
+      setAlignTopState(rect.bottom > window.innerHeight - 180);
+    };
+
+    updatePosition();
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+
+    return () => {
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
+  }, []);
+
+  const alignRight = alignRightProp ?? alignRightState;
+  const alignTop = alignTopProp ?? alignTopState;
   const sigla = event.channel?.sigla;
-
   const isTravelBlock = event.isTravelBlock;
   const isTravel = event.isTravel;
 
+  const isClickable = !!onClick && !isTravelBlock;
+
   return (
     <div
-      onClick={() => !isTravelBlock && onClick?.(event)}
-      className="relative group cursor-pointer text-[11px] sm:text-[12px]"
+      ref={wrapperRef}
+      onClick={() => isClickable && onClick?.(event)}
+      className={`relative group ${isClickable ? 'cursor-pointer' : 'cursor-default'} text-[11px] sm:text-[12px] overflow-visible`}
     >
 
       {/* ITEM */}
@@ -92,13 +121,12 @@ export default function CalendarEventItem({
           absolute z-50
           ${alignRight ? 'right-0' : 'left-0'}
           ${alignTop ? 'bottom-full mb-1' : 'top-full mt-1'}
-          
           hidden group-hover:block
-          
-          w-56 p-2 rounded-md shadow-lg
+          w-64 max-w-screen-sm p-2 rounded-md shadow-lg
           bg-white dark:bg-gray-900
           border border-gray-200 dark:border-gray-700
           text-xs
+          max-h-72 overflow-auto
         `}
       >
 

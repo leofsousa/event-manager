@@ -52,6 +52,7 @@ export default function Dashboard() {
 
       return {
         ...event,
+        channel: event.channels ?? event.channel ?? null,
         hasScale,
         userShift: firstShift,
       };
