@@ -41,9 +41,9 @@ export default function CalendarTimeline({
   const timelineWidth = days.length * DAY_WIDTH;
 
   return (
-    <div className="w-full">
+    <div className="w-full min-w-0">
 
-      {/* SCROLL REAL */}
+      {/* SCROLL APENAS DA TIMELINE */}
       <div
         className="
           w-full
@@ -57,7 +57,7 @@ export default function CalendarTimeline({
         "
       >
 
-        {/* TIMELINE FIXA */}
+        {/* CONTEÚDO FIXO */}
         <div
           className="flex flex-col"
           style={{

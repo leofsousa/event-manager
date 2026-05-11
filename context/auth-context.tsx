@@ -105,16 +105,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user) return;
 
     if (pathname.startsWith('/login')) {
-      if (role === 'admin') router.replace('/dashboard');
-      if (role === 'colaborador') router.replace('/colaborador');
+      if (role === 'admin') {
+        router.replace('/dashboard');
+      } else if (role === 'colaborador') {
+        router.replace('/colaborador');
+      }
       return;
     }
 
+    // Validação de acesso à rota
     if (role === 'colaborador' && pathname.startsWith('/dashboard')) {
       router.replace('/colaborador');
-    }
-
-    if (role === 'admin' && pathname.startsWith('/colaborador')) {
+    } else if (role === 'admin' && pathname.startsWith('/colaborador') && !pathname.startsWith('/colaborador/')) {
       router.replace('/dashboard');
     }
   }, [role, loading, pathname, user, router]);

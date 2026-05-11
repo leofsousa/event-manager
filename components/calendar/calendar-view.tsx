@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState } from "react";
 
-import type { Event } from '@/types/type-event';
+import type { Event } from "@/types/type-event";
 
-import CalendarTimeline from '@/components/calendar/calendar-timeline';
+import CalendarTimeline from "@/components/calendar/calendar-timeline";
 
 type Viagem = {
   id: string;
@@ -16,23 +16,22 @@ type Viagem = {
 type Props = {
   events: Event[];
   viagens: Viagem[];
-  mode?: 'admin' | 'colaborador';
+  mode?: "admin" | "colaborador";
 };
 
 const STUDIO_ORDER = [
-  'estudio-1',
-  'estudio-2',
-  'estudio-3',
-  'estudio-4',
-  '__other__',
+  "estudio-1",
+  "estudio-2",
+  "estudio-3",
+  "estudio-4",
+  "__other__",
 ];
 
 export default function CalendarView({
   events,
   viagens,
-  mode = 'admin',
+  mode = "admin",
 }: Props) {
-
   /**
    * Data atual
    */
@@ -41,16 +40,12 @@ export default function CalendarView({
   /**
    * Estado mês selecionado
    */
-  const [selectedMonth, setSelectedMonth] = useState(
-    today.getMonth()
-  );
+  const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
 
   /**
    * Estado ano selecionado
    */
-  const [selectedYear, setSelectedYear] = useState(
-    today.getFullYear()
-  );
+  const [selectedYear, setSelectedYear] = useState(today.getFullYear());
 
   /**
    * Filtra apenas mês atual
@@ -71,14 +66,9 @@ export default function CalendarView({
    */
   const sortedEvents = useMemo(() => {
     return [...filteredEvents].sort((a, b) => {
+      const studioA = STUDIO_ORDER.indexOf(a.estudio || "__other__");
 
-      const studioA = STUDIO_ORDER.indexOf(
-        a.estudio || '__other__'
-      );
-
-      const studioB = STUDIO_ORDER.indexOf(
-        b.estudio || '__other__'
-      );
+      const studioB = STUDIO_ORDER.indexOf(b.estudio || "__other__");
 
       if (studioA !== studioB) {
         return studioA - studioB;
@@ -92,23 +82,22 @@ export default function CalendarView({
    * Meses dropdown
    */
   const months = [
-    'Janeiro',
-    'Fevereiro',
-    'Março',
-    'Abril',
-    'Maio',
-    'Junho',
-    'Julho',
-    'Agosto',
-    'Setembro',
-    'Outubro',
-    'Novembro',
-    'Dezembro',
+    "Janeiro",
+    "Fevereiro",
+    "Março",
+    "Abril",
+    "Maio",
+    "Junho",
+    "Julho",
+    "Agosto",
+    "Setembro",
+    "Outubro",
+    "Novembro",
+    "Dezembro",
   ];
 
   return (
-    <div className="flex flex-col gap-4">
-
+    <div className="flex flex-col gap-4 min-w-0">
       {/* HEADER */}
       <div
         className="
@@ -116,7 +105,6 @@ export default function CalendarView({
           sm:flex-row sm:items-center sm:justify-between
         "
       >
-
         <div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
             Agenda Operacional
@@ -129,12 +117,9 @@ export default function CalendarView({
 
         {/* SELECT MÊS */}
         <div className="flex items-center gap-2">
-
           <select
             value={selectedMonth}
-            onChange={(e) =>
-              setSelectedMonth(Number(e.target.value))
-            }
+            onChange={(e) => setSelectedMonth(Number(e.target.value))}
             className="
               rounded-xl border border-gray-300
               bg-white px-4 py-2 text-sm
@@ -143,28 +128,25 @@ export default function CalendarView({
               dark:text-white
             "
           >
-
             {months.map((month, index) => (
               <option key={month} value={index}>
                 {month}
               </option>
             ))}
-
           </select>
-
         </div>
-
       </div>
 
       {/* TIMELINE */}
-      <CalendarTimeline
-        year={selectedYear}
-        month={selectedMonth}
-        events={sortedEvents}
-        viagens={viagens}
-        mode={mode}
-      />
-
+      <div className="min-w-0">
+        <CalendarTimeline
+          year={selectedYear}
+          month={selectedMonth}
+          events={sortedEvents}
+          viagens={viagens}
+          mode={mode}
+        />
+      </div>
     </div>
   );
 }
