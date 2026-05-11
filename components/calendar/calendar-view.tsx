@@ -1,14 +1,12 @@
 'use client';
 
-import { useMemo, useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import type { Event } from '@/types/type-event';
-import CalendarGrid from '@/components/calendar/calendar-grid';
-import CalendarDayCell from '@/components/calendar/calendar-day-cell';
-import TodayEventsSection from '@/components/calendar/today-events-section';
-import Button from '@/components/ui/button';
+import { useMemo, useState } from 'react';
 
-type TravelRange = {
+import type { Event } from '@/types/type-event';
+
+import CalendarTimeline from '@/components/calendar/calendar-timeline';
+
+type Viagem = {
   id: string;
   nome: string;
   data_saida: string;
@@ -17,218 +15,155 @@ type TravelRange = {
 
 type Props = {
   events: Event[];
+  viagens: Viagem[];
   mode?: 'admin' | 'colaborador';
-  onDelete?: (event: Event) => void;
 };
 
-export default function CalendarView({ events, mode = 'admin', onDelete }: Props) {
+const STUDIO_ORDER = [
+  'estudio-1',
+  'estudio-2',
+  'estudio-3',
+  'estudio-4',
+  '__other__',
+];
 
-  const router = useRouter();
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [isMobile, setIsMobile] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+export default function CalendarView({
+  events,
+  viagens,
+  mode = 'admin',
+}: Props) {
 
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 640);
-    check();
-    window.addEventListener('resize', check);
-    return () => window.removeEventListener('resize', check);
-  }, []);
+  /**
+   * Data atual
+   */
+  const today = new Date();
 
+  /**
+   * Estado mês selecionado
+   */
+  const [selectedMonth, setSelectedMonth] = useState(
+    today.getMonth()
+  );
 
-  const year = currentDate.getFullYear();
-  const month = currentDate.getMonth();
+  /**
+   * Estado ano selecionado
+   */
+  const [selectedYear, setSelectedYear] = useState(
+    today.getFullYear()
+  );
 
-  const todayStr = new Date().toLocaleDateString('en-CA');
+  /**
+   * Filtra apenas mês atual
+   */
+  const filteredEvents = useMemo(() => {
+    return events.filter((event) => {
+      const eventDate = new Date(event.data);
 
-  const todayEvents = useMemo(() => {
-    return events.filter((e) => e.data === todayStr && !(e as any).isTravel);
-  }, [events, todayStr]);
+      return (
+        eventDate.getMonth() === selectedMonth &&
+        eventDate.getFullYear() === selectedYear
+      );
+    });
+  }, [events, selectedMonth, selectedYear]);
 
-  const { groupedEvents, travelRanges } = useMemo(() => {
-    const map: Record<string, Event[]> = {};
-    const travelRanges: TravelRange[] = [];
-    const travelsProcessed = new Set<string>();
+  /**
+   * Ordenação operacional
+   */
+  const sortedEvents = useMemo(() => {
+    return [...filteredEvents].sort((a, b) => {
 
-    const addToDate = (date: Date, event: Event) => {
-      const dateStr = date.toLocaleDateString('en-CA');
-      if (!map[dateStr]) map[dateStr] = [];
-      map[dateStr].push(event);
-    };
+      const studioA = STUDIO_ORDER.indexOf(
+        a.estudio || '__other__'
+      );
 
-    events.forEach((event) => {
-      const eventDate = new Date(event.data + 'T00:00:00');
-      addToDate(eventDate, event);
+      const studioB = STUDIO_ORDER.indexOf(
+        b.estudio || '__other__'
+      );
 
-      if (event.viagem && !travelsProcessed.has(event.viagem.id)) {
-        travelsProcessed.add(event.viagem.id);
-        travelRanges.push({
-          id: event.viagem.id,
-          nome: event.viagem.nome,
-          data_saida: event.viagem.data_saida,
-          data_retorno: event.viagem.data_retorno,
-        });
+      if (studioA !== studioB) {
+        return studioA - studioB;
       }
+
+      return a.data.localeCompare(b.data);
     });
+  }, [filteredEvents]);
 
-    return {
-      groupedEvents: map,
-      travelRanges,
-    };
-  }, [events]);
-
-
-
-  const getWeekDays = (date: Date) => {
-    const start = new Date(date);
-    start.setDate(date.getDate() - date.getDay());
-
-    return Array.from({ length: 7 }).map((_, i) => {
-      const d = new Date(start);
-      d.setDate(start.getDate() + i);
-      return d;
-    });
-  };
-
-  const addDays = (date: Date, days: number) => {
-    const newDate = new Date(date);
-    newDate.setDate(newDate.getDate() + days);
-    return newDate;
-  };
-
-  const handlePrev = () => {
-    if (isMobile) {
-      setCurrentDate(addDays(currentDate, -7));
-    } else {
-      setCurrentDate(new Date(year, month - 1, 1));
-    }
-  };
-
-  const handleNext = () => {
-    if (isMobile) {
-      setCurrentDate(addDays(currentDate, 7));
-    } else {
-      setCurrentDate(new Date(year, month + 1, 1));
-    }
-  };
-
-  const handleEventClick = (event: Event) => {
-    if (mode === 'admin') {
-      setSelectedEvent(event);
-    }
-  };
+  /**
+   * Meses dropdown
+   */
+  const months = [
+    'Janeiro',
+    'Fevereiro',
+    'Março',
+    'Abril',
+    'Maio',
+    'Junho',
+    'Julho',
+    'Agosto',
+    'Setembro',
+    'Outubro',
+    'Novembro',
+    'Dezembro',
+  ];
 
   return (
     <div className="flex flex-col gap-4">
 
-      {selectedEvent && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-lg rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-2xl overflow-hidden">
-            <div className="flex items-start justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400 mb-1">
-                  Evento
-                </p>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                  {selectedEvent.nome}
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSelectedEvent(null)}
-                className="text-gray-500 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
-              >
-                ✕
-              </button>
-            </div>
+      {/* HEADER */}
+      <div
+        className="
+          flex flex-col gap-3
+          sm:flex-row sm:items-center sm:justify-between
+        "
+      >
 
-            <div className="px-6 py-5 space-y-3 text-sm text-gray-700 dark:text-gray-300">
-              <p><span className="font-semibold">Tipo:</span> {selectedEvent.tipo}</p>
-              <p><span className="font-semibold">Data:</span> {selectedEvent.data}</p>
-              <p><span className="font-semibold">Local:</span> {selectedEvent.local}</p>
-              {selectedEvent.observacoes && (
-                <p><span className="font-semibold">Observações:</span> {selectedEvent.observacoes}</p>
-              )}
-              {selectedEvent.channel?.sigla && (
-                <p><span className="font-semibold">Canal:</span> {selectedEvent.channel.sigla}</p>
-              )}
-            </div>
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Agenda Operacional
+          </h2>
 
-            <div className="flex flex-col gap-3 px-6 py-5 sm:flex-row sm:justify-end">
-              <Button variant="secondary" onClick={() => setSelectedEvent(null)}>
-                Fechar
-              </Button>
-              <Button
-                onClick={() => {
-                  router.push(`/dashboard/eventos/${selectedEvent.id}`);
-                  setSelectedEvent(null);
-                }}
-              >
-                Editar
-              </Button>
-            </div>
-          </div>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Visualização mensal das operações
+          </p>
         </div>
-      )}
 
-      <TodayEventsSection
-        events={todayEvents}
-        mode={mode}
-        onDelete={onDelete}
-      />
+        {/* SELECT MÊS */}
+        <div className="flex items-center gap-2">
 
-      <div className="flex items-center justify-between">
-        <button
-          onClick={handlePrev}
-          className="px-2 py-1 rounded bg-gray-200 dark:bg-gray-700"
-        >
-          ←
-        </button>
+          <select
+            value={selectedMonth}
+            onChange={(e) =>
+              setSelectedMonth(Number(e.target.value))
+            }
+            className="
+              rounded-xl border border-gray-300
+              bg-white px-4 py-2 text-sm
+              dark:border-gray-700
+              dark:bg-gray-900
+              dark:text-white
+            "
+          >
 
-        <h2 className="text-lg font-semibold text-center">
-          {isMobile
-            ? `Semana de ${currentDate.toLocaleDateString('pt-BR')}`
-            : currentDate.toLocaleDateString('pt-BR', {
-              month: 'long',
-              year: 'numeric',
-            })}
-        </h2>
+            {months.map((month, index) => (
+              <option key={month} value={index}>
+                {month}
+              </option>
+            ))}
 
-        <button
-          onClick={handleNext}
-          className="px-2 py-1 rounded bg-gray-200 dark:bg-gray-700"
-        >
-          →
-        </button>
+          </select>
+
+        </div>
+
       </div>
 
-      {isMobile ? (
-        <div className="flex flex-col gap-2">
-          {getWeekDays(currentDate).map((date) => {
-            const dateStr = date.toLocaleDateString('en-CA');
-            const dayEvents = groupedEvents[dateStr] || [];
-
-            return (
-              <CalendarDayCell
-                key={dateStr}
-                date={date}
-                events={dayEvents}
-                mode={mode}
-                onEventClick={handleEventClick}
-              />
-            );
-          })}
-        </div>
-      ) : (
-        <CalendarGrid
-          year={year}
-          month={month}
-          eventsByDate={groupedEvents}
-          travelRanges={travelRanges}
-          mode={mode}
-          onEventClick={handleEventClick}
-        />
-      )}
+      {/* TIMELINE */}
+      <CalendarTimeline
+        year={selectedYear}
+        month={selectedMonth}
+        events={sortedEvents}
+        viagens={viagens}
+        mode={mode}
+      />
 
     </div>
   );
