@@ -1,7 +1,6 @@
 - filtro de colaborador na agenda
 - crair tipo hardcoded bora leilão e dia empresa.
 - mexer nos colaboradores: adicionar foto
-- corrigir "você está escalado" no admin side
 - adicionar feedback visual para colaborador escalado em viagens
 - criar mensagem de erro ao adicionar na viagem evento em data fora do range
 - criar relatórios por periodo
