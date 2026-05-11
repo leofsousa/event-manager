@@ -18,7 +18,7 @@ type Props = {
   onEventClick?: (event: Event) => void;
 };
 
-const DAY_WIDTH = 120;
+const DAY_WIDTH = 140;
 
 const formatDateKey = (date: Date) => {
   return date.toISOString().split('T')[0];
@@ -29,7 +29,6 @@ export default function CalendarTimeline({
   month,
   events,
   viagens,
-  mode,
   onEventClick,
 }: Props) {
 
@@ -39,33 +38,36 @@ export default function CalendarTimeline({
     return new Date(year, month, index + 1);
   });
 
-  return (
-    <div
-      className="
-        overflow-x-auto overflow-y-hidden
-        rounded-2xl
-        border border-gray-200
-        bg-white
-        dark:border-gray-800
-        dark:bg-gray-950
-      "
-    >
+  const timelineWidth = days.length * DAY_WIDTH;
 
+  return (
+    <div className="w-full">
+
+      {/* SCROLL REAL */}
       <div
-        style={{
-          width: `${days.length * DAY_WIDTH}px`,
-        }}
+        className="
+          w-full
+          overflow-x-auto
+          overflow-y-hidden
+          rounded-2xl
+          border border-gray-200
+          bg-white
+          dark:border-gray-800
+          dark:bg-gray-950
+        "
       >
 
-        {/* HEADER */}
-        <div className="border-b border-gray-200 dark:border-gray-800">
+        {/* TIMELINE FIXA */}
+        <div
+          className="flex flex-col"
+          style={{
+            width: `${timelineWidth}px`,
+            minWidth: `${timelineWidth}px`,
+          }}
+        >
 
-          <div
-            className="flex"
-            style={{
-              width: `${days.length * DAY_WIDTH}px`,
-            }}
-          >
+          {/* HEADER */}
+          <div className="flex border-b border-gray-200 dark:border-gray-800">
 
             {days.map((day) => {
 
@@ -75,12 +77,8 @@ export default function CalendarTimeline({
               return (
                 <div
                   key={day.toISOString()}
-                  style={{
-                    width: `${DAY_WIDTH}px`,
-                    minWidth: `${DAY_WIDTH}px`,
-                  }}
                   className={`
-                    flex flex-col gap-1
+                    flex flex-col
                     border-r border-gray-200
                     px-3 py-3
                     dark:border-gray-800
@@ -90,6 +88,10 @@ export default function CalendarTimeline({
                       : ''
                     }
                   `}
+                  style={{
+                    width: `${DAY_WIDTH}px`,
+                    minWidth: `${DAY_WIDTH}px`,
+                  }}
                 >
 
                   <span className="text-xs uppercase text-gray-500 dark:text-gray-400">
@@ -117,17 +119,8 @@ export default function CalendarTimeline({
 
           </div>
 
-        </div>
-
-        {/* ROW VIAGENS */}
-        <div className="border-b border-gray-200 dark:border-gray-800">
-
-          <div
-            className="flex"
-            style={{
-              width: `${days.length * DAY_WIDTH}px`,
-            }}
-          >
+          {/* ROW VIAGENS */}
+          <div className="flex">
 
             {days.map((day) => {
 
@@ -143,16 +136,16 @@ export default function CalendarTimeline({
               return (
                 <div
                   key={dateKey}
-                  style={{
-                    width: `${DAY_WIDTH}px`,
-                    minWidth: `${DAY_WIDTH}px`,
-                  }}
                   className="
-                    min-h-[140px]
+                    min-h-[160px]
                     border-r border-gray-200
                     p-2
                     dark:border-gray-800
                   "
+                  style={{
+                    width: `${DAY_WIDTH}px`,
+                    minWidth: `${DAY_WIDTH}px`,
+                  }}
                 >
 
                   <div className="flex flex-col gap-2">
@@ -170,8 +163,10 @@ export default function CalendarTimeline({
                         <div
                           key={`${viagem.id}-${dateKey}`}
                           className="
-                            rounded-2xl bg-purple-500
-                            px-3 py-2 text-white
+                            rounded-2xl
+                            bg-purple-500
+                            px-3 py-2
+                            text-white
                             shadow-sm
                           "
                         >
@@ -184,15 +179,17 @@ export default function CalendarTimeline({
 
                           <div className="flex flex-col gap-1">
 
-                            {eventosDaViagem.map((event) => (
+                            {eventosDaViagem.map((event, index) => (
                               <button
-                                key={event.id}
+                                key={`${event.nome}-${index}`}
                                 onClick={() => onEventClick?.(event)}
                                 className="
-                                  rounded-lg bg-white/20
-                                  px-2 py-1 text-left
-                                  text-[11px]
-                                  transition hover:bg-white/30
+                                  rounded-lg
+                                  bg-white/20
+                                  px-2 py-1
+                                  text-left text-[11px]
+                                  transition
+                                  hover:bg-white/30
                                 "
                               >
 
@@ -201,9 +198,11 @@ export default function CalendarTimeline({
                                   {event.channel?.sigla && (
                                     <span
                                       className="
-                                        rounded bg-white/20
+                                        rounded
+                                        bg-white/20
                                         px-1.5 py-[1px]
-                                        text-[10px] font-semibold
+                                        text-[10px]
+                                        font-semibold
                                       "
                                     >
                                       {event.channel.sigla}
@@ -230,26 +229,6 @@ export default function CalendarTimeline({
                 </div>
               );
             })}
-
-          </div>
-
-        </div>
-
-        {/* PLACEHOLDER */}
-        <div className="p-10">
-
-          <div
-            className="
-              flex items-center justify-center
-              rounded-2xl border border-dashed
-              border-gray-300 py-20
-              dark:border-gray-700
-            "
-          >
-
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Próxima etapa: linhas operacionais dos estúdios
-            </p>
 
           </div>
 
