@@ -16,7 +16,7 @@ const channelStyles: Record<string, string> = {
   "A+": "bg-[#335a45] text-white",
   RW: "bg-[#006e96] text-white",
   "RW+": "bg-[#37b4d8] text-white",
-  CB: "bg-white text-black",
+  CB: "bg-white text-black dark:bg-gray-800 dark:text-white",
 };
 
 export default function CalendarEventItem({

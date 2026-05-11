@@ -1,3 +1,6 @@
+'use client';
+
+import { useEffect, useRef, useState, useCallback } from 'react';
 import CalendarDayCell from '@/components/calendar/calendar-day-cell';
 import type { Event } from '@/types/type-event';
 
@@ -6,14 +9,6 @@ type TravelRange = {
   nome: string;
   data_saida: string;
   data_retorno: string;
-};
-
-type CalendarTravelDay = {
-  id: string;
-  nome: string;
-  isStart: boolean;
-  isEnd: boolean;
-  isSingle: boolean;
 };
 
 type Props = {
@@ -26,97 +21,155 @@ type Props = {
 };
 
 const formatDate = (date: Date) => date.toLocaleDateString('en-CA');
-const weekDayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
-export default function CalendarGrid({ year, month, eventsByDate, travelRanges = [], mode, onEventClick }: Props) {
+export default function CalendarGrid({
+  year,
+  month,
+  eventsByDate,
+  travelRanges = [],
+  mode,
+  onEventClick,
+}: Props) {
+
+  const gridRef = useRef<HTMLDivElement>(null);
+  const cellRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const [travelBars, setTravelBars] = useState<any[]>([]);
+  const [rowCount, setRowCount] = useState(0);
+
   const firstDay = new Date(year, month, 1);
   const startDay = firstDay.getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
   const cells: (Date | null)[] = [];
-
   for (let i = 0; i < startDay; i++) cells.push(null);
-  for (let day = 1; day <= daysInMonth; day++) {
-    cells.push(new Date(year, month, day));
+  for (let d = 1; d <= daysInMonth; d++) {
+    cells.push(new Date(year, month, d));
   }
 
-  const dateIndexMap = new Map<string, number>();
-  cells.forEach((date, index) => {
-    if (date) {
-      dateIndexMap.set(formatDate(date), index);
-    }
-  });
+  const setCellRef = (dateStr: string, el: HTMLDivElement | null) => {
+    if (el) cellRefs.current.set(dateStr, el);
+  };
 
-  const firstVisibleDate = cells.find(Boolean) as Date | undefined;
-  const lastVisibleDate = [...cells].reverse().find(Boolean) as Date | undefined;
+  const computeBars = useCallback(() => {
+    const grid = gridRef.current;
+    if (!grid) return;
 
-  const travelDays: Record<string, CalendarTravelDay[]> = {};
+    const gridRect = grid.getBoundingClientRect();
 
-  travelRanges.forEach((travel) => {
-    const start = new Date(`${travel.data_saida}T00:00:00`);
-    const end = new Date(`${travel.data_retorno}T00:00:00`);
-    if (!firstVisibleDate || !lastVisibleDate) return;
+    const rows: { end: string }[] = [];
+    const bars: any[] = [];
 
-    const clipStart = start < firstVisibleDate ? firstVisibleDate : start;
-    const clipEnd = end > lastVisibleDate ? lastVisibleDate : end;
-    if (clipStart > clipEnd) return;
+    const BAR_HEIGHT = 20;
+    const GAP = 4;
 
-    let current = new Date(clipStart);
-    while (current <= clipEnd) {
-      const dateKey = formatDate(current);
-      const isStart = current.getTime() === start.getTime();
-      const isEnd = current.getTime() === end.getTime();
-      const travelItem = {
-        id: travel.id,
-        nome: travel.nome,
-        isStart,
-        isEnd,
-        isSingle: isStart && isEnd,
-      };
-
-      if (!travelDays[dateKey]) {
-        travelDays[dateKey] = [];
+    const getRow = (start: string, end: string) => {
+      for (let i = 0; i < rows.length; i++) {
+        if (start > rows[i].end) {
+          rows[i].end = end;
+          return i;
+        }
       }
-      travelDays[dateKey].push(travelItem);
+      rows.push({ end });
+      return rows.length - 1;
+    };
 
-      current.setDate(current.getDate() + 1);
-    }
-  });
+    travelRanges.forEach((travel) => {
+      const row = getRow(travel.data_saida, travel.data_retorno);
+
+      let current = new Date(travel.data_saida);
+
+      while (current <= new Date(travel.data_retorno)) {
+        const weekEnd = new Date(current);
+        weekEnd.setDate(weekEnd.getDate() + (6 - weekEnd.getDay()));
+
+        const segmentEnd =
+          weekEnd < new Date(travel.data_retorno)
+            ? weekEnd
+            : new Date(travel.data_retorno);
+
+        const startStr = formatDate(current);
+        const endStr = formatDate(segmentEnd);
+
+        const startCell = cellRefs.current.get(startStr);
+        const endCell = cellRefs.current.get(endStr);
+
+        if (startCell && endCell) {
+          const startRect = startCell.getBoundingClientRect();
+          const endRect = endCell.getBoundingClientRect();
+
+          bars.push({
+            id: `${travel.id}-${startStr}`,
+            nome: travel.nome,
+            top: startRect.top - gridRect.top + row * (BAR_HEIGHT + GAP) + 4,
+            left: startRect.left - gridRect.left,
+            width: endRect.right - startRect.left,
+            isStart: startStr === travel.data_saida,
+            isEnd: endStr === travel.data_retorno,
+          });
+        }
+
+        current = new Date(segmentEnd);
+        current.setDate(current.getDate() + 1);
+      }
+    });
+
+    setRowCount(rows.length);
+    setTravelBars(bars);
+  }, [travelRanges]);
+
+  useEffect(() => {
+    setTimeout(computeBars, 50);
+    window.addEventListener('resize', computeBars);
+    return () => window.removeEventListener('resize', computeBars);
+  }, [computeBars]);
 
   return (
     <div className="overflow-x-auto">
-      <div className="relative">
-        <div className="grid grid-cols-7 gap-2 min-w-[700px] mb-2 text-center text-xs font-semibold text-gray-500 dark:text-gray-400">
-          {weekDayNames.map((name) => (
-            <div key={name} className="py-2">
-              {name}
-            </div>
-          ))}
-        </div>
+      <div className="relative min-w-[700px]" ref={gridRef}>
 
-        <div
-          className="grid grid-cols-7 gap-2 min-w-[700px] mb-2"
-          style={{ gridTemplateColumns: 'repeat(7, 1fr)', gridAutoRows: 'minmax(100px, auto)' }}
-        >
-          {cells.map((date, index) => {
-            if (!date) return <div key={index} />;
+        <div className="grid grid-cols-7 gap-2">
+          {cells.map((date, i) => {
+            if (!date) return <div key={i} />;
 
             const dateStr = formatDate(date);
             const dayEvents = eventsByDate[dateStr] || [];
-            const travel = travelDays[dateStr] || [];
 
             return (
-              <CalendarDayCell
-                key={index}
-                date={date}
-                events={dayEvents}
-                travel={travel}
-                mode={mode}
-                onEventClick={onEventClick}
-              />
+              <div key={i} ref={(el) => setCellRef(dateStr, el)}>
+                <CalendarDayCell
+                  date={date}
+                  events={dayEvents}
+                  mode={mode}
+                  onEventClick={onEventClick}
+                  travelOffset={rowCount * 24}
+                />
+              </div>
             );
           })}
         </div>
+
+        {/* BARRAS */}
+        {travelBars.map((bar) => (
+          <div
+            key={bar.id}
+            style={{
+              position: 'absolute',
+              top: bar.top,
+              left: bar.left,
+              width: bar.width,
+              height: 20,
+              zIndex: 10,
+            }}
+            className={`
+              flex items-center px-2 text-[10px] font-semibold text-white
+              bg-purple-500 shadow-sm
+              ${bar.isStart ? 'rounded-l-full' : ''}
+              ${bar.isEnd ? 'rounded-r-full' : ''}
+            `}
+          >
+            {bar.isStart && `🚐 ${bar.nome}`}
+          </div>
+        ))}
       </div>
     </div>
   );
