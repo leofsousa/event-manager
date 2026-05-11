@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import Header from '@/components/layout/header';
-import Sidebar from '@/components/layout/sidebar';
-import { useState } from 'react';
+import Header from "@/components/layout/header";
+import Sidebar from "@/components/layout/sidebar";
+import { useState } from "react";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -12,7 +12,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <Sidebar open={open} setOpen={setOpen} />
       <div className="flex-1 flex flex-col">
         <Header setOpen={setOpen} />
-        <main className="flex-1 overflow-y-auto p-6">
+        <main
+          className="
+              flex-1
+              min-w-0
+              overflow-auto
+              p-6
+            "
+        >
           {children}
         </main>
       </div>

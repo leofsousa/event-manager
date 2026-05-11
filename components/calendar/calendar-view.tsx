@@ -138,7 +138,7 @@ export default function CalendarView({
       </div>
 
       {/* TIMELINE */}
-      <div className="min-w-0">
+      <div className="w-full overflow-x-auto">
         <CalendarTimeline
           year={selectedYear}
           month={selectedMonth}

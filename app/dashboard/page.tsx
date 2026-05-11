@@ -86,13 +86,17 @@ export default function DashboardPage() {
   return (
     <div
       className="
-        h-full
-        w-full
-      "
+    h-screen
+    w-full
+    overflow-hidden
+    bg-gray-50
+    dark:bg-gray-900
+  "
     >
       <div
         className="
-          flex h-full flex-col
+        flex h-screen flex-col
+        overflow-hidden
         "
       >
         {/* HEADER FIXO */}
@@ -118,11 +122,12 @@ export default function DashboardPage() {
         {/* CONTEÚDO */}
         <div
           className="
-    flex-1
-    min-w-0
-    overflow-y-auto
-    p-6
-  "
+                flex-1
+                min-h-0
+                min-w-0
+                overflow-hidden
+                p-6
+              "
         >
           <CalendarView events={events} viagens={viagens} mode="admin" />
         </div>
