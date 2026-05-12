@@ -26,6 +26,7 @@ export default function DashboardPage() {
   const [viagens, setViagens] = useState<Viagem[]>([]);
 
   const [loadingData, setLoadingData] = useState(true);
+  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -38,15 +39,15 @@ export default function DashboardPage() {
 
     const [eventsResponse, viagensResponse] = await Promise.all([
       supabase.from("events").select(`
-          *,
-          channel:channels(sigla),
-          viagem:viagem_id(
-            id,
-            nome,
-            data_saida,
-            data_retorno
-          )
-        `),
+        *,
+        channel:channels(sigla),
+        viagem:viagem_id(
+          id,
+          nome,
+          data_saida,
+          data_retorno
+        )
+      `),
 
       supabase.from("viagens").select("*"),
     ]);
@@ -63,6 +64,7 @@ export default function DashboardPage() {
     setViagens((viagensResponse.data as Viagem[]) || []);
 
     setLoadingData(false);
+    setInitialized(true);
   }, []);
 
   useEffect(() => {
@@ -71,7 +73,10 @@ export default function DashboardPage() {
     }
   }, [loading, user, fetchData]);
 
-  if (loading || loadingData) {
+  /**
+   * Loading apenas na primeira renderização
+   */
+  if (loading || (!initialized && loadingData)) {
     return (
       <div className="p-6">
         <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -84,13 +89,14 @@ export default function DashboardPage() {
   if (!user) return null;
 
   return (
-    <div className="flex flex-col h-full">
-      {/* HEADER FIXO */}
-      <div className="flex items-center justify-between border-b border-gray-200 px-6 py-5 dark:border-gray-800">
+    <div className="flex h-full flex-col min-w-0">
+      {/* HEADER */}
+      <div className="border-b border-gray-200 px-6 py-5 dark:border-gray-800">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             Agenda Operacional
           </h1>
+
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Visualização mensal das operações
           </p>
@@ -98,8 +104,20 @@ export default function DashboardPage() {
       </div>
 
       {/* CONTEÚDO */}
-      <div className="flex-1 min-h-0 overflow-y-auto p-6">
-        <CalendarView events={events} viagens={viagens} mode="admin" />
+      <div
+        className="
+          flex-1
+          min-h-0
+          min-w-0
+          overflow-hidden
+          p-6
+        "
+      >
+        <CalendarView
+          events={events}
+          viagens={viagens}
+          mode="admin"
+        />
       </div>
     </div>
   );
