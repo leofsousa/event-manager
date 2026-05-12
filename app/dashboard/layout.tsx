@@ -10,17 +10,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar open={open} setOpen={setOpen} />
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0">
         <Header setOpen={setOpen} />
         <main
           className="
               flex-1
               min-w-0
               overflow-auto
-              p-6
+              overflow-x-auto
             "
         >
-          {children}
+          <div className="p-6 h-full">{children}</div>
         </main>
       </div>
       {open && (

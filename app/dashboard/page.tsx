@@ -84,53 +84,22 @@ export default function DashboardPage() {
   if (!user) return null;
 
   return (
-    <div
-      className="
-    h-screen
-    w-full
-    overflow-hidden
-    bg-gray-50
-    dark:bg-gray-900
-  "
-    >
-      <div
-        className="
-        flex h-screen flex-col
-        overflow-hidden
-        "
-      >
-        {/* HEADER FIXO */}
-        <div
-          className="
-            flex items-center justify-between
-            border-b border-gray-200
-            px-6 py-5
-            dark:border-gray-800
-          "
-        >
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Agenda Operacional
-            </h1>
-
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Visualização mensal das operações
-            </p>
-          </div>
+    <div className="flex flex-col h-full">
+      {/* HEADER FIXO */}
+      <div className="flex items-center justify-between border-b border-gray-200 px-6 py-5 dark:border-gray-800">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Agenda Operacional
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Visualização mensal das operações
+          </p>
         </div>
+      </div>
 
-        {/* CONTEÚDO */}
-        <div
-          className="
-                flex-1
-                min-h-0
-                min-w-0
-                overflow-hidden
-                p-6
-              "
-        >
-          <CalendarView events={events} viagens={viagens} mode="admin" />
-        </div>
+      {/* CONTEÚDO */}
+      <div className="flex-1 min-h-0 overflow-y-auto p-6">
+        <CalendarView events={events} viagens={viagens} mode="admin" />
       </div>
     </div>
   );
