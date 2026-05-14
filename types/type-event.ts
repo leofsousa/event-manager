@@ -6,6 +6,7 @@ export type Event = {
   local: string;
   observacoes: string;
   estudio?: string;
+  hora_inicio?: string;
 
   channel?: { sigla: string } | null;
 

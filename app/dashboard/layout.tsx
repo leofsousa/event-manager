@@ -20,7 +20,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               overflow-x-auto
             "
         >
-          <div className="p-6 h-full">{children}</div>
+          <div className="p-6">{children}</div>
         </main>
       </div>
       {open && (
