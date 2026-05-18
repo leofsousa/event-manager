@@ -1,44 +1,58 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
-import Input from '@/components/ui/input';
-import InputDate from '@/components/ui/input-date';
-import Button from '@/components/ui/button';
-import FormField from '@/components/events/form-field';
-import { useToast } from '@/hooks/useToast';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
+import Input from "@/components/ui/input";
+import InputDate from "@/components/ui/input-date";
+import Button from "@/components/ui/button";
+import FormField from "@/components/events/form-field";
+import { useToast } from "@/hooks/useToast";
 
 export default function NovaViagemPage() {
   const router = useRouter();
   const { showToast } = useToast();
 
-  const [nome, setNome] = useState('');
-  const [dataSaida, setDataSaida] = useState('');
-  const [dataRetorno, setDataRetorno] = useState('');
-  const [observacoes, setObservacoes] = useState('');
+  const [nome, setNome] = useState("");
+  const [dataSaida, setDataSaida] = useState("");
+  const [dataRetorno, setDataRetorno] = useState("");
+  const [observacoes, setObservacoes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [errors, setErrors] = useState({
-    nome: '',
-    dataSaida: '',
-    dataRetorno: '',
+    nome: "",
+    dataSaida: "",
+    dataRetorno: "",
   });
 
   const validate = () => {
-    const newErrors = { nome: '', dataSaida: '', dataRetorno: '' };
+    const newErrors = {
+      nome: "",
+      dataSaida: "",
+      dataRetorno: "",
+    };
 
-    if (!nome.trim()) newErrors.nome = 'Nome é obrigatório';
-    if (!dataSaida) newErrors.dataSaida = 'Data de saída é obrigatória';
-    if (!dataRetorno) newErrors.dataRetorno = 'Data de retorno é obrigatória';
+    if (!nome.trim()) {
+      newErrors.nome = "Nome é obrigatório";
+    }
 
-    if (dataSaida && dataRetorno && dataSaida > dataRetorno) {
-      showToast('Data de saída não pode ser maior que a de retorno');
-      return false;
+    if (!dataSaida) {
+      newErrors.dataSaida = "Data de saída é obrigatória";
+    }
+
+    if (!dataRetorno) {
+      newErrors.dataRetorno = "Data de retorno é obrigatória";
     }
 
     setErrors(newErrors);
-    return Object.values(newErrors).every((e) => e === '');
+
+    if (dataSaida && dataRetorno && dataSaida > dataRetorno) {
+      showToast("Data de saída não pode ser maior que a de retorno");
+
+      return false;
+    }
+
+    return Object.values(newErrors).every((e) => e === "");
   };
 
   const handleSubmit = async () => {
@@ -46,19 +60,21 @@ export default function NovaViagemPage() {
     setIsSubmitting(true);
 
     const { data, error } = await supabase
-      .from('viagens')
-      .insert([{ nome, data_saida: dataSaida, data_retorno: dataRetorno, observacoes }])
+      .from("viagens")
+      .insert([
+        { nome, data_saida: dataSaida, data_retorno: dataRetorno, observacoes },
+      ])
       .select()
       .single();
 
     if (error) {
       console.error(error);
-      showToast('Erro ao criar viagem');
+      showToast("Erro ao criar viagem");
       setIsSubmitting(false);
       return;
     }
 
-    showToast('Viagem criada!');
+    showToast("Viagem criada!");
     router.push(`/dashboard/viagens/${data.id}`);
   };
 
@@ -72,16 +88,38 @@ export default function NovaViagemPage() {
 
       <div className="flex flex-col gap-4">
         <FormField label="Nome" htmlFor="nome" required error={errors.nome}>
-          <Input id="nome" value={nome} onChange={(e) => setNome(e.target.value)} />
+          <Input
+            id="nome"
+            value={nome}
+            onChange={(e) => setNome(e.target.value)}
+          />
         </FormField>
 
         <div className="grid grid-cols-2 gap-2">
-          <FormField label="Data de saída" htmlFor="data-saida" required error={errors.dataSaida}>
-            <InputDate id="data-saida" value={dataSaida} onChange={setDataSaida} />
+          <FormField
+            label="Data de saída"
+            htmlFor="data-saida"
+            required
+            error={errors.dataSaida}
+          >
+            <InputDate
+              id="data-saida"
+              value={dataSaida}
+              onChange={setDataSaida}
+            />
           </FormField>
 
-          <FormField label="Data de retorno" htmlFor="data-retorno" required error={errors.dataRetorno}>
-            <InputDate id="data-retorno" value={dataRetorno} onChange={setDataRetorno} />
+          <FormField
+            label="Data de retorno"
+            htmlFor="data-retorno"
+            required
+            error={errors.dataRetorno}
+          >
+            <InputDate
+              id="data-retorno"
+              value={dataRetorno}
+              onChange={setDataRetorno}
+            />
           </FormField>
         </div>
 
@@ -101,8 +139,11 @@ export default function NovaViagemPage() {
           <Button variant="secondary" onClick={() => router.back()}>
             Cancelar
           </Button>
-          <Button onClick={handleSubmit} disabled={!isFormValid || isSubmitting}>
-            {isSubmitting ? 'Salvando...' : 'Salvar e continuar'}
+          <Button
+            onClick={handleSubmit}
+            disabled={!isFormValid || isSubmitting}
+          >
+            {isSubmitting ? "Salvando..." : "Salvar e continuar"}
           </Button>
         </div>
       </div>

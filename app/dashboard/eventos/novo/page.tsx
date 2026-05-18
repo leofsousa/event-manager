@@ -1,134 +1,234 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useMemo } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import Input from '@/components/ui/input';
-import InputDate from '@/components/ui/input-date';
-import Button from '@/components/ui/button';
-import FormField from '@/components/events/form-field';
-import Select from '@/components/ui/select';
-import CreateOptionModal from '@/components/modals/create-option-modal';
-import { useToast } from '@/hooks/useToast';
-import { supabase } from '@/lib/supabase';
+import { useState, useEffect, useMemo } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+
+import Input from "@/components/ui/input";
+import InputDate from "@/components/ui/input-date";
+import Button from "@/components/ui/button";
+import FormField from "@/components/events/form-field";
+import Select from "@/components/ui/select";
+import CreateOptionModal from "@/components/modals/create-option-modal";
+
+import { useToast } from "@/hooks/useToast";
+import { supabase } from "@/lib/supabase";
+
+type Viagem = {
+  id: string;
+  nome: string;
+  data_saida: string;
+  data_retorno: string;
+};
 
 export default function NovoEventoPage() {
   const router = useRouter();
   const { showToast } = useToast();
   const searchParams = useSearchParams();
 
-  const viagemId = searchParams.get('viagemId');
+  const viagemId = searchParams.get("viagemId");
 
-  const [eventTypes, setEventTypes] = useState<{ label: string; value: string }[]>([]);
-  const [channels, setChannels] = useState<{ label: string; value: string }[]>([]);
+  const [viagem, setViagem] = useState<Viagem | null>(null);
+
+  const [eventTypes, setEventTypes] = useState<
+    { label: string; value: string }[]
+  >([]);
+
+  const [channels, setChannels] = useState<{ label: string; value: string }[]>(
+    [],
+  );
 
   const [isCreatingType, setIsCreatingType] = useState(false);
 
-  const [nome, setNome] = useState('');
-  const [tipo, setTipo] = useState('');
-  const [channel, setChannel] = useState('');
-  const [data, setData] = useState('');
-  const [local, setLocal] = useState('');
-  const [observacoes, setObservacoes] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const [customLocal, setCustomLocal] = useState('');
+  const [nome, setNome] = useState("");
+  const [tipo, setTipo] = useState("");
+  const [channel, setChannel] = useState("");
+  const [data, setData] = useState("");
+  const [local, setLocal] = useState("");
+  const [observacoes, setObservacoes] = useState("");
+
+  const [customLocal, setCustomLocal] = useState("");
   const [isOtherSelected, setIsOtherSelected] = useState(false);
 
   const [isSubmiting, setIsSubmiting] = useState(false);
 
   const [errors, setErrors] = useState({
-    nome: '',
-    tipo: '',
-    data: '',
-    local: '',
+    nome: "",
+    tipo: "",
+    data: "",
+    local: "",
   });
 
-  const studioOptions = useMemo(() => [
-    { label: 'Estúdio 1', value: 'estudio-1' },
-    { label: 'Estúdio 2', value: 'estudio-2' },
-    { label: 'Estúdio 3', value: 'estudio-3' },
-    { label: 'Estúdio 4', value: 'estudio-4' },
-    { label: 'Outro', value: '__other__' },
-  ], []);
+  const studioOptions = useMemo(
+    () => [
+      { label: "Estúdio 1", value: "estudio-1" },
+      { label: "Estúdio 2", value: "estudio-2" },
+      { label: "Estúdio 3", value: "estudio-3" },
+      { label: "Estúdio 4", value: "estudio-4" },
+      { label: "Outro", value: "__other__" },
+    ],
+    [],
+  );
 
-  const isStudio = tipo === 'operacao-estudio';
+  const isStudio = tipo === "operacao-estudio";
 
   const fetchTypes = async () => {
-    const { data } = await supabase.from('event_types').select('*');
+    try {
+      const { data, error: err } = await supabase
+        .from("event_types")
+        .select("*");
 
-    const formatted = (data || []).map((t: any) => ({
-      label: t.label,
-      value: t.value,
-    }));
+      if (err) {
+        throw err;
+      }
 
-    setEventTypes(formatted);
+      const formatted = (data || []).map((t: any) => ({
+        label: t.label,
+        value: t.value,
+      }));
+
+      setEventTypes(formatted);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Erro ao carregar tipos";
+      console.error(errorMessage, err);
+    }
   };
 
   const fetchChannels = async () => {
-    const { data } = await supabase.from('channels').select('*');
+    try {
+      const { data, error: err } = await supabase.from("channels").select("*");
 
-    const formatted = (data || []).map((c: any) => ({
-      label: `${c.sigla} - ${c.name}`,
-      value: c.id,
-    }));
+      if (err) {
+        throw err;
+      }
 
-    setChannels(formatted);
+      const formatted = (data || []).map((c: any) => ({
+        label: `${c.sigla} - ${c.name}`,
+        value: c.id,
+      }));
+
+      setChannels(formatted);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Erro ao carregar canais";
+      console.error(errorMessage, err);
+    }
+  };
+
+  const fetchViagem = async () => {
+    if (!viagemId) return;
+
+    try {
+      const { data, error: err } = await supabase
+        .from("viagens")
+        .select("*")
+        .eq("id", viagemId)
+        .single();
+
+      if (err) {
+        throw err;
+      }
+
+      setViagem(data);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Erro ao carregar viagem";
+      console.error(errorMessage, err);
+    }
   };
 
   useEffect(() => {
-    fetchTypes();
-    fetchChannels();
-  }, []);
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        await fetchTypes();
+        await fetchChannels();
+        if (viagemId) {
+          await fetchViagem();
+        }
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Erro ao carregar dados";
+        setError(errorMessage);
+        console.error(errorMessage, err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [viagemId]);
 
   useEffect(() => {
-    setLocal('');
+    setLocal("");
     setIsOtherSelected(false);
   }, [tipo]);
 
   const handleCreateType = async (name: string) => {
-    const formatted = name.toLowerCase().replace(/\s+/g, '-');
+    const formatted = name.toLowerCase().replace(/\s+/g, "-");
 
     const { data, error } = await supabase
-      .from('event_types')
+      .from("event_types")
       .insert([{ label: name, value: formatted }])
       .select()
       .single();
 
     if (error) {
-      showToast('Erro ao criar tipo');
+      showToast("Erro ao criar tipo");
       return;
     }
 
     setEventTypes((prev) => [...prev, data]);
+
     setTipo(data.value);
 
-    showToast('Tipo criado!');
+    showToast("Tipo criado!");
   };
 
   const validate = () => {
     const newErrors = {
-      nome: '',
-      tipo: '',
-      data: '',
-      local: '',
+      nome: "",
+      tipo: "",
+      data: "",
+      local: "",
     };
 
-    if (!nome.trim()) newErrors.nome = 'Nome é obrigatório';
-    if (!tipo.trim()) newErrors.tipo = 'Tipo é obrigatório';
-    if (!data.trim()) newErrors.data = 'Data é obrigatória';
-    if (!local.trim()) newErrors.local = 'Local é obrigatório';
+    if (!nome.trim()) newErrors.nome = "Nome é obrigatório";
+
+    if (!tipo.trim()) newErrors.tipo = "Tipo é obrigatório";
+
+    if (!data.trim()) newErrors.data = "Data é obrigatória";
+
+    if (!local.trim()) newErrors.local = "Local é obrigatório";
 
     setErrors(newErrors);
 
-    return Object.values(newErrors).every((err) => err === '');
+    return Object.values(newErrors).every((err) => err === "");
   };
 
   const handleSubmit = async () => {
     if (!validate()) return;
 
+    // VALIDAÇÃO DA VIAGEM
+    if (viagem) {
+      const isInsideRange =
+        data >= viagem.data_saida && data <= viagem.data_retorno;
+
+      if (!isInsideRange) {
+        showToast("A data do evento está fora do período da viagem");
+
+        return;
+      }
+    }
+
     setIsSubmiting(true);
 
     try {
-      const { error } = await supabase.from('events').insert([
+      const { error } = await supabase.from("events").insert([
         {
           nome,
           tipo,
@@ -142,32 +242,58 @@ export default function NovoEventoPage() {
 
       if (error) throw error;
 
-      showToast('Evento criado com sucesso!');
-      router.push('/dashboard/eventos');
+      showToast("Evento criado com sucesso!");
 
+      // SE VEIO DA VIAGEM → VOLTA PRA VIAGEM
+      if (viagemId) {
+        router.push(`/dashboard/viagens/${viagemId}`);
+      } else {
+        router.push("/dashboard/eventos");
+      }
     } catch (err) {
       console.error(err);
-      showToast('Erro ao salvar');
+
+      showToast("Erro ao salvar");
     }
 
     setIsSubmiting(false);
   };
 
-  const isFormValid =
-    nome.trim() &&
-    tipo.trim() &&
-    data.trim() &&
-    local.trim();
+  const isFormValid = nome.trim() && tipo.trim() && data.trim() && local.trim();
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
+      <h1 className="text-2xl font-semibold mb-6">Novo Evento</h1>
 
-      <h1 className="text-2xl font-semibold mb-6">
-        Novo Evento
-      </h1>
+      {viagem && (
+        <div
+          className="
+            mb-6
+            rounded-xl
+            border
+            border-purple-200
+            bg-purple-50
+            p-4
+
+            dark:border-purple-900
+            dark:bg-purple-950/30
+          "
+        >
+          <p className="text-sm font-medium text-purple-700 dark:text-purple-300">
+            Evento será vinculado à viagem:
+          </p>
+
+          <p className="mt-1 text-sm text-purple-600 dark:text-purple-400">
+            🚐 {viagem.nome}
+          </p>
+
+          <p className="text-xs text-purple-500 dark:text-purple-400">
+            Permitido entre {viagem.data_saida} e {viagem.data_retorno}
+          </p>
+        </div>
+      )}
 
       <div className="flex flex-col gap-4">
-
         <FormField label="Nome" required error={errors.nome}>
           <Input value={nome} onChange={(e) => setNome(e.target.value)} />
         </FormField>
@@ -178,7 +304,7 @@ export default function NovoEventoPage() {
             options={eventTypes}
             showCreateOption
             onChange={(value) => {
-              if (value === '__new__') {
+              if (value === "__new__") {
                 setIsCreatingType(true);
               } else {
                 setTipo(value);
@@ -191,18 +317,19 @@ export default function NovoEventoPage() {
           {isStudio ? (
             <>
               <Select
-                value={isOtherSelected ? '__other__' : local}
+                value={isOtherSelected ? "__other__" : local}
                 options={studioOptions}
                 onChange={(value) => {
-                  if (value === '__other__') {
+                  if (value === "__other__") {
                     setIsOtherSelected(true);
-                    setLocal('');
+                    setLocal("");
                   } else {
                     setIsOtherSelected(false);
                     setLocal(value);
                   }
                 }}
               />
+
               {isOtherSelected && (
                 <Input
                   value={customLocal}
@@ -234,10 +361,24 @@ export default function NovoEventoPage() {
           <textarea
             value={observacoes}
             onChange={(e) => setObservacoes(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg border
-            bg-white text-gray-900 dark:bg-gray-800 dark:border-gray-700
-            dark:text-gray-100 focus:outline-none focus:ring-2
-            focus:ring-blue-500 border-gray-300 resize-none"
+            className="
+              w-full
+              resize-none
+              rounded-lg
+              border
+              border-gray-300
+              bg-white
+              px-3
+              py-2
+              text-gray-900
+              focus:outline-none
+              focus:ring-2
+              focus:ring-blue-500
+
+              dark:border-gray-700
+              dark:bg-gray-800
+              dark:text-gray-100
+            "
           />
         </FormField>
 
@@ -246,11 +387,10 @@ export default function NovoEventoPage() {
             Cancelar
           </Button>
 
-          <Button onClick={handleSubmit} disabled={!isFormValid}>
-            {isSubmiting ? 'Salvando...' : 'Salvar'}
+          <Button onClick={handleSubmit} disabled={!isFormValid || isSubmiting}>
+            {isSubmiting ? "Salvando..." : "Salvar"}
           </Button>
         </div>
-
       </div>
 
       {isCreatingType && (
@@ -260,6 +400,7 @@ export default function NovoEventoPage() {
           onClose={() => setIsCreatingType(false)}
           onCreate={(value) => {
             handleCreateType(value);
+
             setIsCreatingType(false);
           }}
         />

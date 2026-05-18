@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
-import Button from '@/components/ui/button';
-import { useToast } from '@/hooks/useToast';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import type { Event } from '@/types/type-event';
-import EventShiftsManager from '@/components/events/event-shift-manager';
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
+import Button from "@/components/ui/button";
+import { useToast } from "@/hooks/useToast";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import type { Event } from "@/types/type-event";
+import EventShiftsManager from "@/components/events/event-shift-manager";
 
 type Viagem = {
   id: string;
@@ -35,104 +35,182 @@ export default function ViagemDetalhePage() {
   const [allEvents, setAllEvents] = useState<Event[]>([]);
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [isSavingScale, setIsSavingScale] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const formatDate = (date: string) =>
-    format(new Date(date + 'T00:00:00'), "dd 'de' MMMM", { locale: ptBR });
+    format(new Date(date + "T00:00:00"), "dd 'de' MMMM", { locale: ptBR });
 
   const fetchViagem = async () => {
-    const { data, error } = await supabase
-      .from('viagens')
-      .select('*')
-      .eq('id', id)
-      .single();
+    try {
+      const { data, error: err } = await supabase
+        .from("viagens")
+        .select("*")
+        .eq("id", id)
+        .single();
 
-    if (error) { console.error(error); return; }
-    setViagem(data);
+      if (err) {
+        throw err;
+      }
+      setViagem(data);
+      setError(null);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Erro ao carregar viagem";
+      setError(errorMessage);
+      console.error(errorMessage, err);
+    }
   };
 
   const fetchEventos = async () => {
-    // Eventos já vinculados à viagem
-    const { data, error } = await supabase
-      .from('events')
-      .select('*, channels(sigla)')
-      .eq('viagem_id', id)
-      .order('data', { ascending: true });
+    try {
+      const { data, error: err } = await supabase
+        .from("events")
+        .select("*, channels(sigla)")
+        .eq("viagem_id", id)
+        .order("data", { ascending: true });
 
-    if (error) { console.error(error); return; }
-    setEventos(data || []);
+      if (err) {
+        throw err;
+      }
+      setEventos(data || []);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Erro ao carregar eventos";
+      console.error(errorMessage, err);
+    }
   };
 
   const fetchAllEvents = async () => {
-    // Eventos sem viagem para vincular
-    const { data, error } = await supabase
-      .from('events')
-      .select('*, channels(sigla)')
-      .is('viagem_id', null)
-      .order('data', { ascending: true });
+    try {
+      const { data, error: err } = await supabase
+        .from("events")
+        .select("*, channels(sigla)")
+        .is("viagem_id", null)
+        .order("data", { ascending: true });
 
-    if (error) { console.error(error); return; }
-    setAllEvents(data || []);
+      if (err) {
+        throw err;
+      }
+      setAllEvents(data || []);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Erro ao carregar eventos";
+      console.error(errorMessage, err);
+    }
   };
 
   const fetchShifts = async () => {
-    if (eventos.length === 0) return;
+    if (!eventos || eventos.length === 0) return;
 
-    const { data, error } = await supabase
-      .from('event_shifts')
-      .select('*, event_shift_collaborators(collaborator_id)')
-      .eq('event_id', eventos[0].id);
+    try {
+      const { data, error: err } = await supabase
+        .from("event_shifts")
+        .select("*, event_shift_collaborators(collaborator_id)")
+        .eq("event_id", eventos[0].id);
 
-    if (error) { console.error(error); return; }
+      if (err) {
+        throw err;
+      }
 
-    const mapped = (data || []).map((s: any) => ({
-      id: s.id,
-      start_time: s.start_time,
-      end_time: s.end_time,
-      colaboradores: s.event_shift_collaborators.map((c: any) => c.collaborator_id),
-    }));
+      const mapped = (data || []).map((s: any) => ({
+        id: s.id,
+        start_time: s.start_time,
+        end_time: s.end_time,
+        colaboradores: s.event_shift_collaborators.map(
+          (c: any) => c.collaborator_id,
+        ),
+      }));
 
-    setShifts(mapped);
+      setShifts(mapped);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Erro ao carregar escala";
+      console.error(errorMessage, err);
+    }
   };
 
   useEffect(() => {
-    fetchViagem();
-    fetchEventos();
-    fetchAllEvents();
-  }, []);
+    if (!id) return;
+
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        await fetchViagem();
+        await fetchEventos();
+        await fetchAllEvents();
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Erro ao carregar dados";
+        setError(errorMessage);
+        console.error(errorMessage, err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [id]);
 
   useEffect(() => {
     fetchShifts();
   }, [eventos]);
 
   const handleVincularEvento = async (eventId: string) => {
-    const { error } = await supabase
-      .from('events')
-      .update({ viagem_id: id })
-      .eq('id', eventId);
+    const evento = allEvents.find((e) => e.id === eventId);
 
-    if (error) { showToast('Erro ao vincular evento'); return; }
+    if (!evento || !viagem) {
+      showToast("Evento ou viagem inválida");
+      return;
+    }
+
+    const eventDate = evento.data;
+
+    const isInsideRange =
+      eventDate >= viagem.data_saida && eventDate <= viagem.data_retorno;
+
+    if (!isInsideRange) {
+      showToast("A data do evento está fora do período da viagem");
+
+      return;
+    }
+
+    const { error } = await supabase
+      .from("events")
+      .update({ viagem_id: id })
+      .eq("id", eventId);
+
+    if (error) {
+      showToast("Erro ao vincular evento");
+      return;
+    }
 
     await fetchEventos();
     await fetchAllEvents();
-    showToast('Evento vinculado!');
+
+    showToast("Evento vinculado!");
   };
 
   const handleDesvincularEvento = async (eventId: string) => {
     const { error } = await supabase
-      .from('events')
+      .from("events")
       .update({ viagem_id: null })
-      .eq('id', eventId);
+      .eq("id", eventId);
 
-    if (error) { showToast('Erro ao desvincular evento'); return; }
+    if (error) {
+      showToast("Erro ao desvincular evento");
+      return;
+    }
 
     await fetchEventos();
     await fetchAllEvents();
-    showToast('Evento desvinculado!');
+    showToast("Evento desvinculado!");
   };
 
   const handleSaveScale = async () => {
     if (eventos.length === 0) {
-      showToast('Adicione eventos antes de salvar a escala');
+      showToast("Adicione eventos antes de salvar a escala");
       return;
     }
 
@@ -143,33 +221,35 @@ export default function ViagemDetalhePage() {
       for (const evento of eventos) {
         // Remove shifts antigos do evento
         const { data: oldShifts } = await supabase
-          .from('event_shifts')
-          .select('id')
-          .eq('event_id', evento.id);
+          .from("event_shifts")
+          .select("id")
+          .eq("event_id", evento.id);
 
         if (oldShifts && oldShifts.length > 0) {
           const oldIds = oldShifts.map((s: any) => s.id);
 
           await supabase
-            .from('event_shift_collaborators')
+            .from("event_shift_collaborators")
             .delete()
-            .in('shift_id', oldIds);
+            .in("shift_id", oldIds);
 
           await supabase
-            .from('event_shifts')
+            .from("event_shifts")
             .delete()
-            .eq('event_id', evento.id);
+            .eq("event_id", evento.id);
         }
 
         // Insere novos shifts
         for (const shift of shifts) {
           const { data: newShift, error: shiftError } = await supabase
-            .from('event_shifts')
-            .insert([{
-              event_id: evento.id,
-              start_time: shift.start_time,
-              end_time: shift.end_time,
-            }])
+            .from("event_shifts")
+            .insert([
+              {
+                event_id: evento.id,
+                start_time: shift.start_time,
+                end_time: shift.end_time,
+              },
+            ])
             .select()
             .single();
 
@@ -182,7 +262,7 @@ export default function ViagemDetalhePage() {
             }));
 
             const { error: collabError } = await supabase
-              .from('event_shift_collaborators')
+              .from("event_shift_collaborators")
               .insert(collaborators);
 
             if (collabError) throw collabError;
@@ -190,20 +270,21 @@ export default function ViagemDetalhePage() {
         }
       }
 
-      showToast('Escala salva e replicada para todos os eventos!');
+      showToast("Escala salva e replicada para todos os eventos!");
     } catch (err) {
       console.error(err);
-      showToast('Erro ao salvar escala');
+      showToast("Erro ao salvar escala");
     }
 
     setIsSavingScale(false);
   };
 
-  if (!viagem) return <p className="p-6">Carregando...</p>;
+  if (loading) return <p className="p-6">Carregando...</p>;
+  if (error) return <p className="p-6 text-red-500">Erro: {error}</p>;
+  if (!viagem) return <p className="p-6">Viagem não encontrada</p>;
 
   return (
     <div className="p-6 max-w-4xl mx-auto flex flex-col gap-8">
-
       {/* HEADER */}
       <div className="flex items-start justify-between">
         <div>
@@ -211,7 +292,8 @@ export default function ViagemDetalhePage() {
             {viagem.nome}
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            🚐 {formatDate(viagem.data_saida)} → {formatDate(viagem.data_retorno)}
+            🚐 {formatDate(viagem.data_saida)} →{" "}
+            {formatDate(viagem.data_retorno)}
           </p>
           {viagem.observacoes && (
             <p className="text-sm text-gray-400 mt-1">{viagem.observacoes}</p>
@@ -230,14 +312,18 @@ export default function ViagemDetalhePage() {
           </h2>
           <Button
             variant="secondary"
-            onClick={() => router.push(`/dashboard/eventos/novo?viagemId=${viagem.id}`)}
+            onClick={() =>
+              router.push(`/dashboard/eventos/novo?viagemId=${viagem.id}`)
+            }
           >
             + Criar novo evento
           </Button>
         </div>
 
         {eventos.length === 0 ? (
-          <p className="text-sm text-gray-400">Nenhum evento vinculado ainda.</p>
+          <p className="text-sm text-gray-400">
+            Nenhum evento vinculado ainda.
+          </p>
         ) : (
           <div className="flex flex-col gap-2">
             {eventos.map((evento) => (
@@ -256,7 +342,9 @@ export default function ViagemDetalhePage() {
                 <div className="flex gap-2">
                   <Button
                     variant="secondary"
-                    onClick={() => router.push(`/dashboard/eventos/${evento.id}`)}
+                    onClick={() =>
+                      router.push(`/dashboard/eventos/${evento.id}`)
+                    }
                   >
                     Editar
                   </Button>
@@ -308,7 +396,8 @@ export default function ViagemDetalhePage() {
           Escala da viagem
         </h2>
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-          A escala será replicada automaticamente para todos os eventos desta viagem.
+          A escala será replicada automaticamente para todos os eventos desta
+          viagem.
         </p>
 
         <EventShiftsManager
@@ -320,11 +409,10 @@ export default function ViagemDetalhePage() {
 
         <div className="flex justify-end mt-4">
           <Button onClick={handleSaveScale} disabled={isSavingScale}>
-            {isSavingScale ? 'Salvando...' : 'Salvar escala'}
+            {isSavingScale ? "Salvando..." : "Salvar escala"}
           </Button>
         </div>
       </section>
-
     </div>
   );
 }

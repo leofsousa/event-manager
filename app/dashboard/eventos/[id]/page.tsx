@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import Input from '@/components/ui/input';
-import InputDate from '@/components/ui/input-date';
-import Button from '@/components/ui/button';
-import FormField from '@/components/events/form-field';
-import Select from '@/components/ui/select';
-import CreateOptionModal from '@/components/modals/create-option-modal';
-import { useToast } from '@/hooks/useToast';
-import { supabase } from '@/lib/supabase';
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import Input from "@/components/ui/input";
+import InputDate from "@/components/ui/input-date";
+import Button from "@/components/ui/button";
+import FormField from "@/components/events/form-field";
+import Select from "@/components/ui/select";
+import CreateOptionModal from "@/components/modals/create-option-modal";
+import { useToast } from "@/hooks/useToast";
+import { supabase } from "@/lib/supabase";
 
 export default function EditEventoPage() {
   const params = useParams();
@@ -19,136 +19,178 @@ export default function EditEventoPage() {
   const { showToast } = useToast();
 
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const [eventTypes, setEventTypes] = useState<any[]>([]);
   const [channels, setChannels] = useState<any[]>([]);
 
   const [isCreatingType, setIsCreatingType] = useState(false);
 
-  const [nome, setNome] = useState('');
-  const [tipo, setTipo] = useState('');
-  const [channel, setChannel] = useState('');
-  const [data, setData] = useState('');
-  const [local, setLocal] = useState('');
-  const [observacoes, setObservacoes] = useState('');
+  const [nome, setNome] = useState("");
+  const [tipo, setTipo] = useState("");
+  const [channel, setChannel] = useState("");
+  const [data, setData] = useState("");
+  const [local, setLocal] = useState("");
+  const [observacoes, setObservacoes] = useState("");
   const [viagemId, setViagemId] = useState<string | null>(null);
 
-  const [customLocal, setCustomLocal] = useState('');
+  const [customLocal, setCustomLocal] = useState("");
   const [isOtherSelected, setIsOtherSelected] = useState(false);
 
   const [errors, setErrors] = useState({
-    nome: '',
-    tipo: '',
-    data: '',
-    local: '',
+    nome: "",
+    tipo: "",
+    data: "",
+    local: "",
   });
 
-  const isStudio = tipo === 'operacao-estudio';
+  const isStudio = tipo === "operacao-estudio";
 
   const studioOptions = [
-    { label: 'Estúdio 1', value: 'estudio-1' },
-    { label: 'Estúdio 2', value: 'estudio-2' },
-    { label: 'Estúdio 3', value: 'estudio-3' },
-    { label: 'Estúdio 4', value: 'estudio-4' },
-    { label: 'Outro', value: '__other__' },
+    { label: "Estúdio 1", value: "estudio-1" },
+    { label: "Estúdio 2", value: "estudio-2" },
+    { label: "Estúdio 3", value: "estudio-3" },
+    { label: "Estúdio 4", value: "estudio-4" },
+    { label: "Outro", value: "__other__" },
   ];
 
   const fetchEvent = async () => {
-    const { data, error } = await supabase
-      .from('events')
-      .select('*')
-      .eq('id', id)
-      .single();
+    try {
+      const { data, error: err } = await supabase
+        .from("events")
+        .select("*")
+        .eq("id", id)
+        .single();
 
-    if (error) {
-      console.error(error);
-      showToast('Erro ao carregar evento');
-      return;
-    }
-
-    setNome(data.nome);
-    setTipo(data.tipo);
-    setData(data.data);
-    setObservacoes(data.observacoes || '');
-    setChannel(data.channel_id || '');
-    setViagemId(data.viagem_id || null);
-
-    // local
-    if (data.tipo === 'operacao-estudio') {
-      const isStudioOption = studioOptions.some(
-        (opt) => opt.value === data.local
-      );
-
-      if (isStudioOption) {
-        setLocal(data.local);
-        setIsOtherSelected(false);
-        setCustomLocal('');
-      } else {
-        setLocal('');
-        setCustomLocal(data.local);
-        setIsOtherSelected(true);
+      if (err) {
+        throw err;
       }
-    } else {
-      setLocal(data.local);
-    }
 
-    setLoading(false);
+      setNome(data.nome);
+      setTipo(data.tipo);
+      setData(data.data);
+      setObservacoes(data.observacoes || "");
+      setChannel(data.channel_id || "");
+      setViagemId(data.viagem_id || null);
+
+      // local
+      if (data.tipo === "operacao-estudio") {
+        const isStudioOption = studioOptions.some(
+          (opt) => opt.value === data.local,
+        );
+
+        if (isStudioOption) {
+          setLocal(data.local);
+          setIsOtherSelected(false);
+          setCustomLocal("");
+        } else {
+          setLocal("");
+          setCustomLocal(data.local);
+          setIsOtherSelected(true);
+        }
+      } else {
+        setLocal(data.local);
+      }
+
+      setError(null);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Erro ao carregar evento";
+      setError(errorMessage);
+      console.error(errorMessage, err);
+      showToast("Erro ao carregar evento");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const fetchTypes = async () => {
-    const { data } = await supabase.from('event_types').select('*');
+    try {
+      const { data, error: err } = await supabase
+        .from("event_types")
+        .select("*");
 
-    setEventTypes(
-      (data || []).map((t: any) => ({
-        label: t.label,
-        value: t.value,
-      }))
-    );
+      if (err) {
+        throw err;
+      }
+
+      setEventTypes(
+        (data || []).map((t: any) => ({
+          label: t.label,
+          value: t.value,
+        })),
+      );
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Erro ao carregar tipos";
+      console.error(errorMessage, err);
+    }
   };
 
   const fetchChannels = async () => {
-    const { data } = await supabase.from('channels').select('*');
+    try {
+      const { data, error: err } = await supabase.from("channels").select("*");
 
-    setChannels(
-      (data || []).map((c: any) => ({
-        label: `${c.sigla} - ${c.name}`,
-        value: c.id,
-      }))
-    );
+      if (err) {
+        throw err;
+      }
+
+      setChannels(
+        (data || []).map((c: any) => ({
+          label: `${c.sigla} - ${c.name}`,
+          value: c.id,
+        })),
+      );
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Erro ao carregar canais";
+      console.error(errorMessage, err);
+    }
   };
 
   useEffect(() => {
     if (!id) return;
 
-    fetchEvent();
-    fetchTypes();
-    fetchChannels();
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        await Promise.all([fetchEvent(), fetchTypes(), fetchChannels()]);
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Erro ao carregar dados";
+        setError(errorMessage);
+        console.error(errorMessage, err);
+      }
+    };
+
+    loadData();
   }, [id]);
 
   const handleCreateType = async (name: string) => {
-    const formatted = name.toLowerCase().replace(/\s+/g, '-');
+    const formatted = name.toLowerCase().replace(/\s+/g, "-");
 
     const { data, error } = await supabase
-      .from('event_types')
+      .from("event_types")
       .insert([{ label: name, value: formatted }])
       .select()
       .single();
 
     if (error) {
-      showToast('Erro ao criar tipo');
+      showToast("Erro ao criar tipo");
       return;
     }
 
     setEventTypes((prev) => [...prev, data]);
     setTipo(data.value);
 
-    showToast('Tipo criado!');
+    showToast("Tipo criado!");
   };
 
   const handleSubmit = async () => {
     try {
       const { error } = await supabase
-        .from('events')
+        .from("events")
         .update({
           nome,
           tipo,
@@ -158,32 +200,32 @@ export default function EditEventoPage() {
           channel_id: channel || null,
           viagem_id: viagemId || null,
         })
-        .eq('id', id);
+        .eq("id", id);
 
       if (error) throw error;
 
-      showToast('Evento atualizado!');
-      router.push('/dashboard/eventos');
-
+      showToast("Evento atualizado!");
+      router.push("/dashboard/eventos");
     } catch (err) {
       console.error(err);
-      showToast('Erro ao atualizar');
+      showToast("Erro ao atualizar");
     }
   };
 
   if (loading) return <p>Carregando...</p>;
+  if (error) return <p className="text-red-500">Erro: {error}</p>;
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
-
-      <h1 className="text-2xl font-semibold mb-6">
-        Editar Evento
-      </h1>
+      <h1 className="text-2xl font-semibold mb-6">Editar Evento</h1>
 
       <div className="flex flex-col gap-4">
-
         <FormField label="Nome" htmlFor="nome" required error={errors.nome}>
-          <Input id="nome" value={nome} onChange={(e) => setNome(e.target.value)} />
+          <Input
+            id="nome"
+            value={nome}
+            onChange={(e) => setNome(e.target.value)}
+          />
         </FormField>
 
         <FormField label="Tipo" htmlFor="tipo" required error={errors.tipo}>
@@ -193,7 +235,7 @@ export default function EditEventoPage() {
             options={eventTypes}
             showCreateOption
             onChange={(value) => {
-              if (value === '__new__') {
+              if (value === "__new__") {
                 setIsCreatingType(true);
               } else {
                 setTipo(value);
@@ -207,12 +249,12 @@ export default function EditEventoPage() {
             <>
               <Select
                 id="local"
-                value={isOtherSelected ? '__other__' : local}
+                value={isOtherSelected ? "__other__" : local}
                 options={studioOptions}
                 onChange={(value) => {
-                  if (value === '__other__') {
+                  if (value === "__other__") {
                     setIsOtherSelected(true);
-                    setLocal('');
+                    setLocal("");
                   } else {
                     setIsOtherSelected(false);
                     setLocal(value);
@@ -231,7 +273,11 @@ export default function EditEventoPage() {
               )}
             </>
           ) : (
-            <Input id="local" value={local} onChange={(e) => setLocal(e.target.value)} />
+            <Input
+              id="local"
+              value={local}
+              onChange={(e) => setLocal(e.target.value)}
+            />
           )}
         </FormField>
 
@@ -263,11 +309,8 @@ export default function EditEventoPage() {
             Cancelar
           </Button>
 
-          <Button onClick={handleSubmit}>
-            Salvar alterações
-          </Button>
+          <Button onClick={handleSubmit}>Salvar alterações</Button>
         </div>
-
       </div>
 
       {isCreatingType && (
@@ -281,7 +324,6 @@ export default function EditEventoPage() {
           }}
         />
       )}
-
     </div>
   );
 }

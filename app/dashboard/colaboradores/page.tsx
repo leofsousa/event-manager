@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
-import TableColaboradores from '@/components/colaboradores/table-colaboradores';
-import ColaboradorModal from '@/components/colaboradores/colaboradores-modal';
-import ConfirmModal from '@/components/ui/confirm-modal';
+import TableColaboradores from "@/components/colaboradores/table-colaboradores";
+import ColaboradorModal from "@/components/colaboradores/colaboradores-modal";
+import ConfirmModal from "@/components/ui/confirm-modal";
 
-import { supabase } from '@/lib/supabase';
+import { supabase } from "@/lib/supabase";
 
 type Colaborador = {
   id: string;
@@ -16,7 +16,6 @@ type Colaborador = {
 };
 
 export default function Colaboradores() {
-
   const [colaboradores, setColaboradores] = useState<Colaborador[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -28,113 +27,89 @@ export default function Colaboradores() {
   const [colaboradorToDelete, setColaboradorToDelete] =
     useState<Colaborador | null>(null);
 
-  const [sortBy, setSortBy] =
-    useState<'nome' | 'cargo' | null>('nome');
+  const [sortBy, setSortBy] = useState<"nome" | "cargo" | null>("nome");
 
-  const [sortOrder, setSortOrder] =
-    useState<'asc' | 'desc'>('asc');
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
-  const handleSort = (field: 'nome' | 'cargo') => {
-
+  const handleSort = (field: "nome" | "cargo") => {
     if (sortBy === field) {
-      setSortOrder((prev) =>
-        prev === 'asc' ? 'desc' : 'asc'
-      );
+      setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
       return;
     }
 
     setSortBy(field);
-    setSortOrder('asc');
+    setSortOrder("asc");
   };
 
   const sortedColaboradores = [...colaboradores].sort((a, b) => {
-
     if (!sortBy) return 0;
 
     let comparison = 0;
 
-    if (sortBy === 'nome') {
-      comparison = (a.username || '').localeCompare(
-        b.username || ''
-      );
+    if (sortBy === "nome") {
+      comparison = (a.username || "").localeCompare(b.username || "");
     }
 
-    if (sortBy === 'cargo') {
-      comparison = (a.cargo || '').localeCompare(
-        b.cargo || ''
-      );
+    if (sortBy === "cargo") {
+      comparison = (a.cargo || "").localeCompare(b.cargo || "");
     }
 
-    return sortOrder === 'asc'
-      ? comparison
-      : -comparison;
+    return sortOrder === "asc" ? comparison : -comparison;
   });
 
   const fetchColaboradores = async () => {
-
     try {
-
       setLoading(true);
 
       const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('username', { ascending: true });
+        .from("profiles")
+        .select("*")
+        .order("username", { ascending: true });
 
       if (error) {
-        console.error('Erro ao buscar colaboradores:', error);
-        return;
+        throw error;
       }
 
       setColaboradores(data || []);
-
     } catch (err) {
-
-      console.error('Erro inesperado:', err);
-
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "Erro inesperado ao buscar colaboradores";
+      console.error(errorMessage, err);
     } finally {
-
       setLoading(false);
-
     }
   };
 
   useEffect(() => {
-
     fetchColaboradores();
-
   }, []);
 
   const handleEdit = (colaborador: Colaborador) => {
-
     setSelectedColaborator(colaborador);
     setIsModalOpen(true);
   };
 
   const handleDelete = async () => {
-
     if (!colaboradorToDelete) return;
 
     try {
-
       const { error } = await supabase
-        .from('profiles')
+        .from("profiles")
         .delete()
-        .eq('id', colaboradorToDelete.id);
+        .eq("id", colaboradorToDelete.id);
 
       if (error) {
-        console.error('Erro ao excluir colaborador:', error);
-        return;
+        throw error;
       }
 
       setColaboradorToDelete(null);
-
       await fetchColaboradores();
-
     } catch (err) {
-
-      console.error('Erro inesperado:', err);
-
+      const errorMessage =
+        err instanceof Error ? err.message : "Erro inesperado ao excluir";
+      console.error(errorMessage, err);
     }
   };
 
@@ -150,7 +125,6 @@ export default function Colaboradores() {
 
   return (
     <div className="p-4">
-
       <TableColaboradores
         colaboradores={sortedColaboradores}
         onAdd={() => {
@@ -180,7 +154,6 @@ export default function Colaboradores() {
           onCancel={() => setColaboradorToDelete(null)}
         />
       )}
-
     </div>
   );
 }
