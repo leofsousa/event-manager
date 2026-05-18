@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import Input from "@/components/ui/input";
@@ -74,7 +74,7 @@ export default function NovoEventoPage() {
 
   const isStudio = tipo === "operacao-estudio";
 
-  const fetchTypes = async () => {
+  const fetchTypes = useCallback(async () => {
     try {
       const { data, error: err } = await supabase
         .from("event_types")
@@ -95,9 +95,9 @@ export default function NovoEventoPage() {
         err instanceof Error ? err.message : "Erro ao carregar tipos";
       console.error(errorMessage, err);
     }
-  };
+  }, []);
 
-  const fetchChannels = async () => {
+  const fetchChannels = useCallback(async () => {
     try {
       const { data, error: err } = await supabase.from("channels").select("*");
 
@@ -116,9 +116,9 @@ export default function NovoEventoPage() {
         err instanceof Error ? err.message : "Erro ao carregar canais";
       console.error(errorMessage, err);
     }
-  };
+  }, []);
 
-  const fetchViagem = async () => {
+  const fetchViagem = useCallback(async () => {
     if (!viagemId) return;
 
     try {
@@ -138,7 +138,7 @@ export default function NovoEventoPage() {
         err instanceof Error ? err.message : "Erro ao carregar viagem";
       console.error(errorMessage, err);
     }
-  };
+  }, [viagemId]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -161,7 +161,7 @@ export default function NovoEventoPage() {
     };
 
     loadData();
-  }, [viagemId]);
+  }, [viagemId, fetchTypes, fetchChannels, fetchViagem]);
 
   useEffect(() => {
     setLocal("");

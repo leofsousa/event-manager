@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Button from "@/components/ui/button";
@@ -41,7 +41,7 @@ export default function ViagemDetalhePage() {
   const formatDate = (date: string) =>
     format(new Date(date + "T00:00:00"), "dd 'de' MMMM", { locale: ptBR });
 
-  const fetchViagem = async () => {
+  const fetchViagem = useCallback(async () => {
     try {
       const { data, error: err } = await supabase
         .from("viagens")
@@ -60,9 +60,9 @@ export default function ViagemDetalhePage() {
       setError(errorMessage);
       console.error(errorMessage, err);
     }
-  };
+  }, [id]);
 
-  const fetchEventos = async () => {
+  const fetchEventos = useCallback(async () => {
     try {
       const { data, error: err } = await supabase
         .from("events")
@@ -79,9 +79,9 @@ export default function ViagemDetalhePage() {
         err instanceof Error ? err.message : "Erro ao carregar eventos";
       console.error(errorMessage, err);
     }
-  };
+  }, [id]);
 
-  const fetchAllEvents = async () => {
+  const fetchAllEvents = useCallback(async () => {
     try {
       const { data, error: err } = await supabase
         .from("events")
@@ -98,7 +98,7 @@ export default function ViagemDetalhePage() {
         err instanceof Error ? err.message : "Erro ao carregar eventos";
       console.error(errorMessage, err);
     }
-  };
+  }, []);
 
   const fetchShifts = async () => {
     if (!eventos || eventos.length === 0) return;
@@ -151,10 +151,41 @@ export default function ViagemDetalhePage() {
     };
 
     loadData();
-  }, [id]);
+  }, [id, fetchViagem, fetchEventos, fetchAllEvents]);
 
   useEffect(() => {
-    fetchShifts();
+    const loadShifts = async () => {
+      if (!eventos || eventos.length === 0) {
+        setShifts([]);
+        return;
+      }
+
+      try {
+        const { data, error: err } = await supabase
+          .from("event_shifts")
+          .select("*, event_shift_collaborators(collaborator_id)")
+          .eq("event_id", eventos[0].id);
+
+        if (err) throw err;
+
+        const mapped = (data || []).map((s: any) => ({
+          id: s.id,
+          start_time: s.start_time,
+          end_time: s.end_time,
+          colaboradores: s.event_shift_collaborators.map(
+            (c: any) => c.collaborator_id,
+          ),
+        }));
+
+        setShifts(mapped);
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Erro ao carregar escala";
+        console.error(errorMessage, err);
+      }
+    };
+
+    loadShifts();
   }, [eventos]);
 
   const handleVincularEvento = async (eventId: string) => {
