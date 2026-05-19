@@ -41,62 +41,93 @@ function TravelDayContent({
   getChannelBadgeClass,
 }: TravelDayContentProps) {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-gray-50 p-3 text-left transition hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800">
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <div>
-          <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
-            Viagem
-          </p>
-          <p className="text-sm font-semibold text-gray-900 dark:text-white">
-            {viagem.nome}
-          </p>
+    <div
+      className={`
+        relative
+        min-h-[110px]
+        overflow-hidden
+        border-y border-purple-400
+        bg-purple-500/10
+
+        ${isStart ? "rounded-l-2xl border-l" : ""}
+        ${isEnd ? "rounded-r-2xl border-r" : ""}
+      `}
+    >
+      {/* HEADER DA VIAGEM */}
+      {(isStart || isEnd) && (
+        <div className="px-2 pt-2">
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <p className="truncate text-[11px] font-semibold text-purple-700 dark:text-purple-300">
+                🚐 {viagem.nome}
+              </p>
+
+              <p className="truncate text-[10px] text-purple-600 dark:text-purple-400">
+                {cidade}
+              </p>
+            </div>
+
+            <span className="shrink-0 rounded-full bg-purple-600 px-2 py-[2px] text-[9px] font-semibold text-white">
+              {isStart ? "Saída" : isEnd ? "Retorno" : "Viagem"}
+            </span>
+          </div>
         </div>
+      )}
 
-        <span className="rounded-full bg-blue-100 px-2 py-1 text-[11px] font-semibold text-blue-700 dark:bg-blue-900 dark:text-blue-300">
-          {isStart ? "Início" : isEnd ? "Retorno" : "Em curso"}
-        </span>
-      </div>
+      {/* EVENTOS */}
+      <div className="mt-2 flex flex-col gap-1 px-2 pb-2">
+        {eventos.map((event, index) => (
+          <button
+            key={`${event.nome}-${index}`}
+            type="button"
+            onClick={() => onEventClick?.(event)}
+            className="
+              w-full
+              overflow-hidden
+              rounded-lg
+              border border-purple-300
+              bg-white/90
+              px-2 py-1
+              text-left
+              transition
+              hover:bg-white
 
-      <p className="mb-3 text-[11px] text-gray-500 dark:text-gray-400">
-        {cidade}
-      </p>
-
-      {eventos.length > 0 ? (
-        <div className="flex flex-col gap-2">
-          {eventos.map((event, index) => (
-            <button
-              key={`${event.nome}-${index}`}
-              type="button"
-              onClick={() => onEventClick?.(event)}
-              className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-left text-sm text-gray-900 transition hover:border-gray-300 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-950 dark:text-white dark:hover:border-gray-600 dark:hover:bg-gray-900"
-            >
-              <div className="flex items-center gap-2">
-                {event.channel?.sigla && (
-                  <span
-                    className={`rounded px-1.5 py-[1px] text-[10px] font-semibold ${getChannelBadgeClass(
-                      event.channel?.sigla,
-                    )}`}
-                  >
-                    {event.channel?.sigla}
-                  </span>
-                )}
-
-                <span className="font-semibold">{event.nome}</span>
-              </div>
-
-              {event.local && (
-                <div className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
-                  {event.local}
-                </div>
+              dark:border-purple-800
+              dark:bg-gray-950/80
+            "
+          >
+            <div className="flex items-center gap-1 overflow-hidden">
+              {event.channel?.sigla && (
+                <span
+                  className={`
+                    shrink-0
+                    rounded
+                    px-1 py-[1px]
+                    text-[9px]
+                    font-semibold
+                    ${getChannelBadgeClass(event.channel?.sigla)}
+                  `}
+                >
+                  {event.channel?.sigla}
+                </span>
               )}
-            </button>
-          ))}
-        </div>
-      ) : null}
+
+              <span className="truncate text-[11px] font-semibold text-gray-900 dark:text-white">
+                {event.nome}
+              </span>
+            </div>
+
+            {event.hora_inicio && (
+              <p className="mt-[2px] text-[10px] text-gray-500 dark:text-gray-400">
+                {event.hora_inicio}
+              </p>
+            )}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
-
 const DAY_WIDTH = 140;
 
 const STUDIO_KEYS = ["estudio-1", "estudio-2", "estudio-3", "estudio-4"];
@@ -213,8 +244,7 @@ export default function CalendarTimeline({
           {(dateKey: string) => {
             const viagensAtivas = viagens.filter((viagem) => {
               return (
-                dateKey >= viagem.data_saida &&
-                dateKey <= viagem.data_retorno
+                dateKey >= viagem.data_saida && dateKey <= viagem.data_retorno
               );
             });
 
@@ -235,8 +265,7 @@ export default function CalendarTimeline({
 
                   const eventosDoDia = events.filter((event) => {
                     return (
-                      event.viagem_id === viagem.id &&
-                      event.data === dateKey
+                      event.viagem_id === viagem.id && event.data === dateKey
                     );
                   });
 
@@ -288,9 +317,7 @@ export default function CalendarTimeline({
                               px-1.5 py-[1px]
                               text-[10px]
                               font-semibold
-                              ${getChannelBadgeClass(
-                                event.channel?.sigla,
-                              )}
+                              ${getChannelBadgeClass(event.channel?.sigla)}
                             `}
                           >
                             {event.channel?.sigla}
@@ -318,8 +345,7 @@ export default function CalendarTimeline({
           {(dateKey: string) => {
             const studioEvents = events.filter((event) => {
               return (
-                getEventStudio(event) === "estudio-1" &&
-                event.data === dateKey
+                getEventStudio(event) === "estudio-1" && event.data === dateKey
               );
             });
 
@@ -338,8 +364,7 @@ export default function CalendarTimeline({
           {(dateKey: string) => {
             const studioEvents = events.filter((event) => {
               return (
-                getEventStudio(event) === "estudio-2" &&
-                event.data === dateKey
+                getEventStudio(event) === "estudio-2" && event.data === dateKey
               );
             });
 
@@ -358,8 +383,7 @@ export default function CalendarTimeline({
           {(dateKey: string) => {
             const studioEvents = events.filter((event) => {
               return (
-                getEventStudio(event) === "estudio-3" &&
-                event.data === dateKey
+                getEventStudio(event) === "estudio-3" && event.data === dateKey
               );
             });
 
@@ -378,8 +402,7 @@ export default function CalendarTimeline({
           {(dateKey: string) => {
             const studioEvents = events.filter((event) => {
               return (
-                getEventStudio(event) === "estudio-4" &&
-                event.data === dateKey
+                getEventStudio(event) === "estudio-4" && event.data === dateKey
               );
             });
 

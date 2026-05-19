@@ -25,27 +25,31 @@ const getChannelBadgeClass = (sigla?: string) => {
   return channelStyles[sigla] || "bg-gray-500 text-white";
 };
 
-export default function TravelEventItem({
-  event,
-  onClick,
-}: Props) {
+export default function TravelEventItem({ event, onClick }: Props) {
   return (
     <button
       onClick={() => onClick?.(event)}
       className="
-        w-full
-        rounded-xl
-        border border-purple-200
-        bg-white
-        px-3 py-2
-        text-left
-        transition
-        hover:bg-purple-50
+    w-full
+    min-w-0
 
-        dark:border-purple-900
-        dark:bg-gray-900
-        dark:hover:bg-purple-950/30
-      "
+    overflow-hidden
+
+    rounded-xl
+    border border-purple-200
+    bg-white
+
+    px-3 py-2
+
+    text-left
+    transition
+
+    hover:bg-purple-50
+
+    dark:border-purple-900
+    dark:bg-gray-900
+    dark:hover:bg-purple-950/30
+  "
     >
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-2">
