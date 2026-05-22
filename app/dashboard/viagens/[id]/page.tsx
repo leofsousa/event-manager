@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/useToast";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { Event } from "@/types/type-event";
-import EventShiftsManager from "@/components/events/event-shift-manager";
+import ViagemEscalaSection from "@/components/viagens/viagem-escala-section";
 
 type Viagem = {
   id: string;
@@ -16,13 +16,6 @@ type Viagem = {
   data_saida: string;
   data_retorno: string;
   observacoes?: string;
-};
-
-type Shift = {
-  id?: string;
-  start_time: string;
-  end_time: string;
-  colaboradores: string[];
 };
 
 export default function ViagemDetalhePage() {
@@ -33,7 +26,9 @@ export default function ViagemDetalhePage() {
   const [viagem, setViagem] = useState<Viagem | null>(null);
   const [eventos, setEventos] = useState<Event[]>([]);
   const [allEvents, setAllEvents] = useState<Event[]>([]);
-  const [shifts, setShifts] = useState<Shift[]>([]);
+  const [colaboradoresEscalados, setColaboradoresEscalados] = useState<string[]>(
+    [],
+  );
   const [isSavingScale, setIsSavingScale] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -49,9 +44,7 @@ export default function ViagemDetalhePage() {
         .eq("id", id)
         .single();
 
-      if (err) {
-        throw err;
-      }
+      if (err) throw err;
       setViagem(data);
       setError(null);
     } catch (err) {
@@ -70,14 +63,10 @@ export default function ViagemDetalhePage() {
         .eq("viagem_id", id)
         .order("data", { ascending: true });
 
-      if (err) {
-        throw err;
-      }
+      if (err) throw err;
       setEventos(data || []);
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Erro ao carregar eventos";
-      console.error(errorMessage, err);
+      console.error(err);
     }
   }, [id]);
 
@@ -89,46 +78,46 @@ export default function ViagemDetalhePage() {
         .is("viagem_id", null)
         .order("data", { ascending: true });
 
-      if (err) {
-        throw err;
-      }
+      if (err) throw err;
       setAllEvents(data || []);
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Erro ao carregar eventos";
-      console.error(errorMessage, err);
+      console.error(err);
     }
   }, []);
 
-  const fetchShifts = async () => {
-    if (!eventos || eventos.length === 0) return;
+  const loadColaboradoresEscalados = useCallback(async (eventosViagem: Event[]) => {
+    if (eventosViagem.length === 0) {
+      setColaboradoresEscalados([]);
+      return;
+    }
 
     try {
       const { data, error: err } = await supabase
         .from("event_shifts")
-        .select("*, event_shift_collaborators(collaborator_id)")
-        .eq("event_id", eventos[0].id);
+        .select("event_shift_collaborators(collaborator_id)")
+        .eq("event_id", eventosViagem[0].id);
 
-      if (err) {
-        throw err;
-      }
+      if (err) throw err;
 
-      const mapped = (data || []).map((s: any) => ({
-        id: s.id,
-        start_time: s.start_time,
-        end_time: s.end_time,
-        colaboradores: s.event_shift_collaborators.map(
-          (c: any) => c.collaborator_id,
+      const ids = [
+        ...new Set(
+          (data ?? []).flatMap(
+            (shift) =>
+              (
+                shift.event_shift_collaborators as {
+                  collaborator_id: string;
+                }[]
+              )?.map((c) => c.collaborator_id) ?? [],
+          ),
         ),
-      }));
+      ];
 
-      setShifts(mapped);
+      setColaboradoresEscalados(ids);
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Erro ao carregar escala";
-      console.error(errorMessage, err);
+      console.error(err);
+      setColaboradoresEscalados([]);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (!id) return;
@@ -144,7 +133,6 @@ export default function ViagemDetalhePage() {
         const errorMessage =
           err instanceof Error ? err.message : "Erro ao carregar dados";
         setError(errorMessage);
-        console.error(errorMessage, err);
       } finally {
         setLoading(false);
       }
@@ -154,39 +142,8 @@ export default function ViagemDetalhePage() {
   }, [id, fetchViagem, fetchEventos, fetchAllEvents]);
 
   useEffect(() => {
-    const loadShifts = async () => {
-      if (!eventos || eventos.length === 0) {
-        setShifts([]);
-        return;
-      }
-
-      try {
-        const { data, error: err } = await supabase
-          .from("event_shifts")
-          .select("*, event_shift_collaborators(collaborator_id)")
-          .eq("event_id", eventos[0].id);
-
-        if (err) throw err;
-
-        const mapped = (data || []).map((s: any) => ({
-          id: s.id,
-          start_time: s.start_time,
-          end_time: s.end_time,
-          colaboradores: s.event_shift_collaborators.map(
-            (c: any) => c.collaborator_id,
-          ),
-        }));
-
-        setShifts(mapped);
-      } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : "Erro ao carregar escala";
-        console.error(errorMessage, err);
-      }
-    };
-
-    loadShifts();
-  }, [eventos]);
+    loadColaboradoresEscalados(eventos);
+  }, [eventos, loadColaboradoresEscalados]);
 
   const handleVincularEvento = async (eventId: string) => {
     const evento = allEvents.find((e) => e.id === eventId);
@@ -196,14 +153,11 @@ export default function ViagemDetalhePage() {
       return;
     }
 
-    const eventDate = evento.data;
-
-    const isInsideRange =
-      eventDate >= viagem.data_saida && eventDate <= viagem.data_retorno;
-
-    if (!isInsideRange) {
+    if (
+      evento.data < viagem.data_saida ||
+      evento.data > viagem.data_retorno
+    ) {
       showToast("A data do evento está fora do período da viagem");
-
       return;
     }
 
@@ -217,9 +171,16 @@ export default function ViagemDetalhePage() {
       return;
     }
 
+    if (colaboradoresEscalados.length > 0) {
+      try {
+        await aplicarEscalaNoEvento(eventId, colaboradoresEscalados);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
     await fetchEventos();
     await fetchAllEvents();
-
     showToast("Evento vinculado!");
   };
 
@@ -239,69 +200,66 @@ export default function ViagemDetalhePage() {
     showToast("Evento desvinculado!");
   };
 
+  const aplicarEscalaNoEvento = async (
+    eventoId: string,
+    colaboradorIds: string[],
+  ) => {
+    const { data: oldShifts } = await supabase
+      .from("event_shifts")
+      .select("id")
+      .eq("event_id", eventoId);
+
+    if (oldShifts && oldShifts.length > 0) {
+      const oldIds = oldShifts.map((s) => s.id);
+      await supabase
+        .from("event_shift_collaborators")
+        .delete()
+        .in("shift_id", oldIds);
+      await supabase.from("event_shifts").delete().eq("event_id", eventoId);
+    }
+
+    if (colaboradorIds.length === 0) return;
+
+    const { data: newShift, error: shiftError } = await supabase
+      .from("event_shifts")
+      .insert([
+        {
+          event_id: eventoId,
+          start_time: null,
+          end_time: null,
+        },
+      ])
+      .select()
+      .single();
+
+    if (shiftError) throw shiftError;
+
+    const { error: collabError } = await supabase
+      .from("event_shift_collaborators")
+      .insert(
+        colaboradorIds.map((collaboratorId) => ({
+          shift_id: newShift.id,
+          collaborator_id: collaboratorId,
+        })),
+      );
+
+    if (collabError) throw collabError;
+  };
+
   const handleSaveScale = async () => {
     if (eventos.length === 0) {
-      showToast("Adicione eventos antes de salvar a escala");
+      showToast("Vincule ou crie pelo menos um evento antes de salvar a escala");
       return;
     }
 
     setIsSavingScale(true);
 
     try {
-      // Replica a escala para todos os eventos da viagem
       for (const evento of eventos) {
-        // Remove shifts antigos do evento
-        const { data: oldShifts } = await supabase
-          .from("event_shifts")
-          .select("id")
-          .eq("event_id", evento.id);
-
-        if (oldShifts && oldShifts.length > 0) {
-          const oldIds = oldShifts.map((s: any) => s.id);
-
-          await supabase
-            .from("event_shift_collaborators")
-            .delete()
-            .in("shift_id", oldIds);
-
-          await supabase
-            .from("event_shifts")
-            .delete()
-            .eq("event_id", evento.id);
-        }
-
-        // Insere novos shifts
-        for (const shift of shifts) {
-          const { data: newShift, error: shiftError } = await supabase
-            .from("event_shifts")
-            .insert([
-              {
-                event_id: evento.id,
-                start_time: shift.start_time,
-                end_time: shift.end_time,
-              },
-            ])
-            .select()
-            .single();
-
-          if (shiftError) throw shiftError;
-
-          if (shift.colaboradores.length > 0) {
-            const collaborators = shift.colaboradores.map((colabId) => ({
-              shift_id: newShift.id,
-              collaborator_id: colabId,
-            }));
-
-            const { error: collabError } = await supabase
-              .from("event_shift_collaborators")
-              .insert(collaborators);
-
-            if (collabError) throw collabError;
-          }
-        }
+        await aplicarEscalaNoEvento(evento.id, colaboradoresEscalados);
       }
 
-      showToast("Escala salva e replicada para todos os eventos!");
+      showToast("Escala salva em todos os eventos da viagem!");
     } catch (err) {
       console.error(err);
       showToast("Erro ao salvar escala");
@@ -310,140 +268,164 @@ export default function ViagemDetalhePage() {
     setIsSavingScale(false);
   };
 
-  if (loading) return <p className="p-6">Carregando...</p>;
-  if (error) return <p className="p-6 text-red-500">Erro: {error}</p>;
-  if (!viagem) return <p className="p-6">Viagem não encontrada</p>;
+  if (loading) {
+    return (
+      <div className="flex min-h-0 flex-1 items-center justify-center p-6">
+        <p className="text-sm text-gray-500">Carregando...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex min-h-0 flex-1 overflow-y-auto p-6">
+        <p className="text-red-500">Erro: {error}</p>
+      </div>
+    );
+  }
+
+  if (!viagem) {
+    return (
+      <div className="flex min-h-0 flex-1 overflow-y-auto p-6">
+        <p>Viagem não encontrada</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto flex flex-col gap-8">
-      {/* HEADER */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
-            {viagem.nome}
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            🚐 {formatDate(viagem.data_saida)} →{" "}
-            {formatDate(viagem.data_retorno)}
-          </p>
-          {viagem.observacoes && (
-            <p className="text-sm text-gray-400 mt-1">{viagem.observacoes}</p>
-          )}
-        </div>
-        <Button variant="secondary" onClick={() => router.back()}>
-          Voltar
-        </Button>
-      </div>
-
-      {/* EVENTOS VINCULADOS */}
-      <section>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Eventos da viagem
-          </h2>
-          <Button
-            variant="secondary"
-            onClick={() =>
-              router.push(`/dashboard/eventos/novo?viagemId=${viagem.id}`)
-            }
-          >
-            + Criar novo evento
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden">
+      <div className="mx-auto flex w-full max-w-4xl flex-col gap-8 p-6 pb-12">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+              {viagem.nome}
+            </h1>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              🚐 {formatDate(viagem.data_saida)} →{" "}
+              {formatDate(viagem.data_retorno)}
+            </p>
+            {viagem.observacoes && (
+              <p className="mt-1 text-sm text-gray-400">{viagem.observacoes}</p>
+            )}
+          </div>
+          <Button variant="secondary" onClick={() => router.back()}>
+            Voltar
           </Button>
         </div>
 
-        {eventos.length === 0 ? (
-          <p className="text-sm text-gray-400">
-            Nenhum evento vinculado ainda.
-          </p>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {eventos.map((evento) => (
-              <div
-                key={evento.id}
-                className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 flex items-center justify-between gap-4"
-              >
-                <div>
-                  <p className="font-medium text-gray-900 dark:text-white">
-                    {evento.nome}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    📅 {evento.data} · 📍 {evento.local}
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="secondary"
-                    onClick={() =>
-                      router.push(`/dashboard/eventos/${evento.id}`)
-                    }
-                  >
-                    Editar
-                  </Button>
-                  <Button
-                    variant="danger"
-                    onClick={() => handleDesvincularEvento(evento.id)}
-                  >
-                    Desvincular
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* VINCULAR EVENTOS EXISTENTES */}
-      {allEvents.length > 0 && (
         <section>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-            Vincular evento existente
-          </h2>
-          <div className="flex flex-col gap-2">
-            {allEvents.map((evento) => (
-              <div
-                key={evento.id}
-                className="bg-gray-50 dark:bg-gray-900 border border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-3 flex items-center justify-between gap-4"
-              >
-                <div>
-                  <p className="font-medium text-gray-900 dark:text-white">
-                    {evento.nome}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    📅 {evento.data} · 📍 {evento.local}
-                  </p>
-                </div>
-                <Button onClick={() => handleVincularEvento(evento.id)}>
-                  Vincular
-                </Button>
-              </div>
-            ))}
+          <div className="mb-3 flex items-center justify-between gap-4">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Eventos da viagem
+            </h2>
+            <Button
+              variant="secondary"
+              onClick={() =>
+                router.push(`/dashboard/eventos/novo?viagemId=${viagem.id}`)
+              }
+            >
+              + Criar novo evento
+            </Button>
           </div>
+
+          {eventos.length === 0 ? (
+            <p className="text-sm text-gray-400">
+              Nenhum evento vinculado ainda.
+            </p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {eventos.map((evento) => (
+                <div
+                  key={evento.id}
+                  className="flex items-center justify-between gap-4 rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800"
+                >
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      {evento.nome}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      📅 {evento.data} · 📍 {evento.local}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 gap-2">
+                    <Button
+                      variant="secondary"
+                      onClick={() =>
+                        router.push(`/dashboard/eventos/${evento.id}`)
+                      }
+                    >
+                      Editar
+                    </Button>
+                    <Button
+                      variant="danger"
+                      onClick={() => handleDesvincularEvento(evento.id)}
+                    >
+                      Desvincular
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
-      )}
 
-      {/* ESCALA DA VIAGEM */}
-      <section>
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-          Escala da viagem
-        </h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-          A escala será replicada automaticamente para todos os eventos desta
-          viagem.
-        </p>
+        {allEvents.length > 0 && (
+          <section>
+            <h2 className="mb-3 text-lg font-semibold text-gray-900 dark:text-white">
+              Vincular evento existente
+            </h2>
+            <div className="flex max-h-64 flex-col gap-2 overflow-y-auto pr-1">
+              {allEvents.map((evento) => (
+                <div
+                  key={evento.id}
+                  className="flex items-center justify-between gap-4 rounded-xl border border-dashed border-gray-300 bg-gray-50 p-3 dark:border-gray-600 dark:bg-gray-900"
+                >
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      {evento.nome}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      📅 {evento.data} · 📍 {evento.local}
+                    </p>
+                  </div>
+                  <Button onClick={() => handleVincularEvento(evento.id)}>
+                    Vincular
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
-        <EventShiftsManager
-          shifts={shifts}
-          setShifts={setShifts}
-          eventDate={viagem.data_saida}
-          isViagem={true}
-        />
+        <section className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-900">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Escala da viagem
+          </h2>
+          <p className="mt-1 mb-4 text-sm text-gray-500 dark:text-gray-400">
+            Selecione os colaboradores escalados na viagem.
+          </p>
 
-        <div className="flex justify-end mt-4">
-          <Button onClick={handleSaveScale} disabled={isSavingScale}>
-            {isSavingScale ? "Salvando..." : "Salvar escala"}
-          </Button>
-        </div>
-      </section>
+          <ViagemEscalaSection
+            selected={colaboradoresEscalados}
+            onChange={setColaboradoresEscalados}
+          />
+
+          <div className="mt-4 flex justify-end">
+            <Button
+              onClick={handleSaveScale}
+              disabled={isSavingScale || eventos.length === 0}
+            >
+              {isSavingScale ? "Salvando..." : "Salvar escala"}
+            </Button>
+          </div>
+
+          {eventos.length === 0 && (
+            <p className="mt-2 text-right text-xs text-amber-600 dark:text-amber-400">
+              Vincule ou crie pelo menos um evento para salvar.
+            </p>
+          )}
+        </section>
+      </div>
     </div>
   );
 }

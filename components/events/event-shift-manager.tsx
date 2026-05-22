@@ -125,102 +125,118 @@ export default function EventShiftsManager({
   // =========================
 
   useEffect(() => {
+    if (isViagem) {
+      setShifts((prev) => {
+        if (prev.length === 0) {
+          return [{ start_time: "", end_time: "", colaboradores: [] }];
+        }
+        if (prev.length > 1) {
+          return [prev[0]];
+        }
+        return prev;
+      });
+      setActiveIndex(0);
+      return;
+    }
+
     if (shifts.length === 0) {
       setShifts([
         {
-          start_time: '',
-          end_time: '',
+          start_time: "",
+          end_time: "",
           colaboradores: [],
         },
       ]);
     }
+  }, [isViagem, setShifts, shifts.length]);
 
-    if (isViagem && shifts.length > 1) {
-      setShifts([shifts[0]]);
+  const currentShift = shifts[activeIndex] ?? shifts[0];
+
+  if (isViagem) {
+    if (!currentShift) {
+      return (
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Carregando...
+        </p>
+      );
     }
-  }, [isViagem]);
 
-  const currentShift = shifts[activeIndex];
+    return (
+      <div className="rounded-xl border border-gray-200 p-4 dark:border-gray-700">
+        <EventColaboradoresSelect
+          selected={currentShift.colaboradores}
+          onChange={(ids) => updateShift(0, { colaboradores: ids })}
+        />
+      </div>
+    );
+  }
 
-  // =========================
-  // UI
-  // =========================
+  if (!currentShift) {
+    return (
+      <p className="text-sm text-gray-500 dark:text-gray-400">
+        Carregando escala...
+      </p>
+    );
+  }
 
   return (
     <div className="space-y-4">
 
-      {/* TURNOS */}
-      {!isViagem && (
-        <div className="flex gap-2 flex-wrap">
-          {shifts.map((shift, index) => (
-            <button
-              key={index}
-              onClick={() => setActiveIndex(index)}
-              className={`px-3 py-1 rounded-lg text-sm transition ${
-                activeIndex === index
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-200 dark:bg-gray-700'
-              }`}
-            >
-              Turno {index + 1}
-              {shift.start_time && shift.end_time && (
-                <span className="ml-2 text-xs opacity-80">
-                  ({shift.start_time} - {shift.end_time})
-                </span>
-              )}
-            </button>
-          ))}
-
+      <div className="flex flex-wrap gap-2">
+        {shifts.map((shift, index) => (
           <button
-            onClick={addShift}
-            className="px-3 py-1 rounded-lg bg-green-500 text-white"
+            key={index}
+            onClick={() => setActiveIndex(index)}
+            className={`rounded-lg px-3 py-1 text-sm transition ${
+              activeIndex === index
+                ? "bg-blue-500 text-white"
+                : "bg-gray-200 dark:bg-gray-700"
+            }`}
           >
-            +
+            Turno {index + 1}
+            {shift.start_time && shift.end_time && (
+              <span className="ml-2 text-xs opacity-80">
+                ({shift.start_time} - {shift.end_time})
+              </span>
+            )}
           </button>
-        </div>
-      )}
+        ))}
 
-      {/* CARD */}
-      {currentShift && (
-        <div className="border rounded-xl p-4 space-y-4">
+        <button
+          onClick={addShift}
+          className="rounded-lg bg-green-500 px-3 py-1 text-white"
+        >
+          +
+        </button>
+      </div>
 
-          {/* HORÁRIO */}
-          {!isViagem && (
-            <div className="flex gap-2">
-              <Input
-                type="time"
-                step={900}
-                value={currentShift.start_time}
-                onChange={(e) =>
-                  updateShift(activeIndex, {
-                    start_time: e.target.value,
-                  })
-                }
-              />
+      <div className="space-y-4 rounded-xl border border-gray-200 p-4 dark:border-gray-700">
+          <div className="flex gap-2">
+            <Input
+              type="time"
+              step={900}
+              value={currentShift.start_time}
+              onChange={(e) =>
+                updateShift(activeIndex, {
+                  start_time: e.target.value,
+                })
+              }
+            />
 
-              <Input
-                type="time"
-                value={currentShift.end_time}
-                onChange={(e) =>
-                  updateShift(activeIndex, {
-                    end_time: e.target.value,
-                  })
-                }
-              />
-            </div>
-          )}
+            <Input
+              type="time"
+              value={currentShift.end_time}
+              onChange={(e) =>
+                updateShift(activeIndex, {
+                  end_time: e.target.value,
+                })
+              }
+            />
+          </div>
 
-          {/* COLABORADORES */}
           <EventColaboradoresSelect
             selected={currentShift.colaboradores}
             onChange={async (ids) => {
-
-              // 🚀 viagem = sem conflito
-              if (isViagem) {
-                updateShift(activeIndex, { colaboradores: ids });
-                return;
-              }
-
               const currentShiftUpdated = {
                 ...currentShift,
                 colaboradores: ids
@@ -276,8 +292,7 @@ export default function EventShiftsManager({
             </div>
           )}
 
-        </div>
-      )}
+      </div>
     </div>
   );
 }
