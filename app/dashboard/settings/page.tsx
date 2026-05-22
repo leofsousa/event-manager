@@ -1,5 +1,7 @@
 export default function Settings() {
   return (
-   <h1>Configurações</h1>
-  )
+    <div className="overflow-y-auto p-6">
+      <h1>Configurações</h1>
+    </div>
+  );
 }

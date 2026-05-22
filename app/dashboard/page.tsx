@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/auth-context";
+import { mapEventsWithUserScale } from "@/app/utils/map-events-with-user-scale";
 
 import CalendarView from "@/components/calendar/calendar-view";
 
@@ -35,6 +36,8 @@ export default function DashboardPage() {
   }, [loading, user, router]);
 
   const fetchData = useCallback(async () => {
+    if (!user) return;
+
     setLoadingData(true);
 
     const [eventsResponse, viagensResponse] = await Promise.all([
@@ -46,6 +49,14 @@ export default function DashboardPage() {
           nome,
           data_saida,
           data_retorno
+        ),
+        event_shifts(
+          id,
+          start_time,
+          end_time,
+          event_shift_collaborators(
+            collaborator_id
+          )
         )
       `),
 
@@ -60,12 +71,17 @@ export default function DashboardPage() {
       console.error(viagensResponse.error);
     }
 
-    setEvents((eventsResponse.data as Event[]) || []);
+    const mapped = mapEventsWithUserScale(
+      (eventsResponse.data as Record<string, unknown>[]) || [],
+      user.id,
+    );
+
+    setEvents(mapped);
     setViagens((viagensResponse.data as Viagem[]) || []);
 
     setLoadingData(false);
     setInitialized(true);
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     if (!loading && user) {
@@ -73,9 +89,6 @@ export default function DashboardPage() {
     }
   }, [loading, user, fetchData]);
 
-  /**
-   * Loading apenas na primeira renderização
-   */
   if (loading || (!initialized && loadingData)) {
     return (
       <div className="p-6">
@@ -89,9 +102,8 @@ export default function DashboardPage() {
   if (!user) return null;
 
   return (
-    <div className="flex h-full flex-col min-w-0">
-      {/* HEADER */}
-      <div className="border-b border-gray-200 px-6 py-5 dark:border-gray-800">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+      <div className="shrink-0 border-b border-gray-200 px-6 py-5 dark:border-gray-800">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             Agenda Operacional
@@ -103,21 +115,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* CONTEÚDO */}
-      <div
-        className="
-          flex-1
-          min-h-0
-          min-w-0
-          overflow-hidden
-          p-6
-        "
-      >
-        <CalendarView
-          events={events}
-          viagens={viagens}
-          mode="admin"
-        />
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-6 pt-4">
+        <CalendarView events={events} viagens={viagens} mode="admin" />
       </div>
     </div>
   );

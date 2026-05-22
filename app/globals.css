@@ -62,3 +62,35 @@ body {
 .dark ::-webkit-scrollbar-thumb:hover {
   background: #6b7280;
 }
+
+/* Calendário: scroll fluido na área da timeline */
+.calendar-scroll-main {
+  scrollbar-width: thin;
+  scroll-behavior: smooth;
+}
+
+.calendar-scroll-slider {
+  height: 6px;
+  accent-color: #2563eb;
+  appearance: none;
+  border-radius: 9999px;
+}
+
+.calendar-scroll-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #2563eb;
+  cursor: grab;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.2);
+}
+
+.calendar-scroll-slider::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 9999px;
+}
+
+.dark .calendar-scroll-slider {
+  accent-color: #3b82f6;
+}

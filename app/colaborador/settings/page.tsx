@@ -1,6 +1,6 @@
 export default function ColaboradorSettings() {
     return (
-      <div>
+      <div className="overflow-y-auto p-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
           Configurações
         </h1>

@@ -8,6 +8,8 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/auth-context';
 
+const VALID_ROLES = ['admin', 'colaborador'] as const;
+
 export default function Login() {
   const { loading } = useAuth();
   const router = useRouter();
@@ -15,6 +17,7 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const toggleTheme = () => {
     const newTheme = !isDark;
@@ -41,84 +44,94 @@ export default function Login() {
 
   const handleLogin = async () => {
     if (!email || !senha) {
-      alert('Preencha corretamente os campos');
+      setErrorMessage('Preencha email e senha.');
       return;
     }
 
     setIsLoggingIn(true);
+    setErrorMessage(null);
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password: senha }),
-      });
+      const { data: authData, error: authError } =
+        await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password: senha,
+        });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        alert(data.error || 'Erro ao fazer login');
-        setIsLoggingIn(false);
+      if (authError) {
+        setErrorMessage(authError.message || 'Credenciais inválidas.');
         return;
       }
 
-      const { error: clientError } = await supabase.auth.signInWithPassword({
-        email,
-        password: senha,
-      });
-
-      if (clientError) {
-        alert(clientError.message || 'Erro ao autenticar o cliente');
-        setIsLoggingIn(false);
+      if (!authData.user) {
+        setErrorMessage('Não foi possível autenticar o usuário.');
         return;
       }
 
-      const role = data.role;
-      if (role === 'admin') {
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', authData.user.id)
+        .single();
+
+      if (profileError || !profile?.role) {
+        await supabase.auth.signOut();
+        setErrorMessage('Perfil do usuário não encontrado.');
+        return;
+      }
+
+      if (!VALID_ROLES.includes(profile.role as (typeof VALID_ROLES)[number])) {
+        await supabase.auth.signOut();
+        setErrorMessage('Perfil sem permissão de acesso.');
+        return;
+      }
+
+      router.refresh();
+
+      if (profile.role === 'admin') {
         router.replace('/dashboard');
-      } else if (role === 'colaborador') {
-        router.replace('/colaborador');
       } else {
-        router.replace('/login');
+        router.replace('/colaborador');
       }
-
-      setIsLoggingIn(false);
     } catch (error) {
-      alert('Erro ao fazer login: ' + (error instanceof Error ? error.message : String(error)));
+      setErrorMessage(
+        error instanceof Error ? error.message : 'Erro ao fazer login.',
+      );
+    } finally {
       setIsLoggingIn(false);
     }
   };
 
-  // Mostra loading enquanto verifica sessão inicial
   if (loading) {
     return (
-      <div className="h-screen w-full bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
-        <p className="text-gray-400 text-sm">Carregando...</p>
+      <div className="flex h-screen w-full items-center justify-center bg-gray-50 dark:bg-gray-950">
+        <p className="text-sm text-gray-400">Carregando...</p>
       </div>
     );
   }
 
   return (
-    <div className="h-screen w-full bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
-      <div className="flex flex-col w-full max-w-sm p-4 m-4 items-center justify-center bg-white dark:bg-gray-900 rounded-xl gap-4 shadow-md space-y-3">
-        <div className="w-full flex justify-end">
+    <div className="flex h-screen w-full items-center justify-center bg-gray-50 dark:bg-gray-950">
+      <div className="m-4 flex w-full max-w-sm flex-col items-center justify-center gap-4 rounded-xl bg-white p-4 shadow-md dark:bg-gray-900">
+        <div className="flex w-full justify-end">
           <button
             type="button"
             onClick={toggleTheme}
-            className="rounded-xl p-2 bg-gray-100 text-gray-900 hover:bg-gray-200 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700 transition"
+            className="rounded-xl bg-gray-100 p-2 text-gray-900 transition hover:bg-gray-200 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700"
             aria-label="Alternar tema"
           >
             {isDark ? <Sun size={18} /> : <Moon size={18} />}
           </button>
         </div>
 
-        <h1 className="text-center w-full text-2xl font-bold text-gray-900 dark:text-white tracking-tight mb-2">
+        <h1 className="mb-2 w-full text-center text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
           Event Manager
         </h1>
 
         <Input
           value={email}
-          placeholder="Login"
+          placeholder="Email"
+          type="email"
           onChange={(e) => setEmail(e.target.value)}
         />
 
@@ -127,9 +140,16 @@ export default function Login() {
           type="password"
           placeholder="Senha"
           onChange={(e) => setSenha(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') handleLogin();
+          }}
         />
 
-        <Button onClick={handleLogin} disabled={isLoggingIn}>
+        {errorMessage && (
+          <p className="w-full text-center text-sm text-red-500">{errorMessage}</p>
+        )}
+
+        <Button onClick={handleLogin} disabled={isLoggingIn} className="w-full">
           {isLoggingIn ? 'Entrando...' : 'Entrar'}
         </Button>
       </div>

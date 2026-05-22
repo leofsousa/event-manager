@@ -1,16 +1,25 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/auth-context';
+import { mapEventsWithUserScale } from '@/app/utils/map-events-with-user-scale';
 import type { Event } from '@/types/type-event';
 import CalendarView from '@/components/calendar/calendar-view';
+
+type Viagem = {
+  id: string;
+  nome: string;
+  data_saida: string;
+  data_retorno: string;
+};
 
 export default function ColaboradorPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [events, setEvents] = useState<Event[]>([]);
+  const [viagens, setViagens] = useState<Viagem[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [eventsError, setEventsError] = useState<string | null>(null);
 
@@ -20,90 +29,59 @@ export default function ColaboradorPage() {
     setLoadingEvents(true);
     setEventsError(null);
 
-    const { data, error } = await supabase
-      .from('events')
-      .select(`
-        *,
-        viagem:viagem_id (
-          data_saida,
-          data_retorno
-        ),
-        channels(sigla),
-        event_shifts(
-          id,
-          start_time,
-          end_time,
-          event_shift_collaborators(
-            collaborator_id
+    const [eventsResponse, viagensResponse] = await Promise.all([
+      supabase
+        .from('events')
+        .select(`
+          *,
+          viagem:viagem_id (
+            id,
+            nome,
+            data_saida,
+            data_retorno
+          ),
+          channels(sigla),
+          event_shifts(
+            id,
+            start_time,
+            end_time,
+            event_shift_collaborators(
+              collaborator_id
+            )
           )
-        )
-      `)
-      .order('data', { ascending: true });
+        `)
+        .order('data', { ascending: true }),
 
-    if (error) {
-      console.error(error);
-      setEventsError(error.message);
+      supabase.from('viagens').select('*').order('data_saida', { ascending: true }),
+    ]);
+
+    if (eventsResponse.error) {
+      console.error(eventsResponse.error);
+      setEventsError(eventsResponse.error.message);
       setEvents([]);
+      setViagens([]);
       setLoadingEvents(false);
       return;
     }
 
-    const toMinutes = (time: string) => {
-      const [h, m] = time.split(':').map(Number);
-      return h * 60 + m;
-    };
+    if (viagensResponse.error) {
+      console.error(viagensResponse.error);
+    }
 
-    const calcArrival = (startTime: string) => {
-      const [h, m] = startTime.split(':').map(Number);
-      const arrival = new Date();
-      arrival.setHours(h - 1, m, 0);
-      return arrival.toLocaleTimeString('pt-BR', {
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    };
+    const mapped = mapEventsWithUserScale(
+      (eventsResponse.data as Record<string, unknown>[]) || [],
+      user.id,
+    );
 
-    const mapped = (data as any[]).map((event) => {
-      const shifts = event.event_shifts ?? [];
-      const hasScale = shifts.length > 0;
-
-      const userShift = shifts.find((shift: any) =>
-        shift.event_shift_collaborators?.some(
-          (c: any) => c.collaborator_id === user.id
-        )
-      ) ?? null;
-
-      const isUserScaled = !!userShift;
-
-      let arrivalTime: string | null = null;
-      let isFirstShift = false;
-
-      if (userShift?.start_time) {
-        const earliestShift = [...shifts].sort(
-          (a: any, b: any) => toMinutes(a.start_time) - toMinutes(b.start_time)
-        )[0];
-
-        isFirstShift = earliestShift?.id === userShift.id;
-
-        if (isFirstShift) {
-          arrivalTime = calcArrival(userShift.start_time);
-        }
-      }
-
-      return {
-        ...event,
-        channel: event.channels ?? event.channel ?? null,
-        hasScale,
-        isUserScaled,
-        userShift,
-        arrivalTime,
-        isFirstShift,
-      };
-    });
-
-    setEvents(mapped as Event[]);
+    setEvents(mapped);
+    setViagens((viagensResponse.data as Viagem[]) || []);
     setLoadingEvents(false);
   }, [user]);
+
+  const scaledCount = useMemo(
+    () => events.filter((event) => event.isUserScaled).length,
+    [events]
+  );
 
   useEffect(() => {
     if (!loading && !user) {
@@ -119,11 +97,13 @@ export default function ColaboradorPage() {
 
   if (loading || loadingEvents) {
     return (
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-          Agenda
+      <div className="flex min-h-0 flex-1 flex-col p-6">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          Minha Agenda
         </h1>
-        <p className="text-gray-700 dark:text-gray-200">Carregando agenda...</p>
+        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+          Carregando escala...
+        </p>
       </div>
     );
   }
@@ -131,14 +111,27 @@ export default function ColaboradorPage() {
   if (!user) return null;
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-        Agenda
-      </h1>
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+      <div className="shrink-0 border-b border-gray-200 px-6 py-5 dark:border-gray-800">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          Minha Agenda
+        </h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          {scaledCount > 0
+            ? `${scaledCount} escala${scaledCount !== 1 ? 's' : ''} neste período`
+            : 'Nenhuma escala no período selecionado'}
+        </p>
+      </div>
+
       {eventsError && (
-        <p className="mb-4 text-sm text-red-500">Erro ao carregar eventos: {eventsError}</p>
+        <p className="shrink-0 px-6 pt-4 text-sm text-red-500">
+          Erro ao carregar eventos: {eventsError}
+        </p>
       )}
-      <CalendarView events={events} mode="colaborador" />
+
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-6 pt-4">
+        <CalendarView events={events} viagens={viagens} mode="colaborador" />
+      </div>
     </div>
   );
 }

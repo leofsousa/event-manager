@@ -10,15 +10,15 @@ export default function ColaboradorLayout({ children }: { children: React.ReactN
   return (
     <div className="flex h-screen overflow-hidden">
       <SidebarColaborador open={open} setOpen={setOpen} />
-      <div className="flex-1 flex flex-col">
+      <div className="flex min-w-0 flex-1 flex-col">
         <HeaderColaborador setOpen={setOpen} />
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
           {children}
         </main>
       </div>
       {open && (
         <div
-          className="fixed inset-0 bg-black/30 z-40 md:hidden"
+          className="fixed inset-0 z-40 bg-black/30 md:hidden"
           onClick={() => setOpen(false)}
         />
       )}

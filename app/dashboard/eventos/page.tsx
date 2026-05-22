@@ -120,7 +120,7 @@ export default function Eventos() {
   });
 
   return (
-    <div>
+    <div className="overflow-y-auto p-6">
       {loadingEvents ? (
         <div className="text-gray-700 dark:text-gray-200">
           Carregando eventos...

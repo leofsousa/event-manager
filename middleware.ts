@@ -32,11 +32,7 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-
-  console.log('>>> MIDDLEWARE PATH:', request.nextUrl.pathname);
-  console.log('>>> USER:', user?.id ?? 'null');
-  console.log('>>> USER ERROR:', userError?.message ?? 'none');
+  const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
     if (!request.nextUrl.pathname.startsWith('/login')) {
@@ -45,14 +41,11 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  const { data: profile, error: profileError } = await supabase
+  const { data: profile } = await supabase
     .from('profiles')
     .select('role')
     .eq('id', user.id)
     .single();
-
-  console.log('>>> PROFILE:', profile);
-  console.log('>>> PROFILE ERROR:', profileError?.message ?? 'none');
 
   const role = profile?.role;
   const path = request.nextUrl.pathname;
