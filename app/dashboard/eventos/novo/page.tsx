@@ -21,6 +21,11 @@ type Viagem = {
   data_retorno: string;
 };
 
+const SPECIAL_NAME_ONLY_TYPES: Record<string, string> = {
+  "bora-leilao": "Bora Leilão",
+  "dia-empresa": "Dia Empresa",
+};
+
 export default function NovoEventoPage() {
   const router = useRouter();
   const { showToast } = useToast();
@@ -48,6 +53,8 @@ export default function NovoEventoPage() {
   const [tipo, setTipo] = useState("");
   const [channel, setChannel] = useState("");
   const [data, setData] = useState("");
+  const [horaInicio, setHoraInicio] = useState("");
+  const [horaFim, setHoraFim] = useState("");
   const [local, setLocal] = useState("");
   const [observacoes, setObservacoes] = useState("");
 
@@ -75,6 +82,7 @@ export default function NovoEventoPage() {
   );
 
   const isStudio = tipo === "operacao-estudio";
+  const isNameOnlyType = tipo in SPECIAL_NAME_ONLY_TYPES;
 
   const fetchTypes = useCallback(async () => {
     try {
@@ -87,8 +95,8 @@ export default function NovoEventoPage() {
       }
 
       const formatted = (data || []).map((t: any) => ({
-        label: t.label,
-        value: t.value,
+        label: String(t.label).trim(),
+        value: String(t.value).trim(),
       }));
 
       setEventTypes(formatted);
@@ -96,6 +104,7 @@ export default function NovoEventoPage() {
       const errorMessage =
         err instanceof Error ? err.message : "Erro ao carregar tipos";
       console.error(errorMessage, err);
+      throw new Error(errorMessage);
     }
   }, []);
 
@@ -117,6 +126,7 @@ export default function NovoEventoPage() {
       const errorMessage =
         err instanceof Error ? err.message : "Erro ao carregar canais";
       console.error(errorMessage, err);
+      throw new Error(errorMessage);
     }
   }, []);
 
@@ -166,7 +176,17 @@ export default function NovoEventoPage() {
   }, [viagemId, fetchTypes, fetchChannels, fetchViagem]);
 
   useEffect(() => {
-    setLocal("");
+    const fixedName = SPECIAL_NAME_ONLY_TYPES[tipo];
+
+    if (fixedName) {
+      setNome(fixedName);
+      setLocal(fixedName);
+      setChannel("");
+    } else {
+      setLocal("");
+    }
+
+    setCustomLocal("");
     setIsOtherSelected(false);
   }, [tipo]);
 
@@ -205,7 +225,7 @@ export default function NovoEventoPage() {
 
     if (!data.trim()) newErrors.data = "Data é obrigatória";
 
-    if (!local.trim()) newErrors.local = "Local é obrigatório";
+    if (!isNameOnlyType && !local.trim()) newErrors.local = "Local é obrigatório";
 
     setErrors(newErrors);
 
@@ -236,8 +256,10 @@ export default function NovoEventoPage() {
           tipo,
           local,
           data,
+          hora_inicio: horaInicio || null,
+          hora_fim: horaFim || null,
           observacoes,
-          channel_id: channel || null,
+          channel_id: isNameOnlyType ? null : channel || null,
           viagem_id: viagemId || null,
           created_by: user?.id ?? null,
         },
@@ -269,6 +291,27 @@ export default function NovoEventoPage() {
   };
 
   const isFormValid = nome.trim() && tipo.trim() && data.trim() && local.trim();
+
+  if (loading) {
+    return (
+      <div className="p-6 max-w-3xl mx-auto">
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Carregando dados do evento...
+        </p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 max-w-3xl mx-auto">
+        <p className="text-sm text-red-500">Erro ao carregar dados: {error}</p>
+        <Button variant="secondary" onClick={() => window.location.reload()}>
+          Recarregar
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
@@ -304,13 +347,23 @@ export default function NovoEventoPage() {
 
       <div className="flex flex-col gap-4">
         <FormField label="Nome" required error={errors.nome}>
-          <Input value={nome} onChange={(e) => setNome(e.target.value)} />
+          <Input
+            value={nome}
+            disabled={isNameOnlyType}
+            onChange={(e) => setNome(e.target.value)}
+          />
         </FormField>
 
         <FormField label="Tipo" required error={errors.tipo}>
           <Select
             value={tipo}
             options={eventTypes}
+            disabled={eventTypes.length === 0}
+            placeholder={
+              eventTypes.length === 0
+                ? "Carregando tipos..."
+                : "Selecione uma opção"
+            }
             showCreateOption
             onChange={(value) => {
               if (value === "__new__") {
@@ -322,49 +375,71 @@ export default function NovoEventoPage() {
           />
         </FormField>
 
-        <FormField label="Local" required error={errors.local}>
-          {isStudio ? (
-            <>
-              <Select
-                value={isOtherSelected ? "__other__" : local}
-                options={studioOptions}
-                onChange={(value) => {
-                  if (value === "__other__") {
-                    setIsOtherSelected(true);
-                    setLocal("");
-                  } else {
-                    setIsOtherSelected(false);
-                    setLocal(value);
-                  }
-                }}
-              />
+        {!isNameOnlyType && (
+          <>
+            <FormField label="Local" required error={errors.local}>
+              {isStudio ? (
+                <>
+                  <Select
+                    value={isOtherSelected ? "__other__" : local}
+                    options={studioOptions}
+                    onChange={(value) => {
+                      if (value === "__other__") {
+                        setIsOtherSelected(true);
+                        setLocal("");
+                      } else {
+                        setIsOtherSelected(false);
+                        setLocal(value);
+                      }
+                    }}
+                  />
 
-              {isOtherSelected && (
-                <Input
-                  value={customLocal}
-                  onChange={(e) => {
-                    setCustomLocal(e.target.value);
-                    setLocal(e.target.value);
-                  }}
-                />
+                  {isOtherSelected && (
+                    <Input
+                      value={customLocal}
+                      onChange={(e) => {
+                        setCustomLocal(e.target.value);
+                        setLocal(e.target.value);
+                      }}
+                    />
+                  )}
+                </>
+              ) : (
+                <Input value={local} onChange={(e) => setLocal(e.target.value)} />
               )}
-            </>
-          ) : (
-            <Input value={local} onChange={(e) => setLocal(e.target.value)} />
-          )}
-        </FormField>
+            </FormField>
 
-        <FormField label="Canal">
-          <Select
-            value={channel}
-            options={channels}
-            onChange={(value) => setChannel(value)}
-          />
-        </FormField>
+            <FormField label="Canal">
+              <Select
+                value={channel}
+                options={channels}
+                onChange={(value) => setChannel(value)}
+              />
+            </FormField>
+          </>
+        )}
 
         <FormField label="Data" required error={errors.data}>
           <InputDate value={data} onChange={setData} />
         </FormField>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <FormField label="Hora de início">
+            <Input
+              type="time"
+              value={horaInicio}
+              onChange={(e) => setHoraInicio(e.target.value)}
+            />
+          </FormField>
+
+          <FormField label="Hora final">
+            <Input
+              type="time"
+              value={horaFim}
+              onChange={(e) => setHoraFim(e.target.value)}
+            />
+          </FormField>
+        </div>
 
         <FormField label="Observações">
           <textarea

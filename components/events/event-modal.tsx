@@ -19,6 +19,11 @@ type Props = {
   onUpdateEvent: (event: Event) => void;
 };
 
+const SPECIAL_NAME_ONLY_TYPES: Record<string, string> = {
+  "bora-leilao": "Bora Leilão",
+  "dia-empresa": "Dia Empresa",
+};
+
 export default function EventModal({
   onClose,
   onAddEvent,
@@ -38,6 +43,8 @@ export default function EventModal({
   const [tipo, setTipo] = useState("");
   const [channel, setChannel] = useState("");
   const [data, setData] = useState("");
+  const [horaInicio, setHoraInicio] = useState("");
+  const [horaFim, setHoraFim] = useState("");
   const [local, setLocal] = useState("");
   const [observacoes, setObservacoes] = useState("");
 
@@ -65,6 +72,7 @@ export default function EventModal({
   ], []);
 
   const isStudio = tipo === "operacao-estudio";
+  const isNameOnlyType = tipo in SPECIAL_NAME_ONLY_TYPES;
   const isExterna = tipo === "externa";
 
   const fetchTypes = async () => {
@@ -78,8 +86,8 @@ export default function EventModal({
     }
 
     const formatted = (data || []).map((t: any) => ({
-      label: t.label,
-      value: t.value,
+      label: String(t.label).trim(),
+      value: String(t.value).trim(),
     }));
 
     setEventTypes(formatted);
@@ -109,10 +117,30 @@ export default function EventModal({
   }, []);
 
   useEffect(() => {
+    const fixedName = SPECIAL_NAME_ONLY_TYPES[tipo];
+
+    if (fixedName) {
+      setNome(fixedName);
+      setLocal(fixedName);
+      setChannel("");
+      setIsOtherSelected(false);
+      setCustomLocal("");
+      return;
+    }
+
+    if (!isStudio) {
+      setIsOtherSelected(false);
+      setCustomLocal("");
+    }
+  }, [tipo, isStudio]);
+
+  useEffect(() => {
     if (editingEvent) {
       setNome(editingEvent.nome);
       setTipo(editingEvent.tipo);
       setData(editingEvent.data);
+      setHoraInicio(editingEvent.hora_inicio || "");
+      setHoraFim(editingEvent.hora_fim || "");
       setObservacoes(editingEvent.observacoes || "");
 
       setChannel((editingEvent as any)?.channel_id || "");
@@ -142,6 +170,8 @@ export default function EventModal({
       setNome("");
       setTipo("");
       setData("");
+      setHoraInicio("");
+      setHoraFim("");
       setLocal("");
       setObservacoes("");
       setCustomLocal("");
@@ -190,7 +220,7 @@ export default function EventModal({
     if (!nome.trim()) newErrors.nome = "Nome é obrigatório";
     if (!tipo.trim()) newErrors.tipo = "Tipo é obrigatório";
     if (!data.trim()) newErrors.data = "Data é obrigatória";
-    if (!local.trim()) newErrors.local = "Local é obrigatório";
+    if (!isNameOnlyType && !local.trim()) newErrors.local = "Local é obrigatório";
 
     setErrors(newErrors);
 
@@ -209,10 +239,12 @@ export default function EventModal({
           .update({
             nome,
             tipo,
-            local,
+            local: isNameOnlyType ? SPECIAL_NAME_ONLY_TYPES[tipo] : local,
             data,
+            hora_inicio: horaInicio || null,
+            hora_fim: horaFim || null,
             observacoes,
-            channel_id: channel || null,
+            channel_id: isNameOnlyType ? null : channel || null,
 
             data_saida: dataSaida || null,
             data_retorno: dataRetorno || null,
@@ -232,10 +264,12 @@ export default function EventModal({
           .insert([{
             nome,
             tipo,
-            local,
+            local: isNameOnlyType ? SPECIAL_NAME_ONLY_TYPES[tipo] : local,
             data,
+            hora_inicio: horaInicio || null,
+            hora_fim: horaFim || null,
             observacoes,
-            channel_id: channel || null,
+            channel_id: isNameOnlyType ? null : channel || null,
 
             data_saida: dataSaida || null,
             data_retorno: dataRetorno || null,
@@ -271,7 +305,7 @@ export default function EventModal({
     nome.trim() &&
     tipo.trim() &&
     data.trim() &&
-    local.trim();
+    (isNameOnlyType || local.trim());
 
   return (
     <div
@@ -289,7 +323,12 @@ export default function EventModal({
         <div className="flex flex-col gap-4">
 
           <FormField label="Nome" htmlFor="nome" required error={errors.nome}>
-            <Input id="nome" value={nome} onChange={(e) => setNome(e.target.value)} />
+            <Input
+              id="nome"
+              value={nome}
+              disabled={isNameOnlyType}
+              onChange={(e) => setNome(e.target.value)}
+            />
           </FormField>
 
           <FormField label="Tipo" htmlFor="tipo" required error={errors.tipo}>
@@ -297,6 +336,12 @@ export default function EventModal({
               id="tipo"
               value={tipo}
               options={eventTypes}
+              disabled={eventTypes.length === 0}
+              placeholder={
+                eventTypes.length === 0
+                  ? "Carregando tipos..."
+                  : "Selecione uma opção"
+              }
               showCreateOption
               onChange={(value) => {
                 if (value === "__new__") {
@@ -308,51 +353,75 @@ export default function EventModal({
             />
           </FormField>
 
-          <FormField label="Canal" htmlFor="canal" required={false}>
-            <Select
-              id="canal"
-              value={channel}
-              options={channels}
-              onChange={(value) => setChannel(value)}
-            />
-          </FormField>
-
-          <FormField label="Local" htmlFor="local" required error={errors.local}>
-            {isStudio ? (
-              <>
+          {!isNameOnlyType && (
+            <>
+              <FormField label="Canal" htmlFor="canal" required={false}>
                 <Select
-                  id="local"
-                  value={isOtherSelected ? "__other__" : local}
-                  options={studioOptions}
-                  onChange={(value) => {
-                    if (value === "__other__") {
-                      setIsOtherSelected(true);
-                      setLocal("");
-                    } else {
-                      setIsOtherSelected(false);
-                      setLocal(value);
-                    }
-                  }}
+                  id="canal"
+                  value={channel}
+                  options={channels}
+                  onChange={(value) => setChannel(value)}
                 />
-                {isOtherSelected && (
-                  <Input
-                    id="local"
-                    value={customLocal}
-                    onChange={(e) => {
-                      setCustomLocal(e.target.value);
-                      setLocal(e.target.value);
-                    }}
-                  />
+              </FormField>
+
+              <FormField label="Local" htmlFor="local" required error={errors.local}>
+                {isStudio ? (
+                  <>
+                    <Select
+                      id="local"
+                      value={isOtherSelected ? "__other__" : local}
+                      options={studioOptions}
+                      onChange={(value) => {
+                        if (value === "__other__") {
+                          setIsOtherSelected(true);
+                          setLocal("");
+                        } else {
+                          setIsOtherSelected(false);
+                          setLocal(value);
+                        }
+                      }}
+                    />
+                    {isOtherSelected && (
+                      <Input
+                        id="local"
+                        value={customLocal}
+                        onChange={(e) => {
+                          setCustomLocal(e.target.value);
+                          setLocal(e.target.value);
+                        }}
+                      />
+                    )}
+                  </>
+                ) : (
+                  <Input id="local" value={local} onChange={(e) => setLocal(e.target.value)} />
                 )}
-              </>
-            ) : (
-              <Input id="local" value={local} onChange={(e) => setLocal(e.target.value)} />
-            )}
-          </FormField>
+              </FormField>
+            </>
+          )}
 
           <FormField label="Data" htmlFor="data" required error={errors.data}>
             <InputDate id="data" value={data} onChange={setData} />
           </FormField>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <FormField label="Hora de início" htmlFor="hora-inicio">
+              <Input
+                id="hora-inicio"
+                type="time"
+                value={horaInicio}
+                onChange={(e) => setHoraInicio(e.target.value)}
+              />
+            </FormField>
+
+            <FormField label="Hora final" htmlFor="hora-fim">
+              <Input
+                id="hora-fim"
+                type="time"
+                value={horaFim}
+                onChange={(e) => setHoraFim(e.target.value)}
+              />
+            </FormField>
+          </div>
 
           {/* 🚐 VIAGEM */}
           {isExterna && (

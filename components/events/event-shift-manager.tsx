@@ -20,6 +20,7 @@ type Props = {
   eventDate: string;
   eventId?: string;
   isViagem?: boolean;
+  defaultStartTime?: string;
 };
 
 export default function EventShiftsManager({
@@ -27,7 +28,8 @@ export default function EventShiftsManager({
   setShifts,
   eventDate,
   eventId,
-  isViagem = false
+  isViagem = false,
+  defaultStartTime = "",
 }: Props) {
 
   const { showToast } = useToast();
@@ -142,13 +144,13 @@ export default function EventShiftsManager({
     if (shifts.length === 0) {
       setShifts([
         {
-          start_time: "",
+          start_time: defaultStartTime,
           end_time: "",
           colaboradores: [],
         },
       ]);
     }
-  }, [isViagem, setShifts, shifts.length]);
+  }, [defaultStartTime, isViagem, setShifts, shifts.length]);
 
   const currentShift = shifts[activeIndex] ?? shifts[0];
 

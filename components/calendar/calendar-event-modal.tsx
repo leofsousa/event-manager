@@ -18,6 +18,7 @@ type ShiftDetail = {
 type Props = {
   event: Event;
   mode: "admin" | "colaborador";
+  onEventChange?: (event: Event) => void;
   onClose: () => void;
 };
 
@@ -46,15 +47,60 @@ const formatDate = (date: string) => {
   }
 };
 
-export default function CalendarEventModal({ event, mode, onClose }: Props) {
+const formatTime = (time?: string | null) => {
+  if (!time) return null;
+  return time.slice(0, 5);
+};
+
+const getDurationLabel = (start?: string | null, end?: string | null) => {
+  if (!start || !end) return null;
+
+  const toMinutes = (time: string) => {
+    const [hours, minutes] = time.split(":").map(Number);
+    return hours * 60 + minutes;
+  };
+
+  const startMinutes = toMinutes(start);
+  let endMinutes = toMinutes(end);
+
+  if (Number.isNaN(startMinutes) || Number.isNaN(endMinutes)) return null;
+
+  if (endMinutes <= startMinutes) {
+    endMinutes += 1440;
+  }
+
+  const total = endMinutes - startMinutes;
+  const hours = Math.floor(total / 60);
+  const minutes = total % 60;
+
+  if (hours > 0 && minutes > 0) return `${hours}h ${minutes}min`;
+  if (hours > 0) return `${hours}h`;
+  return `${minutes}min`;
+};
+
+export default function CalendarEventModal({
+  event,
+  mode,
+  onEventChange,
+  onClose,
+}: Props) {
   const router = useRouter();
   const [shifts, setShifts] = useState<ShiftDetail[]>([]);
   const [loadingShifts, setLoadingShifts] = useState(mode === "admin");
   const [shiftsError, setShiftsError] = useState<string | null>(null);
+  const [horaFim, setHoraFim] = useState(event.hora_fim?.slice(0, 5) || "");
+  const [savingHoraFim, setSavingHoraFim] = useState(false);
+  const [horaFimError, setHoraFimError] = useState<string | null>(null);
 
   const isFromViagem = !!event.viagem_id;
   const creatorName =
     event.creator?.username || event.creator?.email || "Não registrado";
+  const durationLabel = getDurationLabel(event.hora_inicio, horaFim);
+
+  useEffect(() => {
+    setHoraFim(event.hora_fim?.slice(0, 5) || "");
+    setHoraFimError(null);
+  }, [event.hora_fim, event.id]);
 
   useEffect(() => {
     if (mode !== "admin") {
@@ -181,7 +227,11 @@ export default function CalendarEventModal({ event, mode, onClose }: Props) {
             <p>📍 {formatLocal(event.local)}</p>
             <p>👤 Criado por: {creatorName}</p>
             {event.tipo && <p>🏷 {event.tipo}</p>}
-            {event.hora_inicio && <p>⏰ Início programado: {event.hora_inicio}</p>}
+            {event.hora_inicio && (
+              <p>⏰ Início programado: {formatTime(event.hora_inicio)}</p>
+            )}
+            {horaFim && <p>🏁 Fim: {formatTime(horaFim)}</p>}
+            {durationLabel && <p>⏱ Duração: {durationLabel}</p>}
             {isFromViagem && event.viagem?.nome && (
               <p>🚐 Viagem: {event.viagem.nome}</p>
             )}
@@ -218,6 +268,64 @@ export default function CalendarEventModal({ event, mode, onClose }: Props) {
 
           {mode === "admin" && (
             <div>
+              <div className="mb-4 rounded-xl border border-gray-200 p-3 dark:border-gray-700">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                  Encerramento do evento
+                </p>
+
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <input
+                    type="time"
+                    value={horaFim}
+                    onChange={(e) => setHoraFim(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 sm:w-40"
+                  />
+
+                  <Button
+                    variant="secondary"
+                    disabled={savingHoraFim}
+                    onClick={async () => {
+                      setSavingHoraFim(true);
+                      setHoraFimError(null);
+
+                      try {
+                        const { error } = await supabase
+                          .from("events")
+                          .update({ hora_fim: horaFim || null })
+                          .eq("id", event.id);
+
+                        if (error) throw error;
+
+                        onEventChange?.({
+                          ...event,
+                          hora_fim: horaFim || null,
+                        });
+                      } catch (err) {
+                        const message =
+                          err instanceof Error
+                            ? err.message
+                            : "Erro ao salvar hora final";
+                        setHoraFimError(message);
+                      } finally {
+                        setSavingHoraFim(false);
+                      }
+                    }}
+                  >
+                    {savingHoraFim ? "Salvando..." : "Salvar fim"}
+                  </Button>
+                </div>
+
+                {durationLabel && (
+                  <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                    Duração calculada: {durationLabel}
+                  </p>
+                )}
+
+                {horaFimError && (
+                  <p className="mt-2 text-xs text-red-500">{horaFimError}</p>
+                )}
+              </div>
+
               <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                 Escala do evento
               </p>

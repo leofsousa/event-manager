@@ -11,6 +11,11 @@ import CreateOptionModal from "@/components/modals/create-option-modal";
 import { useToast } from "@/hooks/useToast";
 import { supabase } from "@/lib/supabase";
 
+const SPECIAL_NAME_ONLY_TYPES: Record<string, string> = {
+  "bora-leilao": "Bora Leilão",
+  "dia-empresa": "Dia Empresa",
+};
+
 export default function EditEventoPage() {
   const params = useParams();
   const id = params?.id as string;
@@ -30,6 +35,8 @@ export default function EditEventoPage() {
   const [tipo, setTipo] = useState("");
   const [channel, setChannel] = useState("");
   const [data, setData] = useState("");
+  const [horaInicio, setHoraInicio] = useState("");
+  const [horaFim, setHoraFim] = useState("");
   const [local, setLocal] = useState("");
   const [observacoes, setObservacoes] = useState("");
   const [viagemId, setViagemId] = useState<string | null>(null);
@@ -45,6 +52,7 @@ export default function EditEventoPage() {
   });
 
   const isStudio = tipo === "operacao-estudio";
+  const isNameOnlyType = tipo in SPECIAL_NAME_ONLY_TYPES;
 
   const studioOptions = [
     { label: "Estúdio 1", value: "estudio-1" },
@@ -69,6 +77,8 @@ export default function EditEventoPage() {
       setNome(data.nome);
       setTipo(data.tipo);
       setData(data.data);
+      setHoraInicio(data.hora_inicio || "");
+      setHoraFim(data.hora_fim || "");
       setObservacoes(data.observacoes || "");
       setChannel(data.channel_id || "");
       setViagemId(data.viagem_id || null);
@@ -116,8 +126,8 @@ export default function EditEventoPage() {
 
       setEventTypes(
         (data || []).map((t: any) => ({
-          label: t.label,
-          value: t.value,
+          label: String(t.label).trim(),
+          value: String(t.value).trim(),
         })),
       );
     } catch (err) {
@@ -167,6 +177,19 @@ export default function EditEventoPage() {
     loadData();
   }, [id]);
 
+  useEffect(() => {
+    const fixedName = SPECIAL_NAME_ONLY_TYPES[tipo];
+
+    if (fixedName) {
+      setNome(fixedName);
+      setLocal(fixedName);
+      setChannel("");
+    } else if (!isStudio) {
+      setIsOtherSelected(false);
+      setCustomLocal("");
+    }
+  }, [tipo, isStudio]);
+
   const handleCreateType = async (name: string) => {
     const formatted = name.toLowerCase().replace(/\s+/g, "-");
 
@@ -194,10 +217,12 @@ export default function EditEventoPage() {
         .update({
           nome,
           tipo,
-          local,
+          local: isNameOnlyType ? SPECIAL_NAME_ONLY_TYPES[tipo] : local,
           data,
+          hora_inicio: horaInicio || null,
+          hora_fim: horaFim || null,
           observacoes,
-          channel_id: channel || null,
+          channel_id: isNameOnlyType ? null : channel || null,
           viagem_id: viagemId || null,
         })
         .eq("id", id);
@@ -224,6 +249,7 @@ export default function EditEventoPage() {
           <Input
             id="nome"
             value={nome}
+            disabled={isNameOnlyType}
             onChange={(e) => setNome(e.target.value)}
           />
         </FormField>
@@ -233,6 +259,12 @@ export default function EditEventoPage() {
             id="tipo"
             value={tipo}
             options={eventTypes}
+            disabled={eventTypes.length === 0}
+            placeholder={
+              eventTypes.length === 0
+                ? "Carregando tipos..."
+                : "Selecione uma opção"
+            }
             showCreateOption
             onChange={(value) => {
               if (value === "__new__") {
@@ -244,54 +276,76 @@ export default function EditEventoPage() {
           />
         </FormField>
 
-        <FormField label="Local" htmlFor="local" required error={errors.local}>
-          {isStudio ? (
-            <>
-              <Select
-                id="local"
-                value={isOtherSelected ? "__other__" : local}
-                options={studioOptions}
-                onChange={(value) => {
-                  if (value === "__other__") {
-                    setIsOtherSelected(true);
-                    setLocal("");
-                  } else {
-                    setIsOtherSelected(false);
-                    setLocal(value);
-                  }
-                }}
-              />
-              {isOtherSelected && (
+        {!isNameOnlyType && (
+          <>
+            <FormField label="Local" htmlFor="local" required error={errors.local}>
+              {isStudio ? (
+                <>
+                  <Select
+                    id="local"
+                    value={isOtherSelected ? "__other__" : local}
+                    options={studioOptions}
+                    onChange={(value) => {
+                      if (value === "__other__") {
+                        setIsOtherSelected(true);
+                        setLocal("");
+                      } else {
+                        setIsOtherSelected(false);
+                        setLocal(value);
+                      }
+                    }}
+                  />
+                  {isOtherSelected && (
+                    <Input
+                      id="local"
+                      value={customLocal}
+                      onChange={(e) => {
+                        setCustomLocal(e.target.value);
+                        setLocal(e.target.value);
+                      }}
+                    />
+                  )}
+                </>
+              ) : (
                 <Input
                   id="local"
-                  value={customLocal}
-                  onChange={(e) => {
-                    setCustomLocal(e.target.value);
-                    setLocal(e.target.value);
-                  }}
+                  value={local}
+                  onChange={(e) => setLocal(e.target.value)}
                 />
               )}
-            </>
-          ) : (
-            <Input
-              id="local"
-              value={local}
-              onChange={(e) => setLocal(e.target.value)}
-            />
-          )}
-        </FormField>
+            </FormField>
 
-        <FormField label="Canal">
-          <Select
-            value={channel}
-            options={channels}
-            onChange={(value) => setChannel(value)}
-          />
-        </FormField>
+            <FormField label="Canal">
+              <Select
+                value={channel}
+                options={channels}
+                onChange={(value) => setChannel(value)}
+              />
+            </FormField>
+          </>
+        )}
 
         <FormField label="Data" required>
           <InputDate value={data} onChange={setData} />
         </FormField>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <FormField label="Hora de início">
+            <Input
+              type="time"
+              value={horaInicio}
+              onChange={(e) => setHoraInicio(e.target.value)}
+            />
+          </FormField>
+
+          <FormField label="Hora final">
+            <Input
+              type="time"
+              value={horaFim}
+              onChange={(e) => setHoraFim(e.target.value)}
+            />
+          </FormField>
+        </div>
 
         <FormField label="Observações">
           <textarea

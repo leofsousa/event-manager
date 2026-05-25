@@ -42,6 +42,9 @@ export default function CalendarView({
   const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
   const [selectedYear, setSelectedYear] = useState(today.getFullYear());
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [eventOverrides, setEventOverrides] = useState<
+    Record<string, Partial<Event>>
+  >({});
 
   const daysInMonth = useMemo(
     () => new Date(selectedYear, selectedMonth + 1, 0).getDate(),
@@ -62,16 +65,25 @@ export default function CalendarView({
     });
   }, [events, selectedMonth, selectedYear]);
 
+  const visibleEvents = useMemo(
+    () =>
+      filteredEvents.map((event) => ({
+        ...event,
+        ...(eventOverrides[event.id] ?? {}),
+      })),
+    [eventOverrides, filteredEvents],
+  );
+
   const sortedEvents = useMemo(() => {
     if (mode === "colaborador") {
-      return [...filteredEvents].sort((a, b) => {
+      return [...visibleEvents].sort((a, b) => {
         const scaledDiff = Number(!!b.isUserScaled) - Number(!!a.isUserScaled);
         if (scaledDiff !== 0) return scaledDiff;
         return a.data.localeCompare(b.data);
       });
     }
 
-    return [...filteredEvents].sort((a, b) => {
+    return [...visibleEvents].sort((a, b) => {
       const studioA = STUDIO_ORDER.indexOf(a.estudio || "__other__");
       const studioB = STUDIO_ORDER.indexOf(b.estudio || "__other__");
 
@@ -81,7 +93,7 @@ export default function CalendarView({
 
       return a.data.localeCompare(b.data);
     });
-  }, [filteredEvents, mode]);
+  }, [mode, visibleEvents]);
 
   const months = [
     "Janeiro",
@@ -174,6 +186,16 @@ export default function CalendarView({
         <CalendarEventModal
           event={selectedEvent}
           mode={mode}
+          onEventChange={(updatedEvent) => {
+            setEventOverrides((prev) => ({
+              ...prev,
+              [updatedEvent.id]: {
+                ...(prev[updatedEvent.id] ?? {}),
+                ...updatedEvent,
+              },
+            }));
+            setSelectedEvent(updatedEvent);
+          }}
           onClose={() => setSelectedEvent(null)}
         />
       )}

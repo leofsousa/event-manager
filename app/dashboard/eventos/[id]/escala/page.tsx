@@ -158,6 +158,14 @@ export default function EventEscalaPage() {
           {event.data} • {event.local}
         </p>
 
+        {(event.hora_inicio || event.hora_fim) && (
+          <p className="text-sm text-gray-500">
+            {event.hora_inicio ? `Início: ${event.hora_inicio}` : ""}
+            {event.hora_inicio && event.hora_fim ? " • " : ""}
+            {event.hora_fim ? `Fim: ${event.hora_fim}` : ""}
+          </p>
+        )}
+
         {isViagem && (
           <p className="text-sm text-blue-500 mt-1">
             Escala vinculada à viagem (sem horários)
@@ -171,6 +179,7 @@ export default function EventEscalaPage() {
         eventDate={event?.data}
         eventId={event.id}
         isViagem={isViagem}
+        defaultStartTime={event.hora_inicio || ""}
       />
 
       <div className="flex justify-end gap-2">

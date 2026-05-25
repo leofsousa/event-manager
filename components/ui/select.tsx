@@ -12,6 +12,7 @@ type Option = {
     showCreateOption?: boolean;
     createOptionLabel?: string;
     id?: string;
+    disabled?: boolean;
   };
   
   export default function Select({
@@ -22,16 +23,19 @@ type Option = {
     placeholder = "Selecione uma opção",
     showCreateOption = false,
     createOptionLabel = "Criar novo",
-    id
+    id,
+    disabled = false,
   }: SelectProps) {
     return (
       <select
         id={id}
         value={value}
+        disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
         className={`w-full px-3 py-2 rounded-lg border
         bg-white text-gray-900 dark:bg-gray-800 dark:border-gray-700 
         dark:text-gray-100 focus:outline-none focus:ring-2 
+        disabled:cursor-not-allowed disabled:opacity-60
         focus:ring-blue-500 ${
           error
             ? "border-red-500 focus:ring-red-500"
