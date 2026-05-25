@@ -44,6 +44,7 @@ export default function DashboardPage() {
       supabase.from("events").select(`
         *,
         channel:channels(sigla),
+        creator:profiles!events_created_by_fkey(username, email),
         viagem:viagem_id(
           id,
           nome,

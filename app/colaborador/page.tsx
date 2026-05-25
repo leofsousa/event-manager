@@ -40,6 +40,7 @@ export default function ColaboradorPage() {
             data_saida,
             data_retorno
           ),
+          creator:profiles!events_created_by_fkey(username, email),
           channels(sigla),
           event_shifts(
             id,

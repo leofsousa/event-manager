@@ -9,6 +9,11 @@ export type Event = {
   hora_inicio?: string;
 
   channel?: { sigla: string } | null;
+  creator?: {
+    username?: string | null;
+    email?: string | null;
+  } | null;
+  created_by?: string | null;
 
   hasScale: boolean;
 

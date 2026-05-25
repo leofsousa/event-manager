@@ -59,7 +59,7 @@ export default function ViagemDetalhePage() {
     try {
       const { data, error: err } = await supabase
         .from("events")
-        .select("*, channels(sigla)")
+        .select("*, channels(sigla), creator:profiles!events_created_by_fkey(username, email)")
         .eq("viagem_id", id)
         .order("data", { ascending: true });
 
@@ -74,7 +74,7 @@ export default function ViagemDetalhePage() {
     try {
       const { data, error: err } = await supabase
         .from("events")
-        .select("*, channels(sigla)")
+        .select("*, channels(sigla), creator:profiles!events_created_by_fkey(username, email)")
         .is("viagem_id", null)
         .order("data", { ascending: true });
 

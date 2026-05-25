@@ -12,6 +12,7 @@ import CreateOptionModal from "@/components/modals/create-option-modal";
 
 import { useToast } from "@/hooks/useToast";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/context/auth-context";
 
 type Viagem = {
   id: string;
@@ -24,6 +25,7 @@ export default function NovoEventoPage() {
   const router = useRouter();
   const { showToast } = useToast();
   const searchParams = useSearchParams();
+  const { user } = useAuth();
 
   const viagemId = searchParams.get("viagemId");
 
@@ -237,6 +239,7 @@ export default function NovoEventoPage() {
           observacoes,
           channel_id: channel || null,
           viagem_id: viagemId || null,
+          created_by: user?.id ?? null,
         },
       ]);
 
@@ -251,12 +254,18 @@ export default function NovoEventoPage() {
         router.push("/dashboard/eventos");
       }
     } catch (err) {
-      console.error(err);
+      const message =
+        err instanceof Error
+          ? err.message
+          : typeof err === "object" && err && "message" in err
+            ? String(err.message)
+            : "Erro inesperado ao salvar";
 
-      showToast("Erro ao salvar");
+      console.error("Erro ao salvar evento:", err);
+      showToast(message);
+    } finally {
+      setIsSubmiting(false);
     }
-
-    setIsSubmiting(false);
   };
 
   const isFormValid = nome.trim() && tipo.trim() && data.trim() && local.trim();

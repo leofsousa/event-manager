@@ -10,6 +10,7 @@ import Select from "@/components/ui/select";
 import CreateOptionModal from "@/components/modals/create-option-modal";
 import { useToast } from "@/hooks/useToast";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/context/auth-context";
 
 type Props = {
   onClose: () => void;
@@ -26,6 +27,7 @@ export default function EventModal({
 }: Props) {
 
   const { showToast } = useToast();
+  const { user } = useAuth();
 
   const [eventTypes, setEventTypes] = useState<{ label: string; value: string }[]>([]);
   const [channels, setChannels] = useState<{ label: string; value: string }[]>([]);
@@ -216,7 +218,7 @@ export default function EventModal({
             data_retorno: dataRetorno || null,
           })
           .eq("id", editingEvent.id)
-          .select("*, channels(sigla)")
+          .select("*, channels(sigla), creator:profiles!events_created_by_fkey(username, email)")
           .single();
 
         if (error) throw error;
@@ -237,8 +239,9 @@ export default function EventModal({
 
             data_saida: dataSaida || null,
             data_retorno: dataRetorno || null,
+            created_by: user?.id ?? null,
           }])
-          .select("*, channels(sigla)")
+          .select("*, channels(sigla), creator:profiles!events_created_by_fkey(username, email)")
           .single();
 
         if (error) throw error;
@@ -249,12 +252,19 @@ export default function EventModal({
 
       onClose();
 
-    } catch (err: any) {
-      console.error("ERRO REAL:", err);
-      showToast(err.message || "Erro ao salvar");
-    }
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : typeof err === "object" && err && "message" in err
+            ? String(err.message)
+            : "Erro inesperado ao salvar";
 
-    setIsSubmiting(false);
+      console.error("Erro ao salvar evento:", err);
+      showToast(message);
+    } finally {
+      setIsSubmiting(false);
+    }
   };
 
   const isFormValid =

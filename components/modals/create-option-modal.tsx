@@ -19,8 +19,8 @@ export default function CreateOptionModal({
   }: Props) {
     const [value, setValue] = useState('');
     const handleCreate = () => {
-        if (!value.trimm()) return;
-        onCreate(value.trimm());
+        if (!value.trim()) return;
+        onCreate(value.trim());
         onClose();
     };
     return (
@@ -38,7 +38,7 @@ export default function CreateOptionModal({
                 />
                 <div className="flex justify-end gap-2 mt-4">
                     <Button onClick={onClose} variant='secondary'>Cancelar</Button>
-                    <Button onCLick={handleCreate}>Criar</Button>
+                    <Button onClick={handleCreate}>Criar</Button>
                 </div>
             </div>
         </div>

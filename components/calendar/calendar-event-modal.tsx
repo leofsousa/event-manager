@@ -53,6 +53,8 @@ export default function CalendarEventModal({ event, mode, onClose }: Props) {
   const [shiftsError, setShiftsError] = useState<string | null>(null);
 
   const isFromViagem = !!event.viagem_id;
+  const creatorName =
+    event.creator?.username || event.creator?.email || "Não registrado";
 
   useEffect(() => {
     if (mode !== "admin") {
@@ -177,6 +179,7 @@ export default function CalendarEventModal({ event, mode, onClose }: Props) {
           <div className="space-y-2">
             <p>📅 {formatDate(event.data)}</p>
             <p>📍 {formatLocal(event.local)}</p>
+            <p>👤 Criado por: {creatorName}</p>
             {event.tipo && <p>🏷 {event.tipo}</p>}
             {event.hora_inicio && <p>⏰ Início programado: {event.hora_inicio}</p>}
             {isFromViagem && event.viagem?.nome && (

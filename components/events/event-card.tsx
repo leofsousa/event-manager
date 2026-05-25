@@ -7,10 +7,18 @@ import { useRouter } from "next/navigation";
 type Props = {
   event: Event;
   onDelete: (event: Event) => void;
+  onEdit?: (event: Event) => void;
+  onOpenScale?: (id: string) => void;
   mode?: 'admin' | 'colaborador';
 };
 
-export default function EventCard({ event, onDelete, mode = 'admin' }: Props) {
+export default function EventCard({
+  event,
+  onDelete,
+  onEdit,
+  onOpenScale,
+  mode = 'admin',
+}: Props) {
   const router = useRouter();
   const isFromViagem = !!event.viagem_id;
 
@@ -25,6 +33,8 @@ export default function EventCard({ event, onDelete, mode = 'admin' }: Props) {
   };
 
   const channelSigla = event.channel?.sigla;
+  const creatorName =
+    event.creator?.username || event.creator?.email || "Não registrado";
 
   // ✅ NOVA REGRA
   const isTravelEvent = !!event.viagem_id;
@@ -90,6 +100,7 @@ export default function EventCard({ event, onDelete, mode = 'admin' }: Props) {
       <div className="text-sm text-gray-700 dark:text-gray-300 space-y-1 mb-4">
         <p>📅 {event.data}</p>
         <p>📍 {event.local}</p>
+        <p>👤 Criado por: {creatorName}</p>
 
         {/* 🔥 NÃO mostra horário em viagem */}
         {!isTravelEvent && event.userShift?.start_time && (
@@ -146,6 +157,10 @@ export default function EventCard({ event, onDelete, mode = 'admin' }: Props) {
             }
             onClick={() => {
               if (isFromViagem) return;
+              if (onOpenScale) {
+                onOpenScale(event.id);
+                return;
+              }
               router.push(`/dashboard/eventos/${event.id}/escala`);
             }}
           >
@@ -161,7 +176,13 @@ export default function EventCard({ event, onDelete, mode = 'admin' }: Props) {
             <Button
               variant="secondary"
               className="flex-1 sm:flex-none"
-              onClick={() => router.push(`/dashboard/eventos/${event.id}`)}
+              onClick={() => {
+                if (onEdit) {
+                  onEdit(event);
+                  return;
+                }
+                router.push(`/dashboard/eventos/${event.id}`);
+              }}
             >
               Editar
             </Button>

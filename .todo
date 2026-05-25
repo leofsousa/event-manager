@@ -4,7 +4,6 @@
 - adicionar feedback visual para colaborador escalado em viagens
 - criar mensagem de erro ao adicionar na viagem evento em data fora do range
 - criar relatórios por periodo
-- "criado por" nos eventos
 - Operadores escalados por evento e por turno.
 - Priorizar eventos escalados por colaborador
 - padronizar modo escuro e modo claro.

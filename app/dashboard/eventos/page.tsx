@@ -27,6 +27,7 @@ export default function Eventos() {
           *,
           event_shifts ( id ),
           channels ( sigla ),
+          creator:profiles!events_created_by_fkey(username, email),
           viagem:viagens (
             id,
             nome,
