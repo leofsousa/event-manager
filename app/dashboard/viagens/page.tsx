@@ -10,6 +10,7 @@ import { ptBR } from 'date-fns/locale';
 type Viagem = {
   id: string;
   nome: string;
+  local?: string | null;
   data_saida: string;
   data_retorno: string;
   observacoes?: string;
@@ -90,6 +91,11 @@ export default function ViagensPage() {
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   🚐 {formatDate(viagem.data_saida)} → {formatDate(viagem.data_retorno)}
                 </p>
+                {viagem.local && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    📍 {viagem.local}
+                  </p>
+                )}
                 {viagem.observacoes && (
                   <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                     {viagem.observacoes}

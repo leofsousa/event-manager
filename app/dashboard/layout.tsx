@@ -8,11 +8,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-screen overflow-hidden bg-slate-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100">
       <Sidebar open={open} setOpen={setOpen} />
       <div className="flex min-w-0 flex-1 flex-col">
         <Header setOpen={setOpen} />
-        <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-slate-50 dark:bg-gray-950">
           {children}
         </main>
       </div>

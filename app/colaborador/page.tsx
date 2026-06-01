@@ -29,54 +29,59 @@ export default function ColaboradorPage() {
     setLoadingEvents(true);
     setEventsError(null);
 
-    const [eventsResponse, viagensResponse] = await Promise.all([
-      supabase
-        .from('events')
-        .select(`
-          *,
-          viagem:viagem_id (
-            id,
-            nome,
-            data_saida,
-            data_retorno
-          ),
-          creator:profiles!events_created_by_fkey(username, email),
-          channels(sigla),
-          event_shifts(
-            id,
-            start_time,
-            end_time,
-            event_shift_collaborators(
-              collaborator_id
+    try {
+      const [eventsResponse, viagensResponse] = await Promise.all([
+        supabase
+          .from('events')
+          .select(`
+            *,
+            viagem:viagem_id (
+              id,
+              nome,
+              data_saida,
+              data_retorno
+            ),
+            creator:profiles!events_created_by_fkey(username, email),
+            channels(sigla),
+            event_shifts(
+              id,
+              start_time,
+              end_time,
+              event_shift_collaborators(
+                collaborator_id
+              )
             )
-          )
-        `)
-        .order('data', { ascending: true }),
+          `)
+          .order('data', { ascending: true }),
 
-      supabase.from('viagens').select('*').order('data_saida', { ascending: true }),
-    ]);
+        supabase.from('viagens').select('*').order('data_saida', { ascending: true }),
+      ]);
 
-    if (eventsResponse.error) {
-      console.error(eventsResponse.error);
-      setEventsError(eventsResponse.error.message);
+      if (eventsResponse.error) {
+        throw eventsResponse.error;
+      }
+
+      if (viagensResponse.error) {
+        console.error(viagensResponse.error);
+      }
+
+      const mapped = mapEventsWithUserScale(
+        (eventsResponse.data as Record<string, unknown>[]) || [],
+        user.id,
+      );
+
+      setEvents(mapped);
+      setViagens((viagensResponse.data as Viagem[]) || []);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Erro ao carregar eventos';
+      console.error("Erro ao carregar escala:", err);
+      setEventsError(message);
       setEvents([]);
       setViagens([]);
+    } finally {
       setLoadingEvents(false);
-      return;
     }
-
-    if (viagensResponse.error) {
-      console.error(viagensResponse.error);
-    }
-
-    const mapped = mapEventsWithUserScale(
-      (eventsResponse.data as Record<string, unknown>[]) || [],
-      user.id,
-    );
-
-    setEvents(mapped);
-    setViagens((viagensResponse.data as Viagem[]) || []);
-    setLoadingEvents(false);
   }, [user]);
 
   const scaledCount = useMemo(

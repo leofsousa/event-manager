@@ -17,6 +17,11 @@ const formatDateKey = (date: Date) => {
   return date.toISOString().split("T")[0];
 };
 
+const isWeekend = (date: Date) => {
+  const day = date.getDay();
+  return day === 0 || day === 6;
+};
+
 export default function CalendarRow({
   title,
   days,
@@ -76,13 +81,15 @@ export default function CalendarRow({
         <div className="flex">
           {days.map((day) => {
             const dateKey = formatDateKey(day);
+            const weekend = isWeekend(day);
 
             return (
               <div
                 key={dateKey}
                 className={`
                   border-r border-gray-200 p-2 dark:border-gray-800
-                  ${highlighted ? "bg-blue-50/40 dark:bg-blue-950/15" : ""}
+                  ${weekend ? "bg-slate-100/80 dark:bg-white/[0.035]" : ""}
+                  ${highlighted ? "bg-blue-50/50 dark:bg-blue-950/20" : ""}
                 `}
                 style={{
                   width: `${dayWidth}px`,

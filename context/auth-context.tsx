@@ -19,6 +19,23 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
 });
 
+const withTimeout = async <T,>(promise: Promise<T>, timeoutMs = 10000) => {
+  let timeoutId: ReturnType<typeof setTimeout>;
+
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(
+      () => reject(new Error('Tempo limite ao carregar autenticação')),
+      timeoutMs,
+    );
+  });
+
+  try {
+    return await Promise.race([promise, timeout]);
+  } finally {
+    clearTimeout(timeoutId!);
+  }
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<any>(null);
   const [role, setRole] = useState<ValidRole | null>(null);
@@ -28,11 +45,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   const fetchProfile = async (userId: string) => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', userId)
       .single();
+
+    if (error) {
+      console.error('Erro ao buscar perfil:', error);
+      return null;
+    }
 
     const fetchedRole = data?.role ?? null;
 
@@ -48,14 +70,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const init = async () => {
       try {
-        const { data } = await supabase.auth.getSession();
+        const { data } = await withTimeout(supabase.auth.getSession());
 
         if (!isMounted) return;
 
         const currentUser = data.session?.user ?? null;
 
         if (currentUser) {
-          const userRole = await fetchProfile(currentUser.id);
+          const userRole = await withTimeout(fetchProfile(currentUser.id));
           if (!isMounted) return;
 
           setUser(currentUser);
@@ -66,6 +88,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (err) {
         console.error('Erro no init auth:', err);
+        if (!isMounted) return;
+        setUser(null);
+        setRole(null);
       } finally {
         if (isMounted) setLoading(false); // 🔥 GARANTIDO
       }
@@ -74,17 +99,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     init();
 
     const { data: listener } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        const currentUser = session?.user ?? null;
+      (_event, session) => {
+        setTimeout(async () => {
+          if (!isMounted) return;
 
-        setUser(currentUser);
+          const currentUser = session?.user ?? null;
 
-        if (currentUser) {
-          const userRole = await fetchProfile(currentUser.id);
-          setRole(userRole);
-        } else {
-          setRole(null);
-        }
+          setLoading(true);
+          setUser(currentUser);
+
+          if (!currentUser) {
+            setRole(null);
+            setLoading(false);
+            return;
+          }
+
+          try {
+            const userRole = await withTimeout(fetchProfile(currentUser.id));
+            if (!isMounted) return;
+            setRole(userRole);
+          } catch (err) {
+            console.error('Erro ao atualizar auth:', err);
+            if (!isMounted) return;
+            setRole(null);
+          } finally {
+            if (isMounted) setLoading(false);
+          }
+        }, 0);
       }
     );
 

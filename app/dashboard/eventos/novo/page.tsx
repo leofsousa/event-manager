@@ -17,6 +17,7 @@ import { useAuth } from "@/context/auth-context";
 type Viagem = {
   id: string;
   nome: string;
+  local?: string | null;
   data_saida: string;
   data_retorno: string;
 };
@@ -33,6 +34,7 @@ export default function NovoEventoPage() {
   const { user } = useAuth();
 
   const viagemId = searchParams.get("viagemId");
+  const isTravelScoped = !!viagemId;
 
   const [viagem, setViagem] = useState<Viagem | null>(null);
 
@@ -145,6 +147,9 @@ export default function NovoEventoPage() {
       }
 
       setViagem(data);
+      setTipo("externa");
+      setLocal(data.local || "");
+      setChannel("");
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Erro ao carregar viagem";
@@ -176,6 +181,15 @@ export default function NovoEventoPage() {
   }, [viagemId, fetchTypes, fetchChannels, fetchViagem]);
 
   useEffect(() => {
+    if (isTravelScoped) {
+      setTipo("externa");
+      setLocal(viagem?.local || "");
+      setChannel("");
+      setCustomLocal("");
+      setIsOtherSelected(false);
+      return;
+    }
+
     const fixedName = SPECIAL_NAME_ONLY_TYPES[tipo];
 
     if (fixedName) {
@@ -188,7 +202,7 @@ export default function NovoEventoPage() {
 
     setCustomLocal("");
     setIsOtherSelected(false);
-  }, [tipo]);
+  }, [isTravelScoped, tipo, viagem?.local]);
 
   const handleCreateType = async (name: string) => {
     const formatted = name.toLowerCase().replace(/\s+/g, "-");
@@ -254,7 +268,7 @@ export default function NovoEventoPage() {
         {
           nome,
           tipo,
-          local,
+          local: isTravelScoped ? viagem?.local || local : local,
           data,
           hora_inicio: horaInicio || null,
           hora_fim: horaFim || null,
@@ -339,6 +353,12 @@ export default function NovoEventoPage() {
             🚐 {viagem.nome}
           </p>
 
+          {viagem.local && (
+            <p className="text-xs text-purple-500 dark:text-purple-400">
+              Local herdado: {viagem.local}
+            </p>
+          )}
+
           <p className="text-xs text-purple-500 dark:text-purple-400">
             Permitido entre {viagem.data_saida} e {viagem.data_retorno}
           </p>
@@ -358,7 +378,7 @@ export default function NovoEventoPage() {
           <Select
             value={tipo}
             options={eventTypes}
-            disabled={eventTypes.length === 0}
+            disabled={eventTypes.length === 0 || isTravelScoped}
             placeholder={
               eventTypes.length === 0
                 ? "Carregando tipos..."
@@ -378,7 +398,9 @@ export default function NovoEventoPage() {
         {!isNameOnlyType && (
           <>
             <FormField label="Local" required error={errors.local}>
-              {isStudio ? (
+              {isTravelScoped ? (
+                <Input value={local} disabled />
+              ) : isStudio ? (
                 <>
                   <Select
                     value={isOtherSelected ? "__other__" : local}

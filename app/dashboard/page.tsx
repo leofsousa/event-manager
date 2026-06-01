@@ -39,49 +39,56 @@ export default function DashboardPage() {
     if (!user) return;
 
     setLoadingData(true);
+    setInitialized(false);
 
-    const [eventsResponse, viagensResponse] = await Promise.all([
-      supabase.from("events").select(`
-        *,
-        channel:channels(sigla),
-        creator:profiles!events_created_by_fkey(username, email),
-        viagem:viagem_id(
-          id,
-          nome,
-          data_saida,
-          data_retorno
-        ),
-        event_shifts(
-          id,
-          start_time,
-          end_time,
-          event_shift_collaborators(
-            collaborator_id
+    try {
+      const [eventsResponse, viagensResponse] = await Promise.all([
+        supabase.from("events").select(`
+          *,
+          channel:channels(sigla),
+          creator:profiles!events_created_by_fkey(username, email),
+          viagem:viagem_id(
+            id,
+            nome,
+            data_saida,
+            data_retorno
+          ),
+          event_shifts(
+            id,
+            start_time,
+            end_time,
+            event_shift_collaborators(
+              collaborator_id
+            )
           )
-        )
-      `),
+        `),
 
-      supabase.from("viagens").select("*"),
-    ]);
+        supabase.from("viagens").select("*"),
+      ]);
 
-    if (eventsResponse.error) {
-      console.error(eventsResponse.error);
+      if (eventsResponse.error) {
+        throw eventsResponse.error;
+      }
+
+      if (viagensResponse.error) {
+        console.error(viagensResponse.error);
+      }
+
+      const mapped = mapEventsWithUserScale(
+        (eventsResponse.data as Record<string, unknown>[]) || [],
+        user.id,
+      );
+
+      setEvents(mapped);
+      setViagens((viagensResponse.data as Viagem[]) || []);
+    } catch (err) {
+      console.error("Erro ao carregar agenda:", err);
+      setEvents([]);
+      setViagens([]);
+    } finally {
+      setLoadingData(false);
+      setInitialized(true);
     }
-
-    if (viagensResponse.error) {
-      console.error(viagensResponse.error);
-    }
-
-    const mapped = mapEventsWithUserScale(
-      (eventsResponse.data as Record<string, unknown>[]) || [],
-      user.id,
-    );
-
-    setEvents(mapped);
-    setViagens((viagensResponse.data as Viagem[]) || []);
-
-    setLoadingData(false);
-    setInitialized(true);
   }, [user]);
 
   useEffect(() => {

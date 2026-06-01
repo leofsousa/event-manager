@@ -63,7 +63,7 @@ export default function TableEvents({
 
   return (
     <>
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden dark:bg-blue-900">
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
 
         <div className="p-4 flex items-center justify-between">
           <span className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -78,7 +78,7 @@ export default function TableEvents({
 
         <div className="hidden md:block">
           <table className="w-full">
-            <thead className="bg-gray-100 dark:bg-blue-950">
+            <thead className="bg-gray-100 dark:bg-gray-950">
               <tr>
                 <th
                   onClick={() => onSort("nome")}
@@ -125,7 +125,7 @@ export default function TableEvents({
           {/* MÊS */}
           {showMonth && (
             <tr>
-              <td colSpan={5} className="bg-gray-200 dark:bg-blue-950 px-4 py-2 font-bold text-gray-800 dark:text-white">
+              <td colSpan={5} className="bg-gray-200 px-4 py-2 font-bold text-gray-800 dark:bg-gray-950 dark:text-white">
                 {month}
               </td>
             </tr>
@@ -145,7 +145,7 @@ export default function TableEvents({
               event={event}
               onEdit={onEdit}
               onDelete={setEventToDelete}
-              onOpenScale={(id) => router.push(`/dashboard/eventos/${id}`)}
+              onOpenScale={(id) => router.push(`/dashboard/eventos/${id}/escala`)}
             />
           ))}
         </>
@@ -195,7 +195,7 @@ export default function TableEvents({
                 isMobile
                 onEdit={onEdit}
                 onDelete={setEventToDelete}
-                onOpenScale={(id) => router.push(`/dashboard/eventos/${id}`)}
+                onOpenScale={(id) => router.push(`/dashboard/eventos/${id}/escala`)}
               />
             ))}
           </div>

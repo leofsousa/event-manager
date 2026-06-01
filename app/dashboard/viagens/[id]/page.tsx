@@ -13,6 +13,7 @@ import ViagemEscalaSection from "@/components/viagens/viagem-escala-section";
 type Viagem = {
   id: string;
   nome: string;
+  local?: string | null;
   data_saida: string;
   data_retorno: string;
   observacoes?: string;
@@ -304,6 +305,11 @@ export default function ViagemDetalhePage() {
               🚐 {formatDate(viagem.data_saida)} →{" "}
               {formatDate(viagem.data_retorno)}
             </p>
+            {viagem.local && (
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                📍 {viagem.local}
+              </p>
+            )}
             {viagem.observacoes && (
               <p className="mt-1 text-sm text-gray-400">{viagem.observacoes}</p>
             )}

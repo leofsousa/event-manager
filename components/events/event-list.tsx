@@ -62,7 +62,7 @@ export default function EventList({
   
     return (
       <>
-        <div className="bg-white dark:bg-blue-900 rounded-xl shadow-sm">
+        <div className="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
   
           <div className="p-4 flex justify-between items-center">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -110,7 +110,7 @@ export default function EventList({
                         onEdit={onEdit}
                         onDelete={setEventToDelete}
                         onOpenScale={(id) =>
-                          router.push(`/dashboard/eventos/${id}`)
+                          router.push(`/dashboard/eventos/${id}/escala`)
                         }
                       />
                     ))}

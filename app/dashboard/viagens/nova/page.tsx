@@ -14,6 +14,7 @@ export default function NovaViagemPage() {
   const { showToast } = useToast();
 
   const [nome, setNome] = useState("");
+  const [local, setLocal] = useState("");
   const [dataSaida, setDataSaida] = useState("");
   const [dataRetorno, setDataRetorno] = useState("");
   const [observacoes, setObservacoes] = useState("");
@@ -21,6 +22,7 @@ export default function NovaViagemPage() {
 
   const [errors, setErrors] = useState({
     nome: "",
+    local: "",
     dataSaida: "",
     dataRetorno: "",
   });
@@ -28,12 +30,17 @@ export default function NovaViagemPage() {
   const validate = () => {
     const newErrors = {
       nome: "",
+      local: "",
       dataSaida: "",
       dataRetorno: "",
     };
 
     if (!nome.trim()) {
       newErrors.nome = "Nome é obrigatório";
+    }
+
+    if (!local.trim()) {
+      newErrors.local = "Local é obrigatório";
     }
 
     if (!dataSaida) {
@@ -62,7 +69,13 @@ export default function NovaViagemPage() {
     const { data, error } = await supabase
       .from("viagens")
       .insert([
-        { nome, data_saida: dataSaida, data_retorno: dataRetorno, observacoes },
+        {
+          nome,
+          local,
+          data_saida: dataSaida,
+          data_retorno: dataRetorno,
+          observacoes,
+        },
       ])
       .select()
       .single();
@@ -78,7 +91,7 @@ export default function NovaViagemPage() {
     router.push(`/dashboard/viagens/${data.id}`);
   };
 
-  const isFormValid = nome.trim() && dataSaida && dataRetorno;
+  const isFormValid = nome.trim() && local.trim() && dataSaida && dataRetorno;
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
@@ -92,6 +105,14 @@ export default function NovaViagemPage() {
             id="nome"
             value={nome}
             onChange={(e) => setNome(e.target.value)}
+          />
+        </FormField>
+
+        <FormField label="Local" htmlFor="local" required error={errors.local}>
+          <Input
+            id="local"
+            value={local}
+            onChange={(e) => setLocal(e.target.value)}
           />
         </FormField>
 

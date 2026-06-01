@@ -130,12 +130,14 @@ export default function CalendarTimeline({
         <div className="flex">
           {days.map((day) => {
             const isToday = new Date().toDateString() === day.toDateString();
+            const isWeekend = day.getDay() === 0 || day.getDay() === 6;
 
             return (
               <div
                 key={day.toISOString()}
                 className={`
                   flex flex-col border-r border-gray-200 px-3 py-3 dark:border-gray-800
+                  ${isWeekend ? "bg-slate-100 dark:bg-white/[0.04]" : ""}
                   ${isToday ? "bg-blue-50 dark:bg-blue-950/30" : ""}
                 `}
                 style={{ width: `${DAY_WIDTH}px`, minWidth: `${DAY_WIDTH}px` }}

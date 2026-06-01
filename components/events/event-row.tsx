@@ -21,7 +21,7 @@ export default function EventRow({
 
   if (isMobile) {
     return (
-      <div className="bg-white dark:bg-blue-900 rounded-xl p-4 shadow-sm space-y-3">
+      <div className="space-y-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
 
         <div className="flex justify-between items-center">
           <h2 className="font-semibold text-gray-900 dark:text-white">
@@ -80,7 +80,7 @@ export default function EventRow({
   }
 
   return (
-    <tr className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-blue-950 transition">
+    <tr className="border-b dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition">
       <td className="p-4 font-medium text-gray-900 dark:text-gray-100">
         {event.nome}
       </td>

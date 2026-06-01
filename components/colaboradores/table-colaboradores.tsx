@@ -23,9 +23,9 @@ export default function TableColaboradores({
     sortOrder
 }: Props) {
     return (
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden dark:bg-blue-900">
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <table className="w-full">
-                <thead className="bg-gray-100 dark:bg-blue-950">
+                <thead className="bg-gray-100 dark:bg-gray-950">
                     <tr>
                         <th colSpan={3} className="p-4">
                             <div className="flex items-center justify-between w-full">
@@ -59,7 +59,7 @@ export default function TableColaboradores({
                             <td colSpan={3} className="p-4 text-center text-gray-500 dark:text-gray-400">Nenhum colaborador encontrado</td>
                         </tr>
                     ) : (colaboradores.map((c) => (
-                        <tr key={c.id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-blue-950 transition cursor-pointer" onClick={() => onEdit(c)}>
+                        <tr key={c.id} className="border-b dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition cursor-pointer" onClick={() => onEdit(c)}>
                             <td className="p-4 font-medium text-gray-900 dark:text-gray-100">{c.username}</td>
                             <td className="p-4 text-gray-700 dark:text-gray-200">{c.cargo || '-'}</td>
 
