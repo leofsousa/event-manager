@@ -32,6 +32,16 @@ const STUDIO_ORDER = [
   "__other__",
 ];
 
+const getEventDateParts = (date: string) => {
+  const [year, month, day] = date.split("T")[0].split("-").map(Number);
+
+  return {
+    year,
+    month: month - 1,
+    day,
+  };
+};
+
 export default function CalendarView({
   events,
   viagens = [],
@@ -56,11 +66,11 @@ export default function CalendarView({
 
   const filteredEvents = useMemo(() => {
     return events.filter((event) => {
-      const eventDate = new Date(event.data);
+      const eventDate = getEventDateParts(event.data);
 
       return (
-        eventDate.getMonth() === selectedMonth &&
-        eventDate.getFullYear() === selectedYear
+        eventDate.month === selectedMonth &&
+        eventDate.year === selectedYear
       );
     });
   }, [events, selectedMonth, selectedYear]);
