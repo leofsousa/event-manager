@@ -191,7 +191,7 @@ export default function ConfiguracoesPage() {
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tema da aplicação</label>
           <select
             value={theme}
-            onChange={(e) => setTheme(e.target.value)}
+            onChange={(e) => setTheme(e.target.value as any)}
             className="w-full px-3 py-2 border rounded-md bg-white dark:bg-gray-800"
           >
             <option value="system">Sistema</option>
