@@ -12,47 +12,60 @@ export default function Eventos() {
   const { showToast } = useToast();
   const router = useRouter();
 
+  const [isExportModalOpen, setExportModalOpen] = useState(false);
+  const [exportMonth, setExportMonth] = useState('');
+  const [userRole, setUserRole] = useState<string | null>(null);
+
   const [events, setEvents] = useState<Event[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [eventsError, setEventsError] = useState<string | null>(null);
+
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [isModalOpen, setModalOpen] = useState(false);
+
+  // Load user role once
+  useEffect(() => {
+    const fetchRole = async () => {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error || !user) return;
+      const { data: profile, error: pErr } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+      if (!pErr) setUserRole(profile?.role ?? null);
+    };
+    fetchRole();
+  }, []);
 
   const fetchEvents = useCallback(async () => {
     try {
       setLoadingEvents(true);
       setEventsError(null);
-
       const { data, error } = await supabase.from("events").select(`
-          *,
-          event_shifts ( id ),
-          channels ( sigla ),
-          creator:profiles!events_created_by_fkey(username, email),
-          viagem:viagens (
-            id,
-            nome,
-            data_saida,
-            data_retorno
-          )
-        `);
-
-      if (error) {
-        throw error;
-      }
-
+        *,
+        event_shifts ( id ),
+        channels ( sigla ),
+        creator:profiles!events_created_by_fkey(username, email),
+        viagem:viagens (
+          id,
+          nome,
+          data_saida,
+          data_retorno
+        )
+      `);
+      if (error) throw error;
       const eventsWithFlag = (data || []).map((event: any) => ({
         ...event,
         hasScale: (event.event_shifts || []).length > 0,
         channels: event.channels || null,
         viagem: event.viagem || null,
       }));
-
       setEvents(eventsWithFlag);
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Erro ao buscar eventos";
-      console.error(errorMessage, err);
-      setEventsError(errorMessage);
+      const msg = err instanceof Error ? err.message : "Erro ao buscar eventos";
+      console.error(msg, err);
+      setEventsError(msg);
       setEvents([]);
     } finally {
       setLoadingEvents(false);
@@ -65,13 +78,11 @@ export default function Eventos() {
 
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from("events").delete().eq("id", id);
-
     if (error) {
       console.error(error);
       return;
     }
-
-    setEvents((prev) => prev.filter((event) => event.id !== id));
+    setEvents((prev) => prev.filter((e) => e.id !== id));
     showToast("Evento deletado com sucesso!");
   };
 
@@ -106,39 +117,94 @@ export default function Eventos() {
 
   const sortedEvents = [...events].sort((a, b) => {
     if (!sortBy) return 0;
-
-    let comparison = 0;
-
-    if (sortBy === "nome") {
-      comparison = a.nome.localeCompare(b.nome);
-    }
-
-    if (sortBy === "data") {
-      comparison = new Date(a.data).getTime() - new Date(b.data).getTime();
-    }
-
-    return sortOrder === "asc" ? comparison : -comparison;
+    let comp = 0;
+    if (sortBy === "nome") comp = a.nome.localeCompare(b.nome);
+    if (sortBy === "data") comp = new Date(a.data).getTime() - new Date(b.data).getTime();
+    return sortOrder === "asc" ? comp : -comp;
   });
 
   return (
-    <div className="overflow-y-auto p-6">
-      {loadingEvents ? (
-        <div className="text-gray-700 dark:text-gray-200">
-          Carregando eventos...
+    <div className="relative">
+      {/* Export button – visible only for admin */}
+      {userRole === 'admin' && (
+        <div className="flex justify-end mb-4">
+          <button
+            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+            onClick={() => setExportModalOpen(true)}
+          >
+            Exportar Agenda
+          </button>
         </div>
-      ) : eventsError ? (
-        <div className="text-red-500">
-          Erro ao carregar eventos: {eventsError}
-        </div>
-      ) : (
-        <EventList
-          events={sortedEvents}
-          onDelete={handleDelete}
-          onAdd={handleAdd}
-          onEdit={handleEdit}
-        />
       )}
 
+      {/* Export Modal */}
+      {isExportModalOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded shadow-lg w-80">
+            <h2 className="text-lg font-medium mb-4 text-gray-900 dark:text-white">
+              Selecionar Mês para Exportar
+            </h2>
+            <input
+              type="month"
+              value={exportMonth}
+              onChange={(e) => setExportMonth(e.target.value)}
+              className="w-full p-2 border rounded mb-4"
+            />
+            <div className="flex justify-end space-x-2">
+              <button
+                className="px-3 py-1 bg-gray-300 dark:bg-gray-600 rounded"
+                onClick={() => setExportModalOpen(false)}
+              >Cancelar</button>
+              <button
+                className="px-3 py-1 bg-blue-600 text-white rounded"
+                onClick={async () => {
+                  if (!exportMonth) {
+                    showToast('Selecione um mês');
+                    return;
+                  }
+                  try {
+                    const res = await fetch(`/api/export-agenda?month=${exportMonth}`);
+                    if (!res.ok) {
+                      const err = await res.json();
+                      throw new Error(err.error || 'Erro ao exportar');
+                    }
+                    const blob = await res.blob();
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `agenda-${exportMonth}.xlsx`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    showToast('Exportação concluída');
+                    setExportModalOpen(false);
+                  } catch (e: any) {
+                    console.error(e);
+                    showToast(e.message ?? 'Erro na exportação');
+                  }
+                }}
+              >Exportar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main content */}
+      <div className="overflow-y-auto p-6">
+        {loadingEvents ? (
+          <div className="text-gray-700 dark:text-gray-200">Carregando eventos...</div>
+        ) : eventsError ? (
+          <div className="text-red-500">Erro ao carregar eventos: {eventsError}</div>
+        ) : (
+          <EventList
+            events={sortedEvents}
+            onDelete={handleDelete}
+            onAdd={handleAdd}
+            onEdit={handleEdit}
+          />
+        )}
+      </div>
+
+      {/* Edit modal */}
       {isModalOpen && (
         <EventModal
           editingEvent={editingEvent}
