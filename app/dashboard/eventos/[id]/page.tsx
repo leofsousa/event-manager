@@ -233,6 +233,14 @@ export default function EditEventoPage() {
       router.push("/dashboard/eventos");
     } catch (err) {
       console.error(err);
+        .eq("id", id);
+
+      if (error) throw error;
+
+      showToast("Evento atualizado!");
+      router.push("/dashboard/eventos");
+    } catch (err) {
+      console.error(err);
       showToast("Erro ao atualizar");
     }
   };
@@ -241,129 +249,157 @@ export default function EditEventoPage() {
   if (error) return <p className="text-red-500">Erro: {error}</p>;
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <h1 className="text-2xl font-semibold mb-6">Editar Evento</h1>
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden">
+      <div className="mx-auto w-full max-w-4xl p-6 pb-12">
+        <h1 className="text-2xl font-semibold mb-6 text-gray-900 dark:text-white">Editar Evento</h1>
 
-      <div className="flex flex-col gap-4">
-        <FormField label="Nome" htmlFor="nome" required error={errors.nome}>
-          <Input
-            id="nome"
-            value={nome}
-            disabled={isNameOnlyType}
-            onChange={(e) => setNome(e.target.value)}
-          />
-        </FormField>
+        <div className="flex flex-col gap-5">
+          <FormField label="Nome" htmlFor="nome" required error={errors.nome}>
+            <Input
+              id="nome"
+              value={nome}
+              disabled={isNameOnlyType}
+              onChange={(e) => setNome(e.target.value)}
+            />
+          </FormField>
 
-        <FormField label="Tipo" htmlFor="tipo" required error={errors.tipo}>
-          <Select
-            id="tipo"
-            value={tipo}
-            options={eventTypes}
-            disabled={eventTypes.length === 0}
-            placeholder={
-              eventTypes.length === 0
-                ? "Carregando tipos..."
-                : "Selecione uma opção"
-            }
-            showCreateOption
-            onChange={(value) => {
-              if (value === "__new__") {
-                setIsCreatingType(true);
-              } else {
-                setTipo(value);
-              }
-            }}
-          />
-        </FormField>
-
-        {!isNameOnlyType && (
-          <>
-            <FormField label="Local" htmlFor="local" required error={errors.local}>
-              {isStudio ? (
-                <>
-                  <Select
-                    id="local"
-                    value={isOtherSelected ? "__other__" : local}
-                    options={studioOptions}
-                    onChange={(value) => {
-                      if (value === "__other__") {
-                        setIsOtherSelected(true);
-                        setLocal("");
-                      } else {
-                        setIsOtherSelected(false);
-                        setLocal(value);
-                      }
-                    }}
-                  />
-                  {isOtherSelected && (
-                    <Input
-                      id="local"
-                      value={customLocal}
-                      onChange={(e) => {
-                        setCustomLocal(e.target.value);
-                        setLocal(e.target.value);
-                      }}
-                    />
-                  )}
-                </>
-              ) : (
-                <Input
-                  id="local"
-                  value={local}
-                  onChange={(e) => setLocal(e.target.value)}
-                />
-              )}
-            </FormField>
-
-            <FormField label="Canal">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <FormField label="Tipo" htmlFor="tipo" required error={errors.tipo}>
               <Select
-                value={channel}
-                options={channels}
-                onChange={(value) => setChannel(value)}
+                id="tipo"
+                value={tipo}
+                options={eventTypes}
+                disabled={eventTypes.length === 0}
+                placeholder={
+                  eventTypes.length === 0
+                    ? "Carregando tipos..."
+                    : "Selecione uma opção"
+                }
+                showCreateOption
+                onChange={(value) => {
+                  if (value === "__new__") {
+                    setIsCreatingType(true);
+                  } else {
+                    setTipo(value);
+                  }
+                }}
               />
             </FormField>
-          </>
-        )}
 
-        <FormField label="Data" required>
-          <InputDate value={data} onChange={setData} />
-        </FormField>
+            {!isNameOnlyType && (
+              <FormField label="Canal">
+                <Select
+                  value={channel}
+                  options={channels}
+                  onChange={(value) => setChannel(value)}
+                />
+              </FormField>
+            )}
+          </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <FormField label="Hora de início">
-            <Input
-              type="time"
-              value={horaInicio}
-              onChange={(e) => setHoraInicio(e.target.value)}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {!isNameOnlyType ? (
+              <>
+                <FormField label="Local" htmlFor="local" required error={errors.local}>
+                  {isStudio ? (
+                    <div className="flex flex-col gap-2">
+                      <Select
+                        id="local"
+                        value={isOtherSelected ? "__other__" : local}
+                        options={studioOptions}
+                        onChange={(value) => {
+                          if (value === "__other__") {
+                            setIsOtherSelected(true);
+                            setLocal("");
+                          } else {
+                            setIsOtherSelected(false);
+                            setLocal(value);
+                          }
+                        }}
+                      />
+                      {isOtherSelected && (
+                        <Input
+                          id="local"
+                          value={customLocal}
+                          onChange={(e) => {
+                            setCustomLocal(e.target.value);
+                            setLocal(e.target.value);
+                          }}
+                        />
+                      )}
+                    </div>
+                  ) : (
+                    <Input
+                      id="local"
+                      value={local}
+                      onChange={(e) => setLocal(e.target.value)}
+                    />
+                  )}
+                </FormField>
+
+                <FormField label="Data" required>
+                  <InputDate value={data} onChange={setData} />
+                </FormField>
+              </>
+            ) : (
+              <div className="sm:col-span-2">
+                <FormField label="Data" required>
+                  <InputDate value={data} onChange={setData} />
+                </FormField>
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <FormField label="Hora de início">
+              <Input
+                type="time"
+                value={horaInicio}
+                onChange={(e) => setHoraInicio(e.target.value)}
+              />
+            </FormField>
+
+            <FormField label="Hora final">
+              <Input
+                type="time"
+                value={horaFim}
+                onChange={(e) => setHoraFim(e.target.value)}
+              />
+            </FormField>
+          </div>
+
+          <FormField label="Observações">
+            <textarea
+              value={observacoes}
+              onChange={(e) => setObservacoes(e.target.value)}
+              className="
+                w-full
+                min-h-[120px]
+                resize-none
+                rounded-lg
+                border
+                border-gray-300
+                bg-white
+                px-3
+                py-2
+                text-gray-900
+                focus:outline-none
+                focus:ring-2
+                focus:ring-blue-500
+                dark:border-gray-700
+                dark:bg-gray-800
+                dark:text-gray-100
+              "
             />
           </FormField>
 
-          <FormField label="Hora final">
-            <Input
-              type="time"
-              value={horaFim}
-              onChange={(e) => setHoraFim(e.target.value)}
-            />
-          </FormField>
-        </div>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="secondary" onClick={() => router.back()}>
+              Cancelar
+            </Button>
 
-        <FormField label="Observações">
-          <textarea
-            value={observacoes}
-            onChange={(e) => setObservacoes(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg border
-            bg-white text-gray-900 dark:bg-gray-800 dark:border-gray-700
-            dark:text-gray-100 focus:outline-none focus:ring-2
-            focus:ring-blue-500 border-gray-300 resize-none"
-          />
-        </FormField>
-
-        <div className="flex justify-end gap-2 mt-4">
-          <Button variant="secondary" onClick={() => router.back()}>
-            Cancelar
-          </Button>
-
-          <Button onClick={handleSubmit}>Salvar alterações</Button>
+            <Button onClick={handleSubmit}>Salvar alterações</Button>
+          </div>
         </div>
       </div>
 

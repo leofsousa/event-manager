@@ -94,78 +94,96 @@ export default function NovaViagemPage() {
   const isFormValid = nome.trim() && local.trim() && dataSaida && dataRetorno;
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <h1 className="text-2xl font-semibold mb-6 text-gray-900 dark:text-white">
-        Nova Viagem
-      </h1>
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden">
+      <div className="mx-auto w-full max-w-4xl p-6 pb-12">
+        <h1 className="text-2xl font-semibold mb-6 text-gray-900 dark:text-white">
+          Nova Viagem
+        </h1>
 
-      <div className="flex flex-col gap-4">
-        <FormField label="Nome" htmlFor="nome" required error={errors.nome}>
-          <Input
-            id="nome"
-            value={nome}
-            onChange={(e) => setNome(e.target.value)}
-          />
-        </FormField>
+        <div className="flex flex-col gap-5">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <FormField label="Nome" htmlFor="nome" required error={errors.nome}>
+              <Input
+                id="nome"
+                value={nome}
+                onChange={(e) => setNome(e.target.value)}
+              />
+            </FormField>
 
-        <FormField label="Local" htmlFor="local" required error={errors.local}>
-          <Input
-            id="local"
-            value={local}
-            onChange={(e) => setLocal(e.target.value)}
-          />
-        </FormField>
+            <FormField label="Local" htmlFor="local" required error={errors.local}>
+              <Input
+                id="local"
+                value={local}
+                onChange={(e) => setLocal(e.target.value)}
+              />
+            </FormField>
+          </div>
 
-        <div className="grid grid-cols-2 gap-2">
-          <FormField
-            label="Data de saída"
-            htmlFor="data-saida"
-            required
-            error={errors.dataSaida}
-          >
-            <InputDate
-              id="data-saida"
-              value={dataSaida}
-              onChange={setDataSaida}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <FormField
+              label="Data de saída"
+              htmlFor="data-saida"
+              required
+              error={errors.dataSaida}
+            >
+              <InputDate
+                id="data-saida"
+                value={dataSaida}
+                onChange={setDataSaida}
+              />
+            </FormField>
+
+            <FormField
+              label="Data de retorno"
+              htmlFor="data-retorno"
+              required
+              error={errors.dataRetorno}
+            >
+              <InputDate
+                id="data-retorno"
+                value={dataRetorno}
+                onChange={setDataRetorno}
+              />
+            </FormField>
+          </div>
+
+          <FormField label="Observações" htmlFor="observacoes" required={false}>
+            <textarea
+              id="observacoes"
+              value={observacoes}
+              onChange={(e) => setObservacoes(e.target.value)}
+              className="
+                w-full
+                min-h-[120px]
+                resize-none
+                rounded-lg
+                border
+                border-gray-300
+                bg-white
+                px-3
+                py-2
+                text-gray-900
+                focus:outline-none
+                focus:ring-2
+                focus:ring-blue-500
+                dark:border-gray-700
+                dark:bg-gray-800
+                dark:text-gray-100
+              "
             />
           </FormField>
 
-          <FormField
-            label="Data de retorno"
-            htmlFor="data-retorno"
-            required
-            error={errors.dataRetorno}
-          >
-            <InputDate
-              id="data-retorno"
-              value={dataRetorno}
-              onChange={setDataRetorno}
-            />
-          </FormField>
-        </div>
-
-        <FormField label="Observações" htmlFor="observacoes" required={false}>
-          <textarea
-            id="observacoes"
-            value={observacoes}
-            onChange={(e) => setObservacoes(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg border
-            bg-white text-gray-900 dark:bg-gray-800 dark:border-gray-700
-            dark:text-gray-100 focus:outline-none focus:ring-2
-            focus:ring-blue-500 border-gray-300 resize-none"
-          />
-        </FormField>
-
-        <div className="flex justify-end gap-2 mt-4">
-          <Button variant="secondary" onClick={() => router.back()}>
-            Cancelar
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={!isFormValid || isSubmitting}
-          >
-            {isSubmitting ? "Salvando..." : "Salvar e continuar"}
-          </Button>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="secondary" onClick={() => router.back()}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={!isFormValid || isSubmitting}
+            >
+              {isSubmitting ? "Salvando..." : "Salvar e continuar"}
+            </Button>
+          </div>
         </div>
       </div>
     </div>

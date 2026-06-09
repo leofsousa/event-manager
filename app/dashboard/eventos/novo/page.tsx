@@ -328,174 +328,187 @@ export default function NovoEventoPage() {
   }
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <h1 className="text-2xl font-semibold mb-6">Novo Evento</h1>
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden">
+      <div className="mx-auto w-full max-w-4xl p-6 pb-12">
+        <h1 className="text-2xl font-semibold mb-6 text-gray-900 dark:text-white">Novo Evento</h1>
 
-      {viagem && (
-        <div
-          className="
-            mb-6
-            rounded-xl
-            border
-            border-purple-200
-            bg-purple-50
-            p-4
-
-            dark:border-purple-900
-            dark:bg-purple-950/30
-          "
-        >
-          <p className="text-sm font-medium text-purple-700 dark:text-purple-300">
-            Evento será vinculado à viagem:
-          </p>
-
-          <p className="mt-1 text-sm text-purple-600 dark:text-purple-400">
-            🚐 {viagem.nome}
-          </p>
-
-          {viagem.local && (
-            <p className="text-xs text-purple-500 dark:text-purple-400">
-              Local herdado: {viagem.local}
+        {viagem && (
+          <div
+            className="
+              mb-6
+              rounded-xl
+              border
+              border-purple-200
+              bg-purple-50
+              p-4
+              dark:border-purple-900
+              dark:bg-purple-950/30
+            "
+          >
+            <p className="text-sm font-medium text-purple-700 dark:text-purple-300">
+              Evento será vinculado à viagem:
             </p>
-          )}
 
-          <p className="text-xs text-purple-500 dark:text-purple-400">
-            Permitido entre {viagem.data_saida} e {viagem.data_retorno}
-          </p>
-        </div>
-      )}
+            <p className="mt-1 text-sm text-purple-600 dark:text-purple-400">
+              🚐 {viagem.nome}
+            </p>
 
-      <div className="flex flex-col gap-4">
-        <FormField label="Nome" required error={errors.nome}>
-          <Input
-            value={nome}
-            disabled={isNameOnlyType}
-            onChange={(e) => setNome(e.target.value)}
-          />
-        </FormField>
+            {viagem.local && (
+              <p className="text-xs text-purple-500 dark:text-purple-400">
+                Local herdado: {viagem.local}
+              </p>
+            )}
 
-        <FormField label="Tipo" required error={errors.tipo}>
-          <Select
-            value={tipo}
-            options={eventTypes}
-            disabled={eventTypes.length === 0 || isTravelScoped}
-            placeholder={
-              eventTypes.length === 0
-                ? "Carregando tipos..."
-                : "Selecione uma opção"
-            }
-            showCreateOption
-            onChange={(value) => {
-              if (value === "__new__") {
-                setIsCreatingType(true);
-              } else {
-                setTipo(value);
-              }
-            }}
-          />
-        </FormField>
-
-        {!isNameOnlyType && (
-          <>
-            <FormField label="Local" required error={errors.local}>
-              {isTravelScoped ? (
-                <Input value={local} disabled />
-              ) : isStudio ? (
-                <>
-                  <Select
-                    value={isOtherSelected ? "__other__" : local}
-                    options={studioOptions}
-                    onChange={(value) => {
-                      if (value === "__other__") {
-                        setIsOtherSelected(true);
-                        setLocal("");
-                      } else {
-                        setIsOtherSelected(false);
-                        setLocal(value);
-                      }
-                    }}
-                  />
-
-                  {isOtherSelected && (
-                    <Input
-                      value={customLocal}
-                      onChange={(e) => {
-                        setCustomLocal(e.target.value);
-                        setLocal(e.target.value);
-                      }}
-                    />
-                  )}
-                </>
-              ) : (
-                <Input value={local} onChange={(e) => setLocal(e.target.value)} />
-              )}
-            </FormField>
-
-            <FormField label="Canal">
-              <Select
-                value={channel}
-                options={channels}
-                onChange={(value) => setChannel(value)}
-              />
-            </FormField>
-          </>
+            <p className="text-xs text-purple-500 dark:text-purple-400">
+              Permitido entre {viagem.data_saida} e {viagem.data_retorno}
+            </p>
+          </div>
         )}
 
-        <FormField label="Data" required error={errors.data}>
-          <InputDate value={data} onChange={setData} />
-        </FormField>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <FormField label="Hora de início">
+        <div className="flex flex-col gap-5">
+          <FormField label="Nome" required error={errors.nome}>
             <Input
-              type="time"
-              value={horaInicio}
-              onChange={(e) => setHoraInicio(e.target.value)}
+              value={nome}
+              disabled={isNameOnlyType}
+              onChange={(e) => setNome(e.target.value)}
             />
           </FormField>
 
-          <FormField label="Hora final">
-            <Input
-              type="time"
-              value={horaFim}
-              onChange={(e) => setHoraFim(e.target.value)}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <FormField label="Tipo" required error={errors.tipo}>
+              <Select
+                value={tipo}
+                options={eventTypes}
+                disabled={eventTypes.length === 0 || isTravelScoped}
+                placeholder={
+                  eventTypes.length === 0
+                    ? "Carregando tipos..."
+                    : "Selecione uma opção"
+                }
+                showCreateOption
+                onChange={(value) => {
+                  if (value === "__new__") {
+                    setIsCreatingType(true);
+                  } else {
+                    setTipo(value);
+                  }
+                }}
+              />
+            </FormField>
+
+            {!isNameOnlyType && (
+              <FormField label="Canal">
+                <Select
+                  value={channel}
+                  options={channels}
+                  onChange={(value) => setChannel(value)}
+                />
+              </FormField>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {!isNameOnlyType ? (
+              <>
+                <FormField label="Local" required error={errors.local}>
+                  {isTravelScoped ? (
+                    <Input value={local} disabled />
+                  ) : isStudio ? (
+                    <div className="flex flex-col gap-2">
+                      <Select
+                        value={isOtherSelected ? "__other__" : local}
+                        options={studioOptions}
+                        onChange={(value) => {
+                          if (value === "__other__") {
+                            setIsOtherSelected(true);
+                            setLocal("");
+                          } else {
+                            setIsOtherSelected(false);
+                            setLocal(value);
+                          }
+                        }}
+                      />
+
+                      {isOtherSelected && (
+                        <Input
+                          value={customLocal}
+                          onChange={(e) => {
+                            setCustomLocal(e.target.value);
+                            setLocal(e.target.value);
+                          }}
+                        />
+                      )}
+                    </div>
+                  ) : (
+                    <Input value={local} onChange={(e) => setLocal(e.target.value)} />
+                  )}
+                </FormField>
+
+                <FormField label="Data" required error={errors.data}>
+                  <InputDate value={data} onChange={setData} />
+                </FormField>
+              </>
+            ) : (
+              <div className="sm:col-span-2">
+                <FormField label="Data" required error={errors.data}>
+                  <InputDate value={data} onChange={setData} />
+                </FormField>
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <FormField label="Hora de início">
+              <Input
+                type="time"
+                value={horaInicio}
+                onChange={(e) => setHoraInicio(e.target.value)}
+              />
+            </FormField>
+
+            <FormField label="Hora final">
+              <Input
+                type="time"
+                value={horaFim}
+                onChange={(e) => setHoraFim(e.target.value)}
+              />
+            </FormField>
+          </div>
+
+          <FormField label="Observações">
+            <textarea
+              value={observacoes}
+              onChange={(e) => setObservacoes(e.target.value)}
+              className="
+                w-full
+                min-h-[120px]
+                resize-none
+                rounded-lg
+                border
+                border-gray-300
+                bg-white
+                px-3
+                py-2
+                text-gray-900
+                focus:outline-none
+                focus:ring-2
+                focus:ring-blue-500
+                dark:border-gray-700
+                dark:bg-gray-800
+                dark:text-gray-100
+              "
             />
           </FormField>
-        </div>
 
-        <FormField label="Observações">
-          <textarea
-            value={observacoes}
-            onChange={(e) => setObservacoes(e.target.value)}
-            className="
-              w-full
-              resize-none
-              rounded-lg
-              border
-              border-gray-300
-              bg-white
-              px-3
-              py-2
-              text-gray-900
-              focus:outline-none
-              focus:ring-2
-              focus:ring-blue-500
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="secondary" onClick={() => router.back()}>
+              Cancelar
+            </Button>
 
-              dark:border-gray-700
-              dark:bg-gray-800
-              dark:text-gray-100
-            "
-          />
-        </FormField>
-
-        <div className="flex justify-end gap-2 mt-4">
-          <Button variant="secondary" onClick={() => router.back()}>
-            Cancelar
-          </Button>
-
-          <Button onClick={handleSubmit} disabled={!isFormValid || isSubmiting}>
-            {isSubmiting ? "Salvando..." : "Salvar"}
-          </Button>
+            <Button onClick={handleSubmit} disabled={!isFormValid || isSubmiting}>
+              {isSubmiting ? "Salvando..." : "Salvar"}
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -506,7 +519,6 @@ export default function NovoEventoPage() {
           onClose={() => setIsCreatingType(false)}
           onCreate={(value) => {
             handleCreateType(value);
-
             setIsCreatingType(false);
           }}
         />

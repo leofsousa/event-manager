@@ -1,9 +1,8 @@
 - filtro de colaborador na agenda
-- crair tipo hardcoded bora leilão e dia empresa.
 - mexer nos colaboradores: adicionar foto
 - adicionar feedback visual para colaborador escalado em viagens
 - criar mensagem de erro ao adicionar na viagem evento em data fora do range
 - criar relatórios por periodo
 - Operadores escalados por evento e por turno.
 - Priorizar eventos escalados por colaborador
-- padronizar modo escuro e modo claro.
+- (nova grande atualização)fazer uma nova página para solicitação de serviços com um nova role, de planejamento. Dentro dessa tela, ele tera visualização das solicitações pendentes, espaços para adicionar cotações de servicos, e botão para salvar e enviar ao solicitante uma resposta com os dados da solicitação.
