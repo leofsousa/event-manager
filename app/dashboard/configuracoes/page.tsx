@@ -77,7 +77,22 @@ export default function ConfiguracoesPage() {
         .from('avatars')
         .getPublicUrl(fileName);
       setAvatarUrl(publicUrl);
-      showToast('Foto atualizada');
+      // Persist the avatar URL to the user's profile so it survives page reloads
+      if (userId) {
+        const { error: profileUpdateError } = await supabase
+          .from('profiles')
+          .update({ avatar_url: publicUrl })
+          .eq('id', userId);
+        if (profileUpdateError) {
+          console.error('Failed to update avatar URL in profile:', profileUpdateError);
+          showToast('Erro ao salvar foto no perfil');
+        } else {
+          showToast('Foto atualizada e salva no perfil');
+        }
+      } else {
+        // If userId is not yet set, just show the toast; profile will be updated on save
+        showToast('Foto atualizada');
+      }
     } catch (err) {
       console.error(err);
       showToast('Erro ao fazer upload da foto');
