@@ -30,6 +30,8 @@ export default function ColaboradorModal({
   const [cargos, setCargos] = useState<any[]>([]);
   const [role, setRole] = useState<'admin' | 'colaborador'>('colaborador');
   const [isCreateCargoOpen, setIsCreateCargoOpen] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [uploading, setUploading] = useState(false);
 
   const cargoOptions = cargos.map((c) => ({
     label: c.name,
@@ -42,6 +44,7 @@ export default function ColaboradorModal({
       setCargo(colaborador.cargo || '');
       setRole(colaborador.role);
       setEmail(colaborador.email || '');
+      setAvatarUrl(colaborador.avatar_url || '');
     }
   }, [colaborador]);
 
@@ -74,6 +77,38 @@ export default function ColaboradorModal({
     showToast('Cargo criado!');
   };
 
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      setUploading(true);
+      if (!e.target.files || e.target.files.length === 0) {
+        return;
+      }
+      const file = e.target.files[0];
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.round(Math.random() * 1e9)}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file);
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      setAvatarUrl(publicUrl);
+      showToast('Foto carregada com sucesso!');
+    } catch (err) {
+      console.error(err);
+      showToast('Erro no upload. Certifique-se de que o bucket público "avatars" existe no Supabase.');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSubmit = async () => {
     if (!username.trim()) {
@@ -94,6 +129,7 @@ export default function ColaboradorModal({
             username,
             cargo,
             role,
+            avatar_url: avatarUrl || null,
           })
           .eq('id', colaborador.id);
 
@@ -109,8 +145,8 @@ export default function ColaboradorModal({
             password,
             cargo,
             role,
+            avatar_url: avatarUrl || null,
           }),
-
         });
 
         if (!res.ok) throw new Error();
@@ -128,19 +164,38 @@ export default function ColaboradorModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 flex items-center justify-center"
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
       onClick={onClose}
     >
       <div
-        className="bg-white dark:bg-gray-800 p-6 rounded-xl w-full max-w-md"
+        className="bg-white dark:bg-gray-800 p-6 rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
           {colaborador ? 'Editar Colaborador' : 'Novo Colaborador'}
         </h2>
-        <div className="flex justify-center mb-4">
-          <div className="w-20 h-20 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-            <User className="w-10 h-10 text-gray-500 dark:text-gray-300" />
+        
+        {/* Photo Upload and Preview Section */}
+        <div className="flex flex-col items-center gap-3 mb-5 bg-gray-50 dark:bg-gray-900/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50">
+          <div className="relative w-20 h-20 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden border-2 border-gray-300 dark:border-gray-600 shadow-sm">
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="Avatar Preview" className="w-full h-full object-cover" />
+            ) : (
+              <User className="w-10 h-10 text-gray-500 dark:text-gray-300" />
+            )}
+          </div>
+          <div className="flex flex-col items-center gap-1.5 w-full">
+            <label className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-500 cursor-pointer bg-blue-50 dark:bg-blue-950/30 px-3 py-1.5 rounded-lg border border-blue-200 dark:border-blue-900 transition">
+              {uploading ? 'Enviando...' : 'Fazer upload de foto'}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleUpload}
+                disabled={uploading}
+                className="hidden"
+              />
+            </label>
+            <p className="text-[10px] text-gray-400 text-center">ou informe um link da foto abaixo</p>
           </div>
         </div>
 
@@ -177,6 +232,14 @@ export default function ColaboradorModal({
             </FormField>
           )}
 
+          <FormField label="Link da Foto (URL)">
+            <Input
+              value={avatarUrl}
+              onChange={(e) => setAvatarUrl(e.target.value)}
+              placeholder="https://exemplo.com/foto.jpg"
+            />
+          </FormField>
+
           <FormField label="Cargo">
             <Select
               value={cargo}
@@ -206,7 +269,7 @@ export default function ColaboradorModal({
           </FormField>
         </div>
 
-        <div className="flex justify-end gap-2 mt-4">
+        <div className="flex justify-end gap-2 mt-5">
           <Button onClick={onClose} variant="secondary">
             Cancelar
           </Button>

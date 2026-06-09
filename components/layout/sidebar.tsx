@@ -13,7 +13,7 @@ type Props = {
 export default function Sidebar({ open, setOpen }: Props) {
   const router = useRouter();
   const pathName = usePathname();
-  const [profile, setProfile] = useState<{ username: string; email: string } | null>(null);
+  const [profile, setProfile] = useState<{ username: string; email: string; avatar_url?: string | null } | null>(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -22,13 +22,14 @@ export default function Sidebar({ open, setOpen }: Props) {
 
       const { data } = await supabase
         .from('profiles')
-        .select('username')
+        .select('username, avatar_url')
         .eq('id', user.id)
         .single();
 
       setProfile({
         username: data?.username ?? '',
         email: user.email ?? '',
+        avatar_url: data?.avatar_url,
       });
     };
 
@@ -85,7 +86,7 @@ export default function Sidebar({ open, setOpen }: Props) {
           {menuItem('Eventos', Calendar, '/dashboard/eventos')}
           {menuItem('Viagens', Navigation, '/dashboard/viagens')}
           {menuItem('Colaboradores', Users, '/dashboard/colaboradores')}
-          {menuItem('Configurações', Settings, '/dashboard/settings')}
+          {menuItem('Configurações', Settings, '/dashboard/configuracoes')}
         </ul>
       </div>
 
@@ -94,9 +95,17 @@ export default function Sidebar({ open, setOpen }: Props) {
         {/* USUÁRIO LOGADO */}
         {profile && (
           <div className="flex items-center gap-3 px-2">
-            <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm font-bold shrink-0">
-              {profile.username.charAt(0).toUpperCase()}
-            </div>
+            {profile.avatar_url ? (
+              <img
+                src={profile.avatar_url}
+                alt={profile.username}
+                className="w-8 h-8 rounded-full object-cover shrink-0 border border-gray-200 dark:border-gray-800 shadow-sm"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm font-bold shrink-0">
+                {profile.username.charAt(0).toUpperCase()}
+              </div>
+            )}
             <div className="overflow-hidden">
               <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                 {profile.username}

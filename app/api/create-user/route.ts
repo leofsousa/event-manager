@@ -15,7 +15,7 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    const { email, password, username, cargo, role } = body;
+    const { email, password, username, cargo, role, avatar_url } = body;
 
     // Validar role
     if (!role || !VALID_ROLES.includes(role as ValidRole)) {
@@ -56,6 +56,7 @@ export async function POST(req: Request) {
           email,
           cargo: cargo || null,
           role: role as ValidRole,
+          avatar_url: avatar_url || null,
         },
       ]);
 

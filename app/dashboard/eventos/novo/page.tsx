@@ -83,7 +83,7 @@ export default function NovoEventoPage() {
     [],
   );
 
-  const isStudio = tipo === "operacao-estudio";
+  const isStudio = tipo === "operacao-estudio" || tipo === "bora-leilao";
   const isNameOnlyType = tipo in SPECIAL_NAME_ONLY_TYPES;
 
   const fetchTypes = useCallback(async () => {
@@ -204,26 +204,15 @@ export default function NovoEventoPage() {
     setIsOtherSelected(false);
   }, [isTravelScoped, tipo, viagem?.local]);
 
-  const handleCreateType = async (name: string) => {
-    const formatted = name.toLowerCase().replace(/\s+/g, "-");
-
-    const { data, error } = await supabase
-      .from("event_types")
-      .insert([{ label: name, value: formatted }])
-      .select()
-      .single();
-
-    if (error) {
-      showToast("Erro ao criar tipo");
-      return;
+  // Set default studio and start time for "bora-leilao"
+  useEffect(() => {
+    if (tipo === "bora-leilao") {
+      setLocal("estudio-2");
+      setIsOtherSelected(false);
+      setCustomLocal("");
+      setHoraInicio("12:00");
     }
-
-    setEventTypes((prev) => [...prev, data]);
-
-    setTipo(data.value);
-
-    showToast("Tipo criado!");
-  };
+  }, [tipo]);
 
   const validate = () => {
     const newErrors = {
@@ -248,8 +237,6 @@ export default function NovoEventoPage() {
 
   const handleSubmit = async () => {
     if (!validate()) return;
-
-    // VALIDAÇÃO DA VIAGEM
     if (viagem) {
       const isInsideRange =
         data >= viagem.data_saida && data <= viagem.data_retorno;

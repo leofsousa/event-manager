@@ -7,6 +7,7 @@ import ColaboradorModal from "@/components/colaboradores/colaboradores-modal";
 import ConfirmModal from "@/components/ui/confirm-modal";
 
 import { supabase } from "@/lib/supabase";
+import Input from "@/components/ui/input";
 
 type Colaborador = {
   id: string;
@@ -30,6 +31,10 @@ export default function Colaboradores() {
   const [sortBy, setSortBy] = useState<"nome" | "cargo" | null>("nome");
 
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+
+// Filters
+const [filterName, setFilterName] = useState("");
+const [filterCargo, setFilterCargo] = useState("");
 
   const handleSort = (field: "nome" | "cargo") => {
     if (sortBy === field) {
@@ -56,6 +61,11 @@ export default function Colaboradores() {
 
     return sortOrder === "asc" ? comparison : -comparison;
   });
+const filteredColaboradores = sortedColaboradores.filter((c) => {
+  const matchesName = c.username ? c.username.toLowerCase().includes(filterName.toLowerCase()) : false;
+  const matchesCargo = filterCargo ? c.cargo === filterCargo : true;
+  return matchesName && matchesCargo;
+});
 
   const fetchColaboradores = async () => {
     try {
@@ -125,18 +135,39 @@ export default function Colaboradores() {
 
   return (
     <div className="p-4">
-      <TableColaboradores
-        colaboradores={sortedColaboradores}
-        onAdd={() => {
-          setSelectedColaborator(null);
-          setIsModalOpen(true);
-        }}
-        onEdit={handleEdit}
-        onDelete={(c) => setColaboradorToDelete(c)}
-        onSort={handleSort}
-        sortBy={sortBy}
-        sortOrder={sortOrder}
-      />
+{/* Filters */}
+<div className="flex flex-col sm:flex-row gap-4 mb-4">
+  <Input
+    placeholder="Filtrar por nome"
+    value={filterName}
+    onChange={(e) => setFilterName(e.target.value)}
+  />
+  <select
+    className="w-full sm:w-48 px-3 py-2 border rounded-md bg-white dark:bg-gray-800"
+    value={filterCargo}
+    onChange={(e) => setFilterCargo(e.target.value)}
+  >
+    <option value="">Todos os cargos</option>
+    {Array.from(new Set(colaboradores.map((c) => c.cargo).filter(Boolean))).map((cargo) => (
+      <option key={cargo} value={cargo}>
+        {cargo}
+      </option>
+    ))}
+  </select>
+</div>
+<TableColaboradores
+  colaboradores={filteredColaboradores}
+  onAdd={() => {
+    setSelectedColaborator(null);
+    setIsModalOpen(true);
+  }}
+  onEdit={handleEdit}
+  onDelete={(c) => setColaboradorToDelete(c)}
+  onSort={handleSort}
+  sortBy={sortBy}
+  sortOrder={sortOrder}
+/>
+
 
       {isModalOpen && (
         <ColaboradorModal
