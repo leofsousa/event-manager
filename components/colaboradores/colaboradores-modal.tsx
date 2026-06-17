@@ -33,6 +33,11 @@ export default function ColaboradorModal({
   const [avatarUrl, setAvatarUrl] = useState('');
   const [uploading, setUploading] = useState(false);
 
+  // States for resetting password
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
+
   const cargoOptions = cargos.map((c) => ({
     label: c.name,
     value: c.name,
@@ -107,6 +112,42 @@ export default function ColaboradorModal({
       showToast('Erro no upload. Certifique-se de que o bucket público "avatars" existe no Supabase.');
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleResetPasswordAdmin = async () => {
+    if (newPassword.length < 6) {
+      showToast('A senha deve ter pelo menos 6 caracteres');
+      return;
+    }
+
+    try {
+      setIsResettingPassword(true);
+      const res = await fetch('/api/reset-user-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: colaborador.id,
+          password: newPassword,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Erro ao redefinir a senha');
+      }
+
+      showToast('Senha alterada com sucesso!');
+      setNewPassword('');
+      setShowResetPassword(false);
+    } catch (err) {
+      console.error(err);
+      showToast(err instanceof Error ? err.message : 'Erro ao redefinir a senha');
+    } finally {
+      setIsResettingPassword(false);
     }
   };
 
@@ -230,6 +271,45 @@ export default function ColaboradorModal({
             <FormField label="Email">
               <Input value={email} disabled />
             </FormField>
+          )}
+
+          {colaborador && (
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 bg-gray-50 dark:bg-gray-900/30 flex flex-col gap-2">
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                  Senha do Colaborador
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowResetPassword(!showResetPassword);
+                    setNewPassword('');
+                  }}
+                  className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                >
+                  {showResetPassword ? 'Cancelar' : 'Alterar Senha'}
+                </button>
+              </div>
+
+              {showResetPassword && (
+                <div className="flex flex-col gap-2 mt-1">
+                  <Input
+                    type="password"
+                    placeholder="Nova senha (mínimo 6 caracteres)"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                  />
+                  <Button
+                    type="button"
+                    onClick={handleResetPasswordAdmin}
+                    disabled={isResettingPassword}
+                    className="w-full text-xs py-1.5"
+                  >
+                    {isResettingPassword ? 'Alterando...' : 'Confirmar Nova Senha'}
+                  </Button>
+                </div>
+              )}
+            </div>
           )}
 
           <FormField label="Link da Foto (URL)">

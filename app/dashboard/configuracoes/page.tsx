@@ -26,6 +26,9 @@ export default function ConfiguracoesPage() {
   const [uploading, setUploading] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [isExportModalOpen, setExportModalOpen] = useState(false);
+  const [exportMonth, setExportMonth] = useState('');
 
   // Fetch current auth user and profile data
   const fetchProfile = async () => {
@@ -41,12 +44,13 @@ export default function ConfiguracoesPage() {
 
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('username, avatar_url')
+        .select('username, avatar_url, role')
         .eq('id', user.id)
         .single();
       if (error) throw error;
       setUsername(profile?.username ?? '');
       setAvatarUrl(profile?.avatar_url ?? '');
+      setUserRole(profile?.role ?? null);
     } catch (err) {
       console.error(err);
       setErrorMsg('Erro ao carregar perfil');
@@ -186,8 +190,9 @@ export default function ConfiguracoesPage() {
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirmar Senha</label>
           <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Confirme a senha" className="w-full" />
         </div>
+        
         {/* Theme selector */}
-        <div>
+        <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tema da aplicação</label>
           <select
             value={theme}
@@ -199,6 +204,67 @@ export default function ConfiguracoesPage() {
             <option value="dark">Escuro</option>
           </select>
         </div>
+
+        {/* Export button – visible only for admin */}
+        {userRole === 'admin' && (
+          <div className="flex justify-end mb-4">
+            <button
+              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+              onClick={() => setExportModalOpen(true)}
+            >
+              Exportar Agenda
+            </button>
+          </div>
+        )}
+
+        {/* Export Modal */}
+        {isExportModalOpen && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded shadow-lg w-80">
+              <h2 className="text-lg font-medium mb-4 text-gray-900 dark:text-white">Selecionar Mês para Exportar</h2>
+              <input
+                type="month"
+                value={exportMonth}
+                onChange={(e) => setExportMonth(e.target.value)}
+                className="w-full p-2 border rounded mb-4"
+              />
+              <div className="flex justify-end space-x-2">
+                <button
+                  className="px-3 py-1 bg-gray-300 dark:bg-gray-600 rounded"
+                  onClick={() => setExportModalOpen(false)}
+                >Cancelar</button>
+                <button
+                  className="px-3 py-1 bg-blue-600 text-white rounded"
+                  onClick={async () => {
+                    if (!exportMonth) {
+                      showToast('Selecione um mês');
+                      return;
+                    }
+                    try {
+                      const res = await fetch(`/api/export-agenda?month=${exportMonth}`);
+                      if (!res.ok) {
+                        const err = await res.json();
+                        throw new Error(err.error || 'Erro ao exportar');
+                      }
+                      const blob = await res.blob();
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `agenda-${exportMonth}.xlsx`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                      showToast('Exportação concluída');
+                      setExportModalOpen(false);
+                    } catch (e: any) {
+                      console.error(e);
+                      showToast(e.message ?? 'Erro na exportação');
+                    }
+                  }}
+                >Exportar</button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="flex justify-end mt-6 gap-3">

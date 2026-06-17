@@ -145,6 +145,16 @@ export default function Login() {
           }}
         />
 
+        <div className="flex w-full justify-end -mt-2">
+          <button
+            type="button"
+            onClick={() => router.push('/login/recovery')}
+            className="text-xs text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition"
+          >
+            Esqueceu a senha?
+          </button>
+        </div>
+
         {errorMessage && (
           <p className="w-full text-center text-sm text-red-500">{errorMessage}</p>
         )}
